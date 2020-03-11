@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# build folder
+/_genRelease/
+/_genDebug/

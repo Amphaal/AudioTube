@@ -1,0 +1,3 @@
+[submodule "external/promise-cpp"]
+	path = external/promise-cpp
+	url = https://github.com/xhawk18/promise-cpp.git

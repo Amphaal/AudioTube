@@ -1,0 +1,30 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "options": {
+        "cwd": "${workspaceRoot}"
+    },
+    "tasks": [
+        {
+            "label": "1. Generate Project files",
+            "group": {
+                "isDefault": true,
+                "kind": "test"
+            },
+            "type": "shell",
+            "windows": {
+                "command": "cmake -GNinja -B_genDebug -H. -DCMAKE_BUILD_TYPE=Debug"
+            }
+        },
+        {
+            "label": "2. Build",
+            "type": "shell",
+            "command": "ninja",
+            "options": {
+                "cwd": "${workspaceRoot}/_genDebug"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
