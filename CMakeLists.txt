@@ -29,6 +29,11 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 #create as static lib
 add_library(audiotube STATIC)
 
+target_link_libraries(audiotube 
+    Qt5::Network 
+    Qt5::Core
+)
+
 #add source files
 file(GLOB_RECURSE CPP_FILES "src/*.cpp")
 target_sources(appExec PUBLIC
