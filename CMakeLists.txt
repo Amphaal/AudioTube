@@ -34,8 +34,14 @@ target_link_libraries(audiotube
     Qt5::Core
 )
 
+#add deps
+include_directories("promise-cpp")
+target_sources(audiotube PRIVATE
+    "promise-cpp/promise.hpp"
+)
+
 #add source files
 file(GLOB_RECURSE CPP_FILES "src/*.cpp")
-target_sources(appExec PUBLIC
+target_sources(audiotube PUBLIC
     ${CPP_FILES}
 )

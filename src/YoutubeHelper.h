@@ -11,6 +11,7 @@
 #include <QRegularExpression>
 #include <QUrlQuery>
 #include <QString>
+#include <QFile>
 
 #include <QJsonDocument>
 #include <QJsonObject>
