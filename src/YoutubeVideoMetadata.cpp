@@ -1,10 +1,13 @@
 #include "YoutubeVideoMetadata.h"
 
+QRegularExpression YoutubeVideoMetadata::getYoutubeUrlMatcher() {
+    return _ytRegexIdFinder;
+}
+
 YoutubeVideoMetadata* YoutubeVideoMetadata::fromVideoUrl(const QString &url) {
     
     //find id
-    QRegularExpression re("(?:youtube\\.com|youtu.be).*?(?:v=|embed\\/)(?<videoId>[\\w\\-]+)");
-    auto match = re.match(url);
+    auto match = _ytRegexIdFinder.match(url);
 
     //returns
     if(!match.hasMatch()) {

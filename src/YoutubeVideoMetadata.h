@@ -23,6 +23,7 @@ class YoutubeVideoMetadata : public QObject {
         using Id = QString;
         static YoutubeVideoMetadata* fromVideoUrl(const QString &url);
         static QString urlFromVideoId(const QString &videoId);
+        static QRegularExpression getYoutubeUrlMatcher();
         
         YoutubeVideoMetadata(const YoutubeVideoMetadata::Id &videoId);
 
@@ -66,6 +67,8 @@ class YoutubeVideoMetadata : public QObject {
 
         QHash<int, QHash<QString, QString>> _sourceUrlsByItag;
         QHash<int, QString> _audioTypeByItag;
+
+        static inline QRegularExpression _ytRegexIdFinder = QRegularExpression("(?:youtube\\.com|youtu.be).*?(?:v=|embed\\/)(?<videoId>[\\w\\-]+)");
 };
 
 Q_DECLARE_METATYPE(YoutubeVideoMetadata*)
