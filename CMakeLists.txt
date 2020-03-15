@@ -36,7 +36,7 @@ target_link_libraries(audiotube
 
 #add deps
 include_directories("promise-cpp")
-target_sources(audiotube PRIVATE
+target_sources(audiotube PUBLIC
     "promise-cpp/promise.hpp"
 )
 
