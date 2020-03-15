@@ -1,6 +1,6 @@
 #pragma once
 
-#include <promise.hpp>
+#include <promise-cpp/promise.hpp>
 
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
