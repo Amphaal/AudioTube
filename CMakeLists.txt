@@ -40,6 +40,13 @@ target_sources(audiotube PRIVATE
     "promise-cpp/promise.hpp"
 )
 
+#header interface
+file(GLOB_RECURSE H_FILES "src/*.h")
+target_sources(audiotube PUBLIC 
+    ${H_FILES}
+)
+target_include_directories(audiotube INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
 #add source files
 file(GLOB_RECURSE CPP_FILES "src/*.cpp")
 target_sources(audiotube PUBLIC
