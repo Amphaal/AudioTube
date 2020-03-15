@@ -41,14 +41,14 @@ target_sources(audiotube PRIVATE
 )
 
 #header interface
-file(GLOB_RECURSE H_FILES "src/*.h")
+file(GLOB_RECURSE H_FILES "audiotube/*.h")
 target_sources(audiotube PUBLIC 
     ${H_FILES}
 )
 target_include_directories(audiotube INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 #add source files
-file(GLOB_RECURSE CPP_FILES "src/*.cpp")
+file(GLOB_RECURSE CPP_FILES "audiotube/*.cpp")
 target_sources(audiotube PUBLIC
     ${CPP_FILES}
 )
