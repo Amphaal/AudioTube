@@ -11,16 +11,18 @@
                 "limitSymbolsToIncludedHeaders": true
             },
             "includePath": [
-                "${workspaceFolder}/**",
+                "${workspaceFolder}",
+                "${workspaceFolder}/audiotube",
                 "C:/msys64/mingw64/include/QtNetwork",
-                "C:/msys64/mingw64/include/QtCore"
+                "C:/msys64/mingw64/include/QtCore",
+                "${workspaceFolder}/Catch2/single_include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "C:\\msys64\\mingw64\\bin\\clang++.exe",
+            "compilerPath": "C:/msys64/mingw64/bin/clang++.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64"

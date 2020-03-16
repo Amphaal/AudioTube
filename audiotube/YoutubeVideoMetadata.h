@@ -21,7 +21,8 @@ class YoutubeVideoMetadata : public QObject {
 
     public:
         using Id = QString;
-        static YoutubeVideoMetadata* fromVideoUrl(const QString &url);
+        static YoutubeVideoMetadata fromVideoUrl(const QString &url);
+        static YoutubeVideoMetadata fromVideoId(const QString &videoId);
         static QString urlFromVideoId(const QString &videoId);
         static QRegularExpression getYoutubeUrlMatcher();
         

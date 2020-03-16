@@ -4,7 +4,12 @@ QRegularExpression YoutubeVideoMetadata::getYoutubeUrlMatcher() {
     return _ytRegexIdFinder;
 }
 
-YoutubeVideoMetadata* YoutubeVideoMetadata::fromVideoUrl(const QString &url) {
+YoutubeVideoMetadata YoutubeVideoMetadata::fromVideoId(const QString &videoId) {
+    auto url = YoutubeVideoMetadata::urlFromVideoId(videoId);
+    return YoutubeVideoMetadata::fromVideoUrl(url);
+}
+
+YoutubeVideoMetadata YoutubeVideoMetadata::fromVideoUrl(const QString &url) {
     
     //find id
     auto match = _ytRegexIdFinder.match(url);
@@ -15,7 +20,7 @@ YoutubeVideoMetadata* YoutubeVideoMetadata::fromVideoUrl(const QString &url) {
     }
 
     auto videoId = match.captured("videoId");
-    return new YoutubeVideoMetadata(videoId);
+    return YoutubeVideoMetadata(videoId);
 }
 
 QString YoutubeVideoMetadata::urlFromVideoId(const QString &videoId) {

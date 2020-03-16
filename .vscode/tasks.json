@@ -14,7 +14,7 @@
             },
             "type": "shell",
             "windows": {
-                "command": "cmake -GNinja -B_genDebug -H. -DCMAKE_BUILD_TYPE=Debug"
+                "command": "cmake -GNinja -B_genDebug -H. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=clang-toolchain.cmake"
             }
         },
         {
