@@ -21,13 +21,16 @@ promise::Defer YoutubeHelper::refreshMetadata(YoutubeVideoMetadata* toRefresh, b
         })
         .then(&_downloadVideoInfosAndAugmentMetadata)
         .then([=]() {
+            toRefresh->setRanOnce();
             emit toRefresh->metadataRefreshed();
             d.resolve(toRefresh);
         }).fail([=](const std::runtime_error &err) {
             qWarning() << "Youtube : error while fecthing audio stream >> " << err.what();
-            toRefresh->setFailure(true); 
+            toRefresh->setFailure(true);
+            toRefresh->setRanOnce(); 
         }).fail([=]() {
-           toRefresh->setFailure(true); 
+           toRefresh->setFailure(true);
+           toRefresh->setRanOnce(); 
         });
 
     });

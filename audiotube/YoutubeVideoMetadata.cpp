@@ -58,8 +58,16 @@ bool YoutubeVideoMetadata::isMetadataValid() {
     return QDateTime::currentDateTime() < this->_validUntil;
 }
 
-bool YoutubeVideoMetadata::hasFailed() {
+bool YoutubeVideoMetadata::hasFailed() const {
     return this->_failed;
+}
+
+void YoutubeVideoMetadata::setRanOnce() {
+    this->_ranOnce = true;
+}
+
+bool YoutubeVideoMetadata::ranOnce() const {
+    return this->_ranOnce;
 }
 
 void YoutubeVideoMetadata::setFailure(bool failed) {

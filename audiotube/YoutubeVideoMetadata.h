@@ -35,7 +35,8 @@ class YoutubeVideoMetadata : public QObject {
         QString playerSourceUrl() const;
         int duration();
         bool isMetadataValid();
-        bool hasFailed();
+        bool hasFailed() const;
+        bool ranOnce() const;
 
         void setSts(const QString &sts);
         void setPlayerSourceUrl(const QString &pSourceUrl);
@@ -44,6 +45,7 @@ class YoutubeVideoMetadata : public QObject {
         void setExpirationDate(const QDateTime &expiration);
         void setAudioStreamInfos(const YoutubeAudioStreamInfos &streamInfos);
         void setFailure(bool failed);
+        void setRanOnce();
 
         const YoutubeAudioStreamInfos& audioStreams() const;
 
@@ -58,6 +60,7 @@ class YoutubeVideoMetadata : public QObject {
         QString _url;
         QString _title;
         bool _failed = false;
+        bool _ranOnce = false;
 
         QString _sts;
         QString _playerSourceUrl;

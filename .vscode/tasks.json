@@ -18,9 +18,9 @@
             }
         },
         {
-            "label": "2. Build",
+            "label": "2. Build and test",
             "type": "shell",
-            "command": "ninja",
+            "command": "ninja; cd tests; ctest",
             "options": {
                 "cwd": "${workspaceRoot}/_genDebug"
             },

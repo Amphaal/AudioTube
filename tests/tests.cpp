@@ -4,10 +4,15 @@
 #include <audiotube/YoutubeVideoMetadata.h>
 #include <audiotube/YoutubeHelper.h>
 
+#include <chrono>
+#include <thread>
+
 bool youtube_metadata_fetching_succeeded(const QString &ytId) {
     auto container = YoutubeVideoMetadata::fromVideoId(ytId);
-    auto defer = YoutubeHelper::refreshMetadata(&container);
-    promise::all({defer});
+    YoutubeHelper::refreshMetadata(&container).then([]() { return promise::resolve(); });
+    while(!container.ranOnce()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     return !container.hasFailed();
 }
 
