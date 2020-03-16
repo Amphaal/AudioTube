@@ -1,6 +1,6 @@
 [submodule "promise-cpp"]
-	path = promise-cpp
+	path = audiotube/promise-cpp
 	url = https://github.com/xhawk18/promise-cpp.git
 [submodule "Catch2"]
-	path = Catch2
+	path = tests/Catch2
 	url = https://github.com/catchorg/Catch2
