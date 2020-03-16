@@ -16,53 +16,15 @@ project(AudioTube
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#find Qt5 Network
+#Qt moc 
+SET(CMAKE_AUTOMOC ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR ON) 
+
+#find Qt5
 find_package(Qt5 REQUIRED COMPONENTS
     Core 
     Network 
 )
 
-#Qt moc 
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_INCLUDE_CURRENT_DIR ON) 
-
-#create as static lib
-add_library(audiotube STATIC)
-
-target_link_libraries(audiotube 
-    Qt5::Network 
-    Qt5::Core
-)
-
-#add deps
-include_directories("promise-cpp")
-target_sources(audiotube PRIVATE
-    "promise-cpp/promise.hpp"
-)
-
-#header interface
-file(GLOB_RECURSE H_FILES "audiotube/*.h")
-target_sources(audiotube PUBLIC 
-    ${H_FILES}
-)
-target_include_directories(audiotube INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-
-#add source files
-file(GLOB_RECURSE CPP_FILES "audiotube/*.cpp")
-target_sources(audiotube PRIVATE
-    ${CPP_FILES}
-)
-
-#add tests
-add_subdirectory(Catch2)
-add_executable(audiotube_tests tests/tests.cpp)
-target_link_libraries(audiotube_tests
-    audiotube
-    Catch2::Catch2
-)
-
-#tests handling
-include(CTest)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Catch2/contrib)
-include(Catch)
-catch_discover_tests(audiotube_tests)
+add_subdirectory(audiotube)
+add_subdirectory(tests)

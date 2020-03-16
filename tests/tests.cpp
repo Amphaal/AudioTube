@@ -11,6 +11,6 @@ bool youtube_metadata_fetching_succeeded(const QString &ytId) {
     return !container.hasFailed();
 }
 
-TEST_CASE( "Factorials are computed", "[factorial]" ) {
+TEST_CASE( "Fetch youtube video metadata", "[metadata]" ) {
     REQUIRE( youtube_metadata_fetching_succeeded("MnoajJelaAo") );
 }
