@@ -8,4 +8,5 @@ build_script:
     - cd _genRelease
     - ninja
 test_script:
+    - cd tests
     - ctest
