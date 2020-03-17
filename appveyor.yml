@@ -1,0 +1,6 @@
+image: Visual Studio 2019
+platform: x64
+build_script:
+  - cmd: cmake -GNinja -B_genRelease -H. -DCMAKE_BUILD_TYPE=Release
+  - cmd: cd _genRelease
+  - cmd: ninja
