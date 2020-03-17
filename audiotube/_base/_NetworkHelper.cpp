@@ -8,7 +8,7 @@ promise::Defer NetworkHelper::download(const QUrl& url) {
         auto manager = new QNetworkAccessManager;
         auto reply = manager->get(request);  
         
-        qDebug() << qUtf8Printable(QString("AudioTube : Downloading [%1] ...").arg(url.toString()));
+        // qDebug() << qUtf8Printable(QString("AudioTube : Downloading [%1] ...").arg(url.toString()));
 
         _pending++;
 

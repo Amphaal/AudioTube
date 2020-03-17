@@ -18,9 +18,18 @@
             }
         },
         {
-            "label": "2. Build and test",
+            "label": "2+. Build",
             "type": "shell",
             "command": "ninja",
+            "options": {
+                "cwd": "${workspaceRoot}/_genDebug"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "2. Build and test",
+            "type": "shell",
+            "command": "ninja;cd tests;ctest",
             "options": {
                 "cwd": "${workspaceRoot}/_genDebug"
             },

@@ -68,18 +68,19 @@ VideoMetadata* NetworkFetcher::_augmentMetadataWithPlayerConfiguration(VideoMeta
     auto sts = args[QStringLiteral(u"cver")].toString();
     auto playerSourceUrl = playerConfig[QStringLiteral(u"assets")].toObject()[QStringLiteral(u"js")].toString();
     auto title = args[QStringLiteral(u"title")].toString();
-    auto length = args[QStringLiteral(u"length_seconds")].toInt();
+    auto videoLength = args[QStringLiteral(u"length_seconds")].toInt();
 
     //check values exist
-    if(sts.isEmpty() || playerSourceUrl.isEmpty() || title.isEmpty() || !length) {
-        throw std::logic_error("error while getting player client configuration !");
-    }
+    if(sts.isEmpty()) throw std::logic_error("STS is empty or does not exist in player config !");
+    if(playerSourceUrl.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
+    if(title.isEmpty()) throw std::logic_error("Video title cannot be found !");
+    if(!videoLength) throw std::logic_error("Video length cannot be found !");
 
     //augment...
     metadata->setSts(sts);
     metadata->setPlayerSourceUrl("https://www.youtube.com" + playerSourceUrl);
     metadata->setTitle(title);
-    metadata->setDuration(length);
+    metadata->setDuration(videoLength);
 
     return metadata;
     
