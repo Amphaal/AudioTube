@@ -10,3 +10,6 @@ build_script:
 test_script:
     - cd tests
     - ctest
+artifacts:
+    - path: _genRelease
+        name: buildfolder

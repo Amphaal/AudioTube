@@ -26,7 +26,5 @@ find_package(Qt5 REQUIRED COMPONENTS
     Network 
 )
 
-#force enable_testing()
-enable_testing()
 add_subdirectory(audiotube)
 add_subdirectory(tests)
