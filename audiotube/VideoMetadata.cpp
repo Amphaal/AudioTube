@@ -6,7 +6,6 @@ QRegularExpression VideoMetadata::getUrlMatcher() {
 
 VideoMetadata VideoMetadata::fromVideoId(const QString &videoId) {
     auto url = VideoMetadata::urlFromVideoId(videoId);
-    qDebug() << url;
     return VideoMetadata::fromVideoUrl(url);
 }
 

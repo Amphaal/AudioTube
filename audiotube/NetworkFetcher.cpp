@@ -21,7 +21,7 @@ void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded,
         .finally([=](){
             *checkEnded = true;
         });
-        
+
 }
 
 promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
@@ -130,7 +130,7 @@ VideoMetadata* NetworkFetcher::_augmentMetadataWithVideoInfos(
     auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
     auto pStatus = playabilityStatus.value(QStringLiteral(u"reason")).toString();
     if(!pStatus.isNull()) {
-        throw std::logic_error("Video is not available !");
+        throw std::logic_error(qUtf8Printable(QString("Video is not available ! %1").arg(pStatus)));
     }
 
     //check if is live

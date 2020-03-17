@@ -59,10 +59,14 @@ int main(int argc, char *argv[]) {
 //   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
 // }
 
-TEST_CASE( "OK from JSON Adaptative Stream - no deciphering", "[metadata]" ) {
-  REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
-}
+// TEST_CASE( "OK from JSON Adaptative Stream - no deciphering", "[metadata]" ) {
+//   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
+// }
 
-TEST_CASE( "OK from JSON Adaptative Stream - must decipher", "[metadata]" ) {
-  REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
+// TEST_CASE( "OK from JSON Adaptative Stream - must decipher", "[metadata]" ) {
+//   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
+// }
+
+TEST_CASE( "Restricted viewing", "[metadata]" ) {
+  REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
 }
