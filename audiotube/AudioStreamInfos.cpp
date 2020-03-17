@@ -1,12 +1,12 @@
-#include "YoutubeAudioStreamInfos.h"
+#include "AudioStreamInfos.h"
 
-YoutubeAudioStreamInfos::YoutubeAudioStreamInfos() {};
-YoutubeAudioStreamInfos::YoutubeAudioStreamInfos(YoutubeSignatureDecipherer* decipherer, const QString &urlQueryAsRawStr) {
+AudioStreamInfos::AudioStreamInfos() {};
+AudioStreamInfos::AudioStreamInfos(SignatureDecipherer* decipherer, const QString &urlQueryAsRawStr) {
     auto raw = _generatRawAdaptiveStreamInfosFromUrlQuery(urlQueryAsRawStr);
     this->_initFromUrlQuery(decipherer, raw);
 }
 
-YoutubeAudioStreamInfos::YoutubeAudioStreamInfos(const QJsonArray &adaptativeFormatsWithUnsignedUrls) {
+AudioStreamInfos::AudioStreamInfos(const QJsonArray &adaptativeFormatsWithUnsignedUrls) {
     
     auto raw = _generatRawAdaptiveStreamInfosFromJSON(adaptativeFormatsWithUnsignedUrls);
     
@@ -24,7 +24,7 @@ YoutubeAudioStreamInfos::YoutubeAudioStreamInfos(const QJsonArray &adaptativeFor
 
 }
 
-void YoutubeAudioStreamInfos::_initFromUrlQuery(YoutubeSignatureDecipherer* decipherer, const RawInfosByAudioMime &rawData) {
+void AudioStreamInfos::_initFromUrlQuery(SignatureDecipherer* decipherer, const RawInfosByAudioMime &rawData) {
 
     //filter, only audio
     for(auto &streamInfos : rawData) {
@@ -69,7 +69,7 @@ void YoutubeAudioStreamInfos::_initFromUrlQuery(YoutubeSignatureDecipherer* deci
 
 }
 
-const YoutubeAudioStreamInfos::UrlMimePair YoutubeAudioStreamInfos::getPreferedMimeSourcePair() const {
+const AudioStreamInfos::UrlMimePair AudioStreamInfos::getPreferedMimeSourcePair() const {
     auto available = this->availableAudioMimes();
     auto mp4Audio = available.filter(QRegularExpression(QStringLiteral(u"opus")));
     auto selectedMime = mp4Audio.count() ? mp4Audio.value(0) : available.value(0);
@@ -77,17 +77,17 @@ const YoutubeAudioStreamInfos::UrlMimePair YoutubeAudioStreamInfos::getPreferedM
     return {selectedMime, selectedUrl};
 }
 
-const QString YoutubeAudioStreamInfos::streamUrl(const QString &mime) const {
+const QString AudioStreamInfos::streamUrl(const QString &mime) const {
     return this->_InfosByAudioMime
                     .value(mime)
                     .value(QStringLiteral(u"url"));
 }
 
-const QList<QString> YoutubeAudioStreamInfos::availableAudioMimes() const {
+const QList<QString> AudioStreamInfos::availableAudioMimes() const {
     return this->_InfosByAudioMime.keys();
 }
 
-YoutubeAudioStreamInfos::RawInfosByAudioMime YoutubeAudioStreamInfos::_generatRawAdaptiveStreamInfosFromJSON(const QJsonArray &jsonArray) {
+AudioStreamInfos::RawInfosByAudioMime AudioStreamInfos::_generatRawAdaptiveStreamInfosFromJSON(const QJsonArray &jsonArray) {
     
     RawInfosByAudioMime out;
 
@@ -109,7 +109,7 @@ YoutubeAudioStreamInfos::RawInfosByAudioMime YoutubeAudioStreamInfos::_generatRa
 
 }
 
-YoutubeAudioStreamInfos::RawInfosByAudioMime YoutubeAudioStreamInfos::_generatRawAdaptiveStreamInfosFromUrlQuery(const QString &urlQueryAsRawStr) {
+AudioStreamInfos::RawInfosByAudioMime AudioStreamInfos::_generatRawAdaptiveStreamInfosFromUrlQuery(const QString &urlQueryAsRawStr) {
 
     RawInfosByAudioMime out;
 

@@ -20,7 +20,7 @@
         {
             "label": "2. Build and test",
             "type": "shell",
-            "command": "ninja; cd tests; ctest",
+            "command": "ninja",
             "options": {
                 "cwd": "${workspaceRoot}/_genDebug"
             },

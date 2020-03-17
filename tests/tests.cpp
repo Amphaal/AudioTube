@@ -1,21 +1,37 @@
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_RUNNER
 #include <catch2/catch.hpp>
 
-#include <audiotube/YoutubeVideoMetadata.h>
-#include <audiotube/YoutubeHelper.h>
+#include <QCoreApplication>
+#include <QTimer>
+
+#include <audiotube/VideoMetadata.h>
+#include <audiotube/NetworkFetcher.h>
 
 #include <chrono>
 #include <thread>
 
 bool youtube_metadata_fetching_succeeded(const QString &ytId) {
-    auto container = YoutubeVideoMetadata::fromVideoId(ytId);
-    YoutubeHelper::refreshMetadata(&container).then([]() { return promise::resolve(); });
+    auto container = VideoMetadata::fromVideoId(ytId);
+    auto refrsh = NetworkFetcher::refreshMetadata(&container);
     while(!container.ranOnce()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      QCoreApplication::processEvents();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     return !container.hasFailed();
 }
 
+int main(int argc, char *argv[]) {
+  QCoreApplication app(argc, argv);
+  QTimer::singleShot(0, [&]{
+    app.exit(Catch::Session().run(argc, argv));
+  });
+  return app.exec();
+}
+
+//
+// Test cases
+//
+
 TEST_CASE( "Fetch youtube video metadata", "[metadata]" ) {
-    REQUIRE( youtube_metadata_fetching_succeeded("MnoajJelaAo") );
+  REQUIRE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
 }

@@ -13,11 +13,11 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-#include "YoutubeSignatureDecipherer.h"
+#include "SignatureDecipherer.h"
 
 #include <QDebug>
 
-class YoutubeAudioStreamInfos {
+class AudioStreamInfos {
 
     public:
         using InfosByAudioMime = QHash<QString, QHash<QString, QString>>;
@@ -27,9 +27,9 @@ class YoutubeAudioStreamInfos {
             QString decodedUrl;
         };
 
-        YoutubeAudioStreamInfos();
-        YoutubeAudioStreamInfos(YoutubeSignatureDecipherer* decipherer, const QString &urlQueryAsRawStr);
-        YoutubeAudioStreamInfos(const QJsonArray &adaptativeFormatsWithUnsignedUrls);
+        AudioStreamInfos();
+        AudioStreamInfos(SignatureDecipherer* decipherer, const QString &urlQueryAsRawStr);
+        AudioStreamInfos(const QJsonArray &adaptativeFormatsWithUnsignedUrls);
 
         const QString streamUrl(const QString &mime) const;
         const QList<QString> availableAudioMimes() const;
@@ -41,5 +41,5 @@ class YoutubeAudioStreamInfos {
         static RawInfosByAudioMime _generatRawAdaptiveStreamInfosFromUrlQuery(const QString &urlQueryAsRawStr);
         static RawInfosByAudioMime _generatRawAdaptiveStreamInfosFromJSON(const QJsonArray &jsonArray);
 
-        void _initFromUrlQuery(YoutubeSignatureDecipherer* decipherer, const RawInfosByAudioMime &rawData);
+        void _initFromUrlQuery(SignatureDecipherer* decipherer, const RawInfosByAudioMime &rawData);
 };

@@ -15,7 +15,8 @@
                 "${workspaceFolder}/audiotube",
                 "C:/msys64/mingw64/include/QtNetwork",
                 "C:/msys64/mingw64/include/QtCore",
-                "${workspaceFolder}/tests/Catch2/single_include"
+                "${workspaceFolder}/tests/Catch2/single_include",
+                "C:/msys64/mingw64/include/QtWidgets"
             ],
             "defines": [
                 "_DEBUG",

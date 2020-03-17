@@ -1,12 +1,12 @@
-#include "YoutubeHelper.h"
+#include "NetworkFetcher.h"
 
-promise::Defer YoutubeHelper::fromPlaylistUrl(const QString &url) {
+promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
     return download(url)
             .then(&_extractVideoIdsFromHTTPRequest)
             .then(&_videoIdsToMetadataList);         
 };
 
-promise::Defer YoutubeHelper::refreshMetadata(YoutubeVideoMetadata* toRefresh, bool force) {
+promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
     
     if(!force && toRefresh->isMetadataValid()) return promise::resolve(toRefresh);
     
@@ -15,6 +15,12 @@ promise::Defer YoutubeHelper::refreshMetadata(YoutubeVideoMetadata* toRefresh, b
 
     return promise::newPromise([=](promise::Defer d){
         
+        auto whenFailed = [=]() {
+           toRefresh->setFailure(true);
+           toRefresh->setRanOnce(); 
+           d.reject();
+        };
+
         _getVideoEmbedPageRawData(toRefresh)
         .then([toRefresh](const QByteArray &htmlResponse) {
             return _augmentMetadataWithPlayerConfiguration(toRefresh, htmlResponse);
@@ -24,25 +30,30 @@ promise::Defer YoutubeHelper::refreshMetadata(YoutubeVideoMetadata* toRefresh, b
             toRefresh->setRanOnce();
             emit toRefresh->metadataRefreshed();
             d.resolve(toRefresh);
-        }).fail([=](const std::runtime_error &err) {
-            qWarning() << "Youtube : error while fecthing audio stream >> " << err.what();
-            toRefresh->setFailure(true);
-            toRefresh->setRanOnce(); 
-        }).fail([=]() {
-           toRefresh->setFailure(true);
-           toRefresh->setRanOnce(); 
+        })
+        .fail([=](const std::runtime_error &exception) {
+            qWarning() << "AudioTube :" << exception.what();     
+            whenFailed();
+        })
+        .fail([=](const std::logic_error &exception) {
+            qWarning() << "AudioTube :" << exception.what();     
+            whenFailed();
+        })
+        .fail([=](){
+            qWarning() << "AudioTube : unknown failure !";
+            whenFailed();
         });
 
     });
 };
 
 
-promise::Defer YoutubeHelper::_getVideoEmbedPageRawData(YoutubeVideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_getVideoEmbedPageRawData(VideoMetadata* metadata) {
     auto videoEmbedPageHtmlUrl = QStringLiteral(u"https://www.youtube.com/embed/%1?disable_polymer=true&hl=en").arg(metadata->id());
     return download(videoEmbedPageHtmlUrl);
 }
 
-YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithPlayerConfiguration(YoutubeVideoMetadata* metadata, const QByteArray &videoEmbedPageRequestData) {
+VideoMetadata* NetworkFetcher::_augmentMetadataWithPlayerConfiguration(VideoMetadata* metadata, const QByteArray &videoEmbedPageRequestData) {
     
     //to string for pcre2 usage
     auto str = QString::fromUtf8(videoEmbedPageRequestData);
@@ -61,7 +72,7 @@ YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithPlayerConfiguration(You
 
     //check values exist
     if(sts.isEmpty() || playerSourceUrl.isEmpty() || title.isEmpty() || !length) {
-        throw new std::logic_error("error while getting player client configuration !");
+        throw std::logic_error("error while getting player client configuration !");
     }
 
     //augment...
@@ -74,9 +85,9 @@ YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithPlayerConfiguration(You
     
 }
 
-YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithVideoInfos(
-    YoutubeVideoMetadata* metadata,
-    YoutubeSignatureDecipherer* decipherer,
+VideoMetadata* NetworkFetcher::_augmentMetadataWithVideoInfos(
+    VideoMetadata* metadata,
+    SignatureDecipherer* decipherer,
     const QByteArray &videoInfoRawResponse, 
     const QDateTime &tsRequest
 ) {
@@ -86,33 +97,33 @@ YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithVideoInfos(
     auto error = videoInfos.queryItemValue("errorcode");
     auto status = videoInfos.queryItemValue("status");
     if(!error.isNull() || status != "ok") {
-        throw new std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("An error occured while fetching video infos");
     }
 
     //player response as JSON, check if error
     auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
     auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
     if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
-        throw new std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("An error occured while fetching video infos");
     }
 
     //check playability status
     auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
     auto pStatus = playabilityStatus.value(QStringLiteral(u"reason")).toString();
     if(!pStatus.isNull()) {
-        throw new std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("An error occured while fetching video infos");
     }
 
     //get streamingData
     auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
     if(streamingData.isEmpty()) {
-        throw new std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("An error occured while fetching video infos");
     }
 
     //find expiration
     auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
     if(expiresIn.isEmpty()) {
-        throw new std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("An error occured while fetching video infos");
     }
 
     //set expiration date
@@ -120,12 +131,12 @@ YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithVideoInfos(
     metadata->setExpirationDate(expirationDate);
 
     //find stream infos
-    YoutubeAudioStreamInfos streamInfos;
+    AudioStreamInfos streamInfos;
 
         //...from video infos
         auto streamInfosAsStr = videoInfos.queryItemValue("adaptive_fmts", QUrl::ComponentFormattingOption::FullyDecoded);
         if(!streamInfosAsStr.isEmpty()) {
-            streamInfos = YoutubeAudioStreamInfos(decipherer, streamInfosAsStr);
+            streamInfos = AudioStreamInfos(decipherer, streamInfosAsStr);
         } 
         
         //...from streaming data
@@ -134,12 +145,12 @@ YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithVideoInfos(
             //try...
             auto streamInfosAsJSONArray = streamingData["adaptiveFormats"].toArray();
             if(!streamInfosAsJSONArray.isEmpty()) {
-                streamInfos = YoutubeAudioStreamInfos(streamInfosAsJSONArray);
+                streamInfos = AudioStreamInfos(streamInfosAsJSONArray);
             }
 
             //failed...
             else {
-                throw new std::logic_error("An error occured while fetching video infos");
+                throw std::logic_error("An error occured while fetching video infos");
             }
 
         }
@@ -151,7 +162,7 @@ YoutubeVideoMetadata* YoutubeHelper::_augmentMetadataWithVideoInfos(
     
 }
 
-void YoutubeHelper::_dumpAsJSON(const QUrlQuery &query) {
+void NetworkFetcher::_dumpAsJSON(const QUrlQuery &query) {
     
     QJsonObject dump;
     
@@ -163,15 +174,15 @@ void YoutubeHelper::_dumpAsJSON(const QUrlQuery &query) {
 
 }
 
-void YoutubeHelper::_dumpAsJSON(const QJsonObject &obj) {
+void NetworkFetcher::_dumpAsJSON(const QJsonObject &obj) {
     return _dumpAsJSON(QJsonDocument(obj));
 }
 
-void YoutubeHelper::_dumpAsJSON(const QJsonArray &arr) {
+void NetworkFetcher::_dumpAsJSON(const QJsonArray &arr) {
     return _dumpAsJSON(QJsonDocument(arr));
 }
 
-void YoutubeHelper::_dumpAsJSON(const QJsonDocument &doc) {
+void NetworkFetcher::_dumpAsJSON(const QJsonDocument &doc) {
     
     auto bytes = doc.toJson(QJsonDocument::JsonFormat::Indented);
 
@@ -184,14 +195,14 @@ void YoutubeHelper::_dumpAsJSON(const QJsonDocument &doc) {
 
 }
 
-promise::Defer YoutubeHelper::_downloadVideoInfosAndAugmentMetadata(YoutubeVideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_downloadVideoInfosAndAugmentMetadata(VideoMetadata* metadata) {
     
     //define timestamp for request
     auto requestedAt = QDateTime::currentDateTime();
     auto ytPlayerSourceUrl = metadata->playerSourceUrl();
-    auto cachedDecipherer = YoutubeSignatureDecipherer::fromCache(ytPlayerSourceUrl);
+    auto cachedDecipherer = SignatureDecipherer::fromCache(ytPlayerSourceUrl);
 
-    // qDebug() << "Youtube: YT player source URL : " + ytPlayerSourceUrl;
+    // qDebug() << ": YT player source URL : " + ytPlayerSourceUrl;
 
     //helper for raw data download
     QVector<promise::Defer> dlPromises{
@@ -207,7 +218,7 @@ promise::Defer YoutubeHelper::_downloadVideoInfosAndAugmentMetadata(YoutubeVideo
         auto videoInfosRawData = static_cast<QByteArray*>(results[0].tuple_element(0));
         auto rawPlayerSourceData = static_cast<QByteArray*>(results[1].tuple_element(0));
 
-        auto c_decipherer = cachedDecipherer ? cachedDecipherer : YoutubeSignatureDecipherer::create(
+        auto c_decipherer = cachedDecipherer ? cachedDecipherer : SignatureDecipherer::create(
                                                                     ytPlayerSourceUrl,
                                                                     QString::fromUtf8(*rawPlayerSourceData)
                                                                   );
@@ -218,11 +229,11 @@ promise::Defer YoutubeHelper::_downloadVideoInfosAndAugmentMetadata(YoutubeVideo
     });
 }
 
-QString YoutubeHelper::_getApiUrl(const QString &videoId) {
+QString NetworkFetcher::_getApiUrl(const QString &videoId) {
     return QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
 }
 
-promise::Defer YoutubeHelper::_getVideoInfosRawData(YoutubeVideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_getVideoInfosRawData(VideoMetadata* metadata) {
     
     auto id = metadata->id();
     auto apiUrl = _getApiUrl(id);
@@ -241,7 +252,7 @@ promise::Defer YoutubeHelper::_getVideoInfosRawData(YoutubeVideoMetadata* metada
 }
 
 
-QList<QString> YoutubeHelper::_extractVideoIdsFromHTTPRequest(const QByteArray &requestData) {
+QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const QByteArray &requestData) {
         
         //to string for pcre2 usage
         auto str = QString::fromUtf8(requestData);
@@ -270,16 +281,16 @@ QList<QString> YoutubeHelper::_extractVideoIdsFromHTTPRequest(const QByteArray &
         }
 
         //if no ids
-        if(!idsList.count()) throw new std::logic_error("no playlist metadata container found !");
+        if(!idsList.count()) throw std::logic_error("no playlist metadata container found !");
 
         //return
         return idsList;
 }
 
-QList<YoutubeVideoMetadata*> YoutubeHelper::_videoIdsToMetadataList(const QList<QString> &videoIds) {
-    QList<YoutubeVideoMetadata*> out;
+QList<VideoMetadata*> NetworkFetcher::_videoIdsToMetadataList(const QList<QString> &videoIds) {
+    QList<VideoMetadata*> out;
     for(const auto &id : videoIds) {
-        out.append(new YoutubeVideoMetadata(id));
+        out.append(new VideoMetadata(id));
     } 
     return out;
 };

@@ -13,22 +13,22 @@
 
 #include <QDebug>
 
-#include "YoutubeAudioStreamInfos.h"
+#include "AudioStreamInfos.h"
 
-class YoutubeVideoMetadata : public QObject {
+class VideoMetadata : public QObject {
     
     Q_OBJECT
 
     public:
         using Id = QString;
-        static YoutubeVideoMetadata fromVideoUrl(const QString &url);
-        static YoutubeVideoMetadata fromVideoId(const QString &videoId);
+        static VideoMetadata fromVideoUrl(const QString &url);
+        static VideoMetadata fromVideoId(const QString &videoId);
         static QString urlFromVideoId(const QString &videoId);
-        static QRegularExpression getYoutubeUrlMatcher();
+        static QRegularExpression getUrlMatcher();
         
-        YoutubeVideoMetadata(const YoutubeVideoMetadata::Id &videoId);
+        VideoMetadata(const VideoMetadata::Id &videoId);
 
-        YoutubeVideoMetadata::Id id() const;
+        VideoMetadata::Id id() const;
         QString title() const;
         QString url() const;
         QString sts() const;
@@ -43,11 +43,11 @@ class YoutubeVideoMetadata : public QObject {
         void setTitle(const QString &title);
         void setDuration(int durationInSeconds);
         void setExpirationDate(const QDateTime &expiration);
-        void setAudioStreamInfos(const YoutubeAudioStreamInfos &streamInfos);
+        void setAudioStreamInfos(const AudioStreamInfos &streamInfos);
         void setFailure(bool failed);
         void setRanOnce();
 
-        const YoutubeAudioStreamInfos& audioStreams() const;
+        const AudioStreamInfos& audioStreams() const;
 
     signals:
         void metadataFetching();
@@ -56,7 +56,7 @@ class YoutubeVideoMetadata : public QObject {
 
     private:
         int _durationInSeconds = -1;
-        YoutubeVideoMetadata::Id _videoId;
+        VideoMetadata::Id _videoId;
         QString _url;
         QString _title;
         bool _failed = false;
@@ -65,7 +65,7 @@ class YoutubeVideoMetadata : public QObject {
         QString _sts;
         QString _playerSourceUrl;
 
-        YoutubeAudioStreamInfos _audioStreamInfos;
+        AudioStreamInfos _audioStreamInfos;
 
         QDateTime _validUntil;
 
@@ -75,4 +75,4 @@ class YoutubeVideoMetadata : public QObject {
         static inline QRegularExpression _ytRegexIdFinder = QRegularExpression("(?:youtube\\.com|youtu.be).*?(?:v=|embed\\/)(?<videoId>[\\w\\-]+)");
 };
 
-Q_DECLARE_METATYPE(YoutubeVideoMetadata*)
+Q_DECLARE_METATYPE(VideoMetadata*)

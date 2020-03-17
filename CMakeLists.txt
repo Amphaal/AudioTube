@@ -7,7 +7,7 @@ endif()
 cmake_minimum_required(VERSION 3.15.4)
 project(AudioTube
     VERSION 0.0.1
-    DESCRIPTION "Request Youtube API to get audio streams"
+    DESCRIPTION "Request  API to get audio streams"
     HOMEPAGE_URL "https://github.com/Amphaal/AudioTube"
     LANGUAGES CXX
 )
