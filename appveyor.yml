@@ -9,4 +9,4 @@ build_script:
     - ninja
 test_script:
     - cd tests
-    - ./audiotube_tests.exe
+    - cmd: audiotube_tests.exe
