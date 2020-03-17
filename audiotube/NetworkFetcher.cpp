@@ -6,6 +6,24 @@ promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
             .then(&_videoIdsToMetadataList);         
 };
 
+void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, bool* success) {
+    
+    auto streams = toCheck->audioStreams();
+    auto firstUrl = streams.value(streams.uniqueKeys().first());
+    
+    download(firstUrl, true)
+        .then([=](){
+            *success = true;
+        })        
+        .fail([=](){
+            *success = false;
+        })
+        .finally([=](){
+            *checkEnded = true;
+        });
+        
+}
+
 promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
     
     if(!force && toRefresh->isMetadataValid()) return promise::resolve(toRefresh);
@@ -49,7 +67,7 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
 
 
 promise::Defer NetworkFetcher::_getVideoEmbedPageRawData(VideoMetadata* metadata) {
-    auto videoEmbedPageHtmlUrl = QStringLiteral(u"https://www.youtube.com/embed/%1?disable_polymer=true&hl=en").arg(metadata->id());
+    auto videoEmbedPageHtmlUrl = QStringLiteral(u"https://www.youtube.com/embed/%1?hl=en").arg(metadata->id());
     return download(videoEmbedPageHtmlUrl);
 }
 
@@ -98,22 +116,27 @@ VideoMetadata* NetworkFetcher::_augmentMetadataWithVideoInfos(
     auto error = videoInfos.queryItemValue("errorcode");
     auto status = videoInfos.queryItemValue("status");
     if(!error.isNull() || status != "ok") {
-        throw std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("Video is not available !");
     }
 
     //player response as JSON, check if error
     auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
     auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
     if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
-        throw std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("Player response is missing !");
     }
 
     //check playability status
     auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
     auto pStatus = playabilityStatus.value(QStringLiteral(u"reason")).toString();
     if(!pStatus.isNull()) {
-        throw std::logic_error("An error occured while fetching video infos");
+        throw std::logic_error("Video is not available !");
     }
+
+    //check if is live
+    auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
+    auto isLiveStream = videoDetails.value(QStringLiteral(u"isLive")).toBool();
+    if(isLiveStream) throw std::logic_error("Live streams are not handled for now!");
 
     //get streamingData
     auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
@@ -128,36 +151,20 @@ VideoMetadata* NetworkFetcher::_augmentMetadataWithVideoInfos(
     }
 
     //set expiration date
-    auto expirationDate =  tsRequest.addSecs((qint64)expiresIn.toDouble());
+    auto expirationDate = tsRequest.addSecs((qint64)expiresIn.toDouble());
     metadata->setExpirationDate(expirationDate);
 
-    //find stream infos
-    AudioStreamInfos streamInfos;
-
-        //...from video infos
-        auto streamInfosAsStr = videoInfos.queryItemValue("adaptive_fmts", QUrl::ComponentFormattingOption::FullyDecoded);
-        if(!streamInfosAsStr.isEmpty()) {
-            streamInfos = AudioStreamInfos(decipherer, streamInfosAsStr);
-        } 
-        
-        //...from streaming data
-        else {
-            
-            //try...
-            auto streamInfosAsJSONArray = streamingData["adaptiveFormats"].toArray();
-            if(!streamInfosAsJSONArray.isEmpty()) {
-                streamInfos = AudioStreamInfos(decipherer, streamInfosAsJSONArray);
-            }
-
-            //failed...
-            else {
-                throw std::logic_error("An error occured while fetching video infos");
-            }
-
-        }
+    PlayerConfiguration pConfig(
+        metadata->playerSourceUrl(),
+        streamingData.value(QStringLiteral(u"dashManifestUrl")).toString(),
+        streamingData.value(QStringLiteral(u"hlsManifestUrl")).toString(),
+        videoInfos.queryItemValue("adaptive_fmts", QUrl::ComponentFormattingOption::FullyDecoded),
+        streamingData["adaptiveFormats"].toArray(),
+        expirationDate
+    );
 
     //define stream infos    
-    metadata->setAudioStreamInfos(streamInfos);
+    metadata->setAudioStreamInfos(pConfig.getUrlsByAudioStreams(decipherer));
 
     return metadata;
     
@@ -210,9 +217,8 @@ promise::Defer NetworkFetcher::_getVideoInfosRawData(VideoMetadata* metadata) {
         QUrl::toPercentEncoding(apiUrl)
     );
 
-    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&sts=%2&eurl=%3&hl=en")
+    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%2&hl=en&sts=18333")
         .arg(id)
-        .arg(metadata->sts())
         .arg(encodedApiUrl);
     
     return download(requestUrl);

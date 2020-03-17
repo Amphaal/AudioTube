@@ -6,19 +6,42 @@
 
 #include <audiotube/VideoMetadata.h>
 #include <audiotube/NetworkFetcher.h>
+#include <audiotube/_base/_NetworkHelper.h>
 
 #include <chrono>
 #include <thread>
 
+bool stream_are_working(VideoMetadata &metadata) {
+    
+    bool isStreamAvailable; bool ended;
+    NetworkFetcher::isStreamAvailable(&metadata, &ended, &isStreamAvailable);
+    
+    while(!ended) {
+      QCoreApplication::processEvents();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    return isStreamAvailable;
+
+}
+
+
 bool youtube_metadata_fetching_succeeded(const QString &ytId) {
+    
     auto container = VideoMetadata::fromVideoId(ytId);
-    auto refrsh = NetworkFetcher::refreshMetadata(&container);
+    NetworkFetcher::refreshMetadata(&container);
+    
     while(!container.ranOnce()) {
       QCoreApplication::processEvents();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    return !container.hasFailed();
+    
+    if(container.hasFailed()) return false;
+    return stream_are_working(container);
+
 }
+
+
 
 int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);
@@ -36,10 +59,10 @@ int main(int argc, char *argv[]) {
 //   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
 // }
 
-// TEST_CASE( "Available video", "[metadata]" ) {
-//   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
-// }
+TEST_CASE( "OK from JSON Adaptative Stream - no deciphering", "[metadata]" ) {
+  REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
+}
 
-TEST_CASE( "Available video", "[metadata]" ) {
+TEST_CASE( "OK from JSON Adaptative Stream - must decipher", "[metadata]" ) {
   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
 }

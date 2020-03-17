@@ -96,10 +96,11 @@ void VideoMetadata::setExpirationDate(const QDateTime &expiration) {
     this->_validUntil = expiration;
 }
 
-void VideoMetadata::setAudioStreamInfos(const AudioStreamInfos &streamInfos) {
+void VideoMetadata::setAudioStreamInfos(const PlayerConfiguration::AudioStreamUrlByITag &streamInfos) {
+    if(!streamInfos.count()) throw std::logic_error("Setting empty audio stream Infos is not allowed !");
     this->_audioStreamInfos = streamInfos;
 }
 
-const AudioStreamInfos& VideoMetadata::audioStreams() const {
+const PlayerConfiguration::AudioStreamUrlByITag& VideoMetadata::audioStreams() const {
     return this->_audioStreamInfos;
 }

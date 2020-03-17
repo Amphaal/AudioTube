@@ -63,10 +63,8 @@ SignatureDecipherer::YTClientMethod SignatureDecipherer::_findObfuscatedDecipher
     auto functionName = match.captured(1);
     
     if(functionName.isEmpty()) {
-        throw std::runtime_error("AudioTube : [Decipherer] No function name found !");
+        throw std::runtime_error("[Decipherer] No function name found !");
     }
-    
-    // qDebug() << "AudioTube : decipherer function name >> " << functionName;
 
     return functionName;
 }
@@ -83,13 +81,11 @@ QList<QString> SignatureDecipherer::_findJSDecipheringOperations(const QString &
 
     auto functionBody = match.captured(1);
     if(functionBody.isEmpty()) {
-        throw std::runtime_error("AudioTube : [Decipherer] No function body found !");
+        throw std::runtime_error("[Decipherer] No function body found !");
     }
 
     //calls
     auto javascriptFunctionCalls = functionBody.split(";", QString::SplitBehavior::SkipEmptyParts);
-
-    // qDebug() << "AudioTube : decipherer function body parts >>" << functionBody;
 
     return std::move(javascriptFunctionCalls);
 }
@@ -137,10 +133,8 @@ QHash<SignatureDecipherer::CipherOperation, SignatureDecipherer::YTClientMethod>
     }
 
     if(!functionNamesByOperation.count()) {
-        throw std::runtime_error("AudioTube : [Decipherer] Missing function names by operations !");
+        throw std::runtime_error("[Decipherer] Missing function names by operations !");
     }
-
-    // qDebug() << "AudioTube :" << functionNamesByOperation;
     
     return functionNamesByOperation;
 }
@@ -187,7 +181,7 @@ SignatureDecipherer::YTDecipheringOperations SignatureDecipherer::_buildOperatio
     }
 
     if(!operations.count()) {
-        throw std::runtime_error("AudioTube : [Decipherer] No operations found !");
+        throw std::runtime_error("[Decipherer] No operations found !");
     }
     
     // qDebug() << " >>" << operations;

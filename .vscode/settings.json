@@ -76,6 +76,7 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "qurlquery": "cpp",
-        "qjsonarray": "cpp"
+        "qjsonarray": "cpp",
+        "qurl": "cpp"
     }
 }

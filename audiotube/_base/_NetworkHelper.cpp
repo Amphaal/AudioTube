@@ -1,14 +1,12 @@
 #include "_NetworkHelper.h"
 
-promise::Defer NetworkHelper::download(const QUrl& url) {
+promise::Defer NetworkHelper::download(const QUrl& url, bool head) {
 
     return promise::newPromise([=](promise::Defer d) {
 
         QNetworkRequest request(url);
         auto manager = new QNetworkAccessManager;
-        auto reply = manager->get(request);  
-        
-        // qDebug() << qUtf8Printable(QString("AudioTube : Downloading [%1] ...").arg(url.toString()));
+        auto reply = head ? manager->head(request) : manager->get(request);  
 
         _pending++;
 

@@ -13,7 +13,7 @@
 
 #include <QDebug>
 
-#include "AudioStreamInfos.h"
+#include "PlayerConfiguration.hpp"
 
 class VideoMetadata : public QObject {
     
@@ -43,11 +43,11 @@ class VideoMetadata : public QObject {
         void setTitle(const QString &title);
         void setDuration(int durationInSeconds);
         void setExpirationDate(const QDateTime &expiration);
-        void setAudioStreamInfos(const AudioStreamInfos &streamInfos);
+        void setAudioStreamInfos(const PlayerConfiguration::AudioStreamUrlByITag &streamInfos);
         void setFailure(bool failed);
         void setRanOnce();
 
-        const AudioStreamInfos& audioStreams() const;
+        const PlayerConfiguration::AudioStreamUrlByITag& audioStreams() const;
 
     signals:
         void metadataFetching();
@@ -65,7 +65,7 @@ class VideoMetadata : public QObject {
         QString _sts;
         QString _playerSourceUrl;
 
-        AudioStreamInfos _audioStreamInfos;
+        PlayerConfiguration::AudioStreamUrlByITag _audioStreamInfos;
 
         QDateTime _validUntil;
 

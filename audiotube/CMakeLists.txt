@@ -14,7 +14,6 @@ target_include_directories(audiotube
 #add source files
 target_sources(audiotube PRIVATE
     promise-cpp/promise.hpp
-    AudioStreamInfos.cpp
     NetworkFetcher.cpp
     SignatureDecipherer.cpp
     VideoMetadata.cpp
