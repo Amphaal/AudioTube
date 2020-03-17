@@ -9,5 +9,5 @@ build_script:
     - ninja
 test_script:
     - set CTEST_OUTPUT_ON_FAILURE=1
-    - cd _genRelease/tests
+    - cd tests
     - ctest
