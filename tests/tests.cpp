@@ -32,10 +32,14 @@ int main(int argc, char *argv[]) {
 // Test cases
 //
 
-TEST_CASE( "Unavailable video", "[metadata]" ) {
-  REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
-}
+// TEST_CASE( "Unavailable video", "[metadata]" ) {
+//   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
+// }
+
+// TEST_CASE( "Available video", "[metadata]" ) {
+//   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
+// }
 
 TEST_CASE( "Available video", "[metadata]" ) {
-  REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
+  REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
 }

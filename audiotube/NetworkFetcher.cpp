@@ -146,7 +146,7 @@ VideoMetadata* NetworkFetcher::_augmentMetadataWithVideoInfos(
             //try...
             auto streamInfosAsJSONArray = streamingData["adaptiveFormats"].toArray();
             if(!streamInfosAsJSONArray.isEmpty()) {
-                streamInfos = AudioStreamInfos(streamInfosAsJSONArray);
+                streamInfos = AudioStreamInfos(decipherer, streamInfosAsJSONArray);
             }
 
             //failed...
@@ -161,39 +161,6 @@ VideoMetadata* NetworkFetcher::_augmentMetadataWithVideoInfos(
 
     return metadata;
     
-}
-
-void NetworkFetcher::_dumpAsJSON(const QUrlQuery &query) {
-    
-    QJsonObject dump;
-    
-    for(const auto &item : query.queryItems(QUrl::ComponentFormattingOption::FullyDecoded)) {
-        dump.insert(item.first, item.second);
-    }
-
-    _dumpAsJSON(dump);
-
-}
-
-void NetworkFetcher::_dumpAsJSON(const QJsonObject &obj) {
-    return _dumpAsJSON(QJsonDocument(obj));
-}
-
-void NetworkFetcher::_dumpAsJSON(const QJsonArray &arr) {
-    return _dumpAsJSON(QJsonDocument(arr));
-}
-
-void NetworkFetcher::_dumpAsJSON(const QJsonDocument &doc) {
-    
-    auto bytes = doc.toJson(QJsonDocument::JsonFormat::Indented);
-
-    QFile fh("yt.json");
-    fh.open(QFile::WriteOnly);
-        fh.write(bytes);
-    fh.close();
-
-    qDebug() << fh.fileName() << " created !";
-
 }
 
 promise::Defer NetworkFetcher::_downloadVideoInfosAndAugmentMetadata(VideoMetadata* metadata) {

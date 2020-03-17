@@ -18,6 +18,7 @@
 #include <QJsonArray>
 
 #include "_base/_NetworkHelper.h"
+#include "_base/_DebugHelper.h"
 
 #include "VideoMetadata.h"
 
@@ -37,9 +38,4 @@ class NetworkFetcher : public NetworkHelper {
         static promise::Defer _getVideoInfosRawData(VideoMetadata* metadata);
         static QList<QString> _extractVideoIdsFromHTTPRequest(const QByteArray &requestData);
         static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<QString> &videoIds);
-
-        static void _dumpAsJSON(const QUrlQuery &query);
-        static void _dumpAsJSON(const QJsonObject &obj);
-        static void _dumpAsJSON(const QJsonArray &arr);
-        static void _dumpAsJSON(const QJsonDocument &doc);
 };

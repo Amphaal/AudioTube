@@ -19,4 +19,5 @@ target_sources(audiotube PRIVATE
     SignatureDecipherer.cpp
     VideoMetadata.cpp
     _base/_NetworkHelper.cpp
+    _base/_DebugHelper.cpp
 )
