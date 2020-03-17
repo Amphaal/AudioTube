@@ -9,5 +9,5 @@ build_script:
     - ninja
 test_script:
     - cd tests
-    - windeployqt audiotube_tests.exe
+    - C:/Qt/5.14/msvc2017_64/bin/windeployqt.exe audiotube_tests.exe
     - audiotube_tests.exe
