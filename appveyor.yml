@@ -8,6 +8,5 @@ build_script:
     - cd _genRelease
     - ninja
 test_script:
-    - set CTEST_OUTPUT_ON_FAILURE=1
     - cd tests
-    - ctest
+    - ./audiotube_tests.exe
