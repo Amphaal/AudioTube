@@ -1,6 +1,9 @@
 image: Visual Studio 2019
 platform: x64
+install:
+    - cd %APPVEYOR_BUILD_FOLDER%
+    - git submodule update --init --recursive
 build_script:
-  - cmd: cmake -GNinja -B_genRelease -H. -DCMAKE_BUILD_TYPE=Release
-  - cmd: cd _genRelease
-  - cmd: ninja
+    - cmake -GNinja -B_genRelease -H. -DCMAKE_BUILD_TYPE=Release -DQT_MAIN_DIR="C:\Qt\5.14"
+    - cd _genRelease
+    - ninja
