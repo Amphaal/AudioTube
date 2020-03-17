@@ -12,4 +12,4 @@ test_script:
     - ctest
 artifacts:
     - path: _genRelease
-        name: buildfolder
+      name: buildfolder
