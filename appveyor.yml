@@ -7,3 +7,7 @@ build_script:
     - cmake -GNinja -B_genRelease -H. -DCMAKE_BUILD_TYPE=Release -DQt5_DIR="C:/Qt/5.14/msvc2017_64/lib/cmake/Qt5"
     - cd _genRelease
     - ninja
+test_script:
+    - set CTEST_OUTPUT_ON_FAILURE=1
+    - cd _genRelease/tests
+    - ctest
