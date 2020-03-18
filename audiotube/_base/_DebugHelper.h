@@ -13,4 +13,5 @@ class DebugHelper {
         static void _dumpAsJSON(const QJsonObject &obj);
         static void _dumpAsJSON(const QJsonArray &arr);
         static void _dumpAsJSON(const QJsonDocument &doc);
+        static void _dumpAsFile(const QString &str);
 };

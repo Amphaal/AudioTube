@@ -41,7 +41,10 @@ class NetworkFetcher : public NetworkHelper {
 
         static promise::Defer _extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
         static promise::Defer _extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData);
-        static promise::Defer _extractDataFrom_WatchPage(const DownloadedUtf8 &dl);
+        static promise::Defer _extractDataFrom_WatchPage(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
+
+        static QString _extractPlayerSourceUrlFromPlayerConfig(const QJsonObject &playerConfig);
+        static QJsonObject _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex);
 
         static promise::Defer _fetchDecipherer(const PlayerConfiguration &playerConfig);
 

@@ -20,6 +20,17 @@ void DebugHelper::_dumpAsJSON(const QJsonArray &arr) {
     return _dumpAsJSON(QJsonDocument(arr));
 }
 
+void DebugHelper::_dumpAsFile(const QString &str) {
+
+    QFile fh("yt.txt");
+    fh.open(QFile::WriteOnly);
+        fh.write(str.toUtf8());
+    fh.close();
+
+    qDebug() << fh.fileName() << " created !";
+
+}
+
 void DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
     
     auto bytes = doc.toJson(QJsonDocument::JsonFormat::Indented);
