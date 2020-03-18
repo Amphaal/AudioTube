@@ -50,7 +50,7 @@ class VideoMetadata : public QObject {
         void setAudioStreamInfos(const PlayerConfiguration::AudioStreamUrlByITag &streamInfos);
         void setFailure(bool failed);
         void setRanOnce();
-        void setPreferedPlayerConfigFetchingMethod(PreferedPlayerConfigFetchingMethod &method);
+        void setPreferedPlayerConfigFetchingMethod(const PreferedPlayerConfigFetchingMethod &method);
 
         const PlayerConfiguration::AudioStreamUrlByITag& audioStreams() const;
 

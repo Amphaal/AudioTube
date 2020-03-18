@@ -2,34 +2,41 @@
 
 promise::Defer NetworkHelper::download(const QUrl& url, bool head) {
 
+    if(!_manager) {
+        _manager = new QNetworkAccessManager;
+    }
+
     return promise::newPromise([=](promise::Defer d) {
 
         QNetworkRequest request(url);
-        auto manager = new QNetworkAccessManager;
-        auto reply = head ? manager->head(request) : manager->get(request);  
+        auto reply = head ? _manager->head(request) : _manager->get(request);  
 
-        _pending++;
-
-        //on finished
-        QObject::connect(reply, &QNetworkReply::finished, [=]() {
+        QEventLoop loop;
+        QObject::connect(
+            reply, &QNetworkReply::finished, 
+            &loop, &QEventLoop::quit
+        );
+        loop.exec();
             
-            auto error = reply->error();
+        if (auto error = reply->error(); error == QNetworkReply::NoError) {
 
-            if (error == QNetworkReply::NoError) {
-                auto result = QString::fromUtf8(reply->readAll());
-                d.resolve(static_cast<DownloadedUtf8>(result));
-            } else {
-                qWarning() << qUtf8Printable(QString("AudioTube : Error downloading [%1] : %2!")
-                    .arg(url.toString())
-                    .arg(error));
-                d.reject(error);       
-            }
+            auto result = static_cast<DownloadedUtf8>(QString::fromUtf8(reply->readAll()));
+            
+            delete reply;
+            d.resolve(result);
 
-            manager->deleteLater();
-            reply->deleteLater();
+        }
 
-            _pending--;
-        });
+        else {
+
+            qWarning() << qUtf8Printable(QString("AudioTube : Error downloading [%1] : %2!")
+                .arg(url.toString())
+                .arg(error));
+
+            delete reply;
+            d.reject(error);    
+
+        }
 
     });
 }

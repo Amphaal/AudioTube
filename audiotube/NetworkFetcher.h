@@ -32,6 +32,7 @@ class NetworkFetcher : public NetworkHelper {
 
     private:
         static promise::Defer _getVideoEmbedPageHtml(const VideoMetadata::Id &videoId);
+        static promise::Defer _getWatchPageHtml(const VideoMetadata::Id &videoId);
         static promise::Defer _getVideoInfosDic(const VideoMetadata::Id &videoId);
 
         static promise::Defer _getPlayerConfiguration(VideoMetadata* metadata);
@@ -40,6 +41,7 @@ class NetworkFetcher : public NetworkHelper {
 
         static promise::Defer _extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
         static promise::Defer _extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData);
+        static promise::Defer _extractDataFrom_WatchPage(const DownloadedUtf8 &dl);
 
         static promise::Defer _fetchDecipherer(const PlayerConfiguration &playerConfig);
 

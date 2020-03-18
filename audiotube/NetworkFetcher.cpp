@@ -24,14 +24,14 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
            toRefresh->setRanOnce(); 
            d.reject();
         };
-
-        //try to get a player configuration
-        _getPlayerConfiguration(toRefresh)
+        
+        _getPlayerConfiguration(toRefresh) 
         .then([=](const PlayerConfiguration &pConfig) {
-            return _fetchDecipherer(pConfig).then([=](SignatureDecipherer* decipherer) {
-                auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
-                toRefresh->setAudioStreamInfos(audioStreams);
-            });
+            return _fetchDecipherer(pConfig)
+                .then([=](SignatureDecipherer* decipherer) {
+                    auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
+                    toRefresh->setAudioStreamInfos(audioStreams);
+                });
         })
         .then([=]() {
             //success !
@@ -88,10 +88,8 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration(VideoMetadata* metadata) 
         case VideoMetadata::PreferedPlayerConfigFetchingMethod::Unknown: {
             return _getPlayerConfiguration_VideoInfo(metadata)
                    .fail([=](const QString &softErr){
-                        return _getPlayerConfiguration_WatchPage(metadata)
-                               .fail([]() {
-                                    throw std::logic_error("All methods to fetch player configuration failed !");
-                                });
+                        qDebug() << qUtf8Printable(softErr);
+                        return _getPlayerConfiguration_WatchPage(metadata);
                     });
         }
         break;
@@ -136,6 +134,7 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* 
         metadata->setTitle(*title);
         metadata->setDuration(*duration);
         metadata->setExpirationDate(*expirationDate);
+        metadata->setPreferedPlayerConfigFetchingMethod(VideoMetadata::PreferedPlayerConfigFetchingMethod::VideoInfo);
 
         return pConfig;
 
@@ -143,7 +142,9 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* 
 }
 
 promise::Defer NetworkFetcher::_getPlayerConfiguration_WatchPage(VideoMetadata* metadata) {
-    throw std::runtime_error("not implemented yet !");
+    return _getWatchPageHtml(metadata->id()).then(_extractDataFrom_WatchPage).then([](){
+        throw std::runtime_error("not implemented yet !");
+    });
 }
 
 
@@ -163,13 +164,21 @@ promise::Defer NetworkFetcher::_extractDataFrom_VideoInfos(const DownloadedUtf8 
         //check if is live
         auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
         auto isLiveStream = videoDetails.value(QStringLiteral(u"isLive")).toBool();
-        if(isLiveStream) throw std::logic_error("Live streams are not handled for now!");
+        if(isLiveStream) {
+            throw std::logic_error("Live streams are not handled for now!");
+        }
 
-        //check playability status, throw soft error
+        //check playability status
         auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
-        auto pStatus = playabilityStatus.value(QStringLiteral(u"reason")).toString();
-        if(!pStatus.isNull()) {
-            throw QString(qUtf8Printable(QString("Video is not available though VideoInfo : %1").arg(pStatus)));
+        auto pStatus = playabilityStatus.value(QStringLiteral(u"status")).toString();
+        if(pStatus.toLower() == "error") {
+            throw std::logic_error("This video is not available !");
+        }
+
+        //check reason, throw soft error
+        auto pReason = playabilityStatus.value(QStringLiteral(u"reason")).toString();
+        if(!pReason.isNull()) {
+            throw QString(qUtf8Printable(QString("This video is not available though VideoInfo : %1").arg(pReason)));
         }
 
         //get streamingData
@@ -194,6 +203,12 @@ promise::Defer NetworkFetcher::_extractDataFrom_VideoInfos(const DownloadedUtf8 
             streamingData[QStringLiteral(u"adaptiveFormats")].toArray()
         );
 
+    })
+    .fail([=](QString &softErr) {
+        return promise::reject(softErr);
+    })
+    .fail([=](std::logic_error &err) {
+        return promise::reject(err);
     });
 }
 
@@ -221,6 +236,9 @@ promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUt
             videoLength
         );
 
+    })
+    .fail([=](std::logic_error &err) {
+        return promise::reject(err);
     });
     
 }
@@ -246,6 +264,20 @@ promise::Defer NetworkFetcher::_fetchDecipherer(const PlayerConfiguration &playe
             });
         }
     });
+}
+
+promise::Defer NetworkFetcher::_getWatchPageHtml(const VideoMetadata::Id &videoId) {
+    auto url = QStringLiteral("https://www.youtube.com/watch?v=%1&bpctr=9999999999&hl=en").arg(videoId);
+    return download(url);
+}
+
+promise::Defer NetworkFetcher::_extractDataFrom_WatchPage(const DownloadedUtf8 &dl) {
+    //get player config JSON
+    QRegularExpression re("ytplayer\\.config = (?<playerConfig>.*?) \\}\\;");
+    auto playerConfigAsStr = re.match(dl).captured("playerConfig");
+    auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
+    DebugHelper::_dumpAsJSON(playerConfig);
+    return promise::reject("FDFFF");
 }
 
 promise::Defer NetworkFetcher::_getVideoInfosDic(const VideoMetadata::Id &videoId) {
@@ -275,36 +307,37 @@ promise::Defer NetworkFetcher::_getVideoEmbedPageHtml(const VideoMetadata::Id &v
 }
 
 
-QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const QString &requestData) {
+QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
 
-        //build regex
-        QRegularExpression re("watch\\?v=(?<videoId>.*?)&amp;");
+    //build regex
+    QRegularExpression re("watch\\?v=(?<videoId>.*?)&amp;");
 
-        //search...
-        auto results = re.globalMatch(requestData);
+    //search...
+    auto results = re.globalMatch(requestData);
+    
+    //return list
+    QList<QString> idsList;
+
+    //iterate
+    while (results.hasNext()) {
+        QRegularExpressionMatch match = results.next(); //next
         
-        //return list
-        QList<QString> idsList;
-
-        //iterate
-        while (results.hasNext()) {
-            QRegularExpressionMatch match = results.next(); //next
+        //if match
+        if (match.hasMatch()) {
+            auto found = match.captured("videoId"); //videoId
             
-            //if match
-            if (match.hasMatch()) {
-                auto found = match.captured("videoId"); //videoId
-                
-                if(!idsList.contains(found)) {
-                    idsList.append(found);
-                }
+            if(!idsList.contains(found)) {
+                idsList.append(found);
             }
         }
+    }
 
-        //if no ids
-        if(!idsList.count()) throw std::logic_error("no playlist metadata container found !");
+    //if no ids
+    if(!idsList.count()) throw std::logic_error("no playlist metadata container found !");
 
-        //return
-        return idsList;
+    //return
+    return idsList;
+
 }
 
 QList<VideoMetadata*> NetworkFetcher::_videoIdsToMetadataList(const QList<QString> &videoIds) {

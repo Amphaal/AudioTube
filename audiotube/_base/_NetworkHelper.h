@@ -4,6 +4,7 @@
 
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QEventLoop>
 
 class NetworkHelper {
     public:
@@ -13,5 +14,5 @@ class NetworkHelper {
         static promise::Defer download(const QUrl& url, bool head = false);
 
     private:
-        static inline int _pending = 0;
+        static inline QNetworkAccessManager* _manager = nullptr;
 };

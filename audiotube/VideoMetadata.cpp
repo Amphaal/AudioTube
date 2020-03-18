@@ -9,7 +9,7 @@ VideoMetadata VideoMetadata::fromVideoId(const QString &videoId) {
     return VideoMetadata::fromVideoUrl(url);
 }
 
-void VideoMetadata::setPreferedPlayerConfigFetchingMethod(VideoMetadata::PreferedPlayerConfigFetchingMethod &method) {
+void VideoMetadata::setPreferedPlayerConfigFetchingMethod(const VideoMetadata::PreferedPlayerConfigFetchingMethod &method) {
     this->_preferedPlayerConfigFetchingMethod = method;
 }
 
