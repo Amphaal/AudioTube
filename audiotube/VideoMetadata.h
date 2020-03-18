@@ -37,7 +37,6 @@ class VideoMetadata : public QObject {
         VideoMetadata::Id id() const;
         QString title() const;
         QString url() const;
-        QString playerSourceUrl() const;
         int duration() const;
         bool isMetadataValid() const;
         bool hasFailed() const;
@@ -45,7 +44,6 @@ class VideoMetadata : public QObject {
         PreferedPlayerConfigFetchingMethod preferedPlayerConfigFetchingMethod() const;
         PlayerConfiguration::PreferedAudioStreamsInfosSource preferedAudioStreamsInfosSource() const;
 
-        void setPlayerSourceUrl(const QString &pSourceUrl);
         void setTitle(const QString &title);
         void setDuration(int durationInSeconds);
         void setExpirationDate(const QDateTime &expiration);
@@ -64,7 +62,6 @@ class VideoMetadata : public QObject {
     private:
         int _durationInSeconds = -1;
         VideoMetadata::Id _videoId;
-        QString _playerSourceUrl;
         QString _url;
         QString _title;
         bool _failed = false;

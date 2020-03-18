@@ -77,6 +77,8 @@
         "variant": "cpp",
         "qurlquery": "cpp",
         "qjsonarray": "cpp",
-        "qurl": "cpp"
+        "qurl": "cpp",
+        "qjsonobject": "cpp",
+        "qvarianthash": "cpp"
     }
 }

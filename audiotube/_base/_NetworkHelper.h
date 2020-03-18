@@ -6,6 +6,9 @@
 #include <QNetworkAccessManager>
 
 class NetworkHelper {
+    public:
+        using DownloadedUtf8 = QString;
+
     protected:
         static promise::Defer download(const QUrl& url, bool head = false);
 

@@ -6,45 +6,35 @@ promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
             .then(&_videoIdsToMetadataList);         
 };
 
-void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, bool* success) {
-    
-    auto streams = toCheck->audioStreams().second;
-    auto firstUrl = streams.value(streams.uniqueKeys().first());
-    
-    download(firstUrl, true)
-        .then([=](){
-            *success = true;
-        })        
-        .fail([=](){
-            *success = false;
-        })
-        .finally([=](){
-            *checkEnded = true;
-        });
-
-}
-
 promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
     
+    //check if soft refresh...
     if(!force && toRefresh->isMetadataValid()) return promise::resolve(toRefresh);
     
+    //if not, reset failure flag and emit event
     toRefresh->setFailure(false);
     emit toRefresh->metadataFetching();
 
+    //workflow...
     return promise::newPromise([=](promise::Defer d){
         
+        //on error default behavior 
         auto whenFailed = [=]() {
            toRefresh->setFailure(true);
            toRefresh->setRanOnce(); 
            d.reject();
         };
 
-        _getVideoEmbedPageRawData(toRefresh)
-        .then([toRefresh](const QByteArray &htmlResponse) {
-            return _augmentMetadataWithPlayerConfiguration(toRefresh, htmlResponse);
-        })
-        .then(&_downloadVideoInfosAndAugmentMetadata)
+        //try to get a player configuration
+        _getPlayerConfiguration(toRefresh)
+
+        // _getVideoEmbedPageHtml(toRefresh)
+        // .then([toRefresh](const QString &htmlResponse) {
+        //     return _augmentMetadataWithPlayerConfiguration(toRefresh, htmlResponse);
+        // })
+        // .then(&_downloadVideoInfosAndAugmentMetadata)
         .then([=]() {
+            //success !
             toRefresh->setRanOnce();
             emit toRefresh->metadataRefreshed();
             d.resolve(toRefresh);
@@ -66,173 +56,235 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
 };
 
 
-promise::Defer NetworkFetcher::_getVideoEmbedPageRawData(VideoMetadata* metadata) {
-    auto videoEmbedPageHtmlUrl = QStringLiteral(u"https://www.youtube.com/embed/%1?hl=en").arg(metadata->id());
-    return download(videoEmbedPageHtmlUrl);
+void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, bool* success) {
+    
+    auto streams = toCheck->audioStreams().second;
+    auto firstUrl = streams.value(streams.uniqueKeys().first());
+    
+    download(firstUrl, true)
+        .then([=](){
+            *success = true;
+        })        
+        .fail([=](){
+            *success = false;
+        })
+        .finally([=](){
+            *checkEnded = true;
+        });
+
 }
 
-VideoMetadata* NetworkFetcher::_augmentMetadataWithPlayerConfiguration(VideoMetadata* metadata, const QByteArray &videoEmbedPageRequestData) {
+promise::Defer NetworkFetcher::_getPlayerConfiguration(VideoMetadata* metadata) {
     
-    //to string for pcre2 usage
-    auto str = QString::fromUtf8(videoEmbedPageRequestData);
-
-    //extract player config
-    QRegularExpression re("yt\\.setConfig\\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\\);");
-    auto playerConfigAsStr = re.match(str).captured("playerConfig");
-    auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
-    auto args = playerConfig[QStringLiteral(u"args")].toObject();
-
-    //get valuable data from it
-    auto playerSourceUrl = playerConfig[QStringLiteral(u"assets")].toObject()[QStringLiteral(u"js")].toString();
-    auto title = args[QStringLiteral(u"title")].toString();
-    auto videoLength = args[QStringLiteral(u"length_seconds")].toInt();
-
-    //check values exist
-    if(playerSourceUrl.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
-    if(title.isEmpty()) throw std::logic_error("Video title cannot be found !");
-    if(!videoLength) throw std::logic_error("Video length cannot be found !");
-
-    //augment...
-    metadata->setPlayerSourceUrl("https://www.youtube.com" + playerSourceUrl);
-    metadata->setTitle(title);
-    metadata->setDuration(videoLength);
-
-    return metadata;
-    
-}
-
-VideoMetadata* NetworkFetcher::_augmentMetadataWithVideoInfos(
-    VideoMetadata* metadata,
-    SignatureDecipherer* decipherer,
-    const QByteArray &videoInfoRawResponse, 
-    const QDateTime &tsRequest
-) {
+    switch (metadata->preferedPlayerConfigFetchingMethod()) {  
         
-    //as string then to query, check for errors
-    QUrlQuery videoInfos(QString::fromUtf8(videoInfoRawResponse));
-    auto error = videoInfos.queryItemValue("errorcode");
-    auto status = videoInfos.queryItemValue("status");
-    if(!error.isNull() || status != "ok") {
-        throw std::logic_error("Video is not available !");
+        case VideoMetadata::PreferedPlayerConfigFetchingMethod::VideoInfo: {
+            return _getPlayerConfiguration_VideoInfo(metadata);
+        }
+        break;
+        
+        case VideoMetadata::PreferedPlayerConfigFetchingMethod::WatchPage: {
+            return _getPlayerConfiguration_WatchPage(metadata);
+        }
+        break;        
+        
+        case VideoMetadata::PreferedPlayerConfigFetchingMethod::Unknown: {
+            return _getPlayerConfiguration_VideoInfo(metadata)
+                   .fail([=](const QString &softErr){
+                        return _getPlayerConfiguration_WatchPage(metadata)
+                               .fail([]() {
+                                    throw std::logic_error("All methods to fetch player configuration failed !");
+                                });
+                    });
+        }
+        break;
+
     }
 
-    //player response as JSON, check if error
-    auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
-    auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
-    if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
-        throw std::logic_error("Player response is missing !");
-    }
-
-    //check playability status
-    auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
-    auto pStatus = playabilityStatus.value(QStringLiteral(u"reason")).toString();
-    if(!pStatus.isNull()) {
-        throw std::logic_error(qUtf8Printable(QString("Video is not available ! %1").arg(pStatus)));
-    }
-
-    //check if is live
-    auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
-    auto isLiveStream = videoDetails.value(QStringLiteral(u"isLive")).toBool();
-    if(isLiveStream) throw std::logic_error("Live streams are not handled for now!");
-
-    //get streamingData
-    auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
-    if(streamingData.isEmpty()) {
-        throw std::logic_error("An error occured while fetching video infos");
-    }
-
-    //find expiration
-    auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
-    if(expiresIn.isEmpty()) {
-        throw std::logic_error("An error occured while fetching video infos");
-    }
-
-    //set expiration date
-    auto expirationDate = tsRequest.addSecs((qint64)expiresIn.toDouble());
-    metadata->setExpirationDate(expirationDate);
-
-    PlayerConfiguration pConfig(
-        metadata->playerSourceUrl(),
-        streamingData.value(QStringLiteral(u"dashManifestUrl")).toString(),
-        streamingData.value(QStringLiteral(u"hlsManifestUrl")).toString(),
-        videoInfos.queryItemValue("adaptive_fmts", QUrl::ComponentFormattingOption::FullyDecoded),
-        streamingData["adaptiveFormats"].toArray(),
-        expirationDate
-    );
-
-    //define stream infos    
-    metadata->setAudioStreamInfos(pConfig.getUrlsByAudioStreams(decipherer));
-
-    return metadata;
-    
 }
 
-promise::Defer NetworkFetcher::_downloadVideoInfosAndAugmentMetadata(VideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* metadata) {
     
-    //define timestamp for request
-    auto requestedAt = QDateTime::currentDateTime();
-    auto ytPlayerSourceUrl = metadata->playerSourceUrl();
-    auto cachedDecipherer = SignatureDecipherer::fromCache(ytPlayerSourceUrl);
-
-    // qDebug() << ": YT player source URL : " + ytPlayerSourceUrl;
-
-    //helper for raw data download
-    QVector<promise::Defer> dlPromises{
-        _getVideoInfosRawData(metadata),
-        !cachedDecipherer ? download(ytPlayerSourceUrl) : promise::resolve(QByteArray())
-    };
-    auto downloadAll = promise::all(dlPromises);
+    //mainly set player source URL to VideoMetadata
+    auto videoId = metadata->id();
+    auto embed = _getVideoEmbedPageHtml(videoId).then(_extractDataFrom_EmbedPageHtml);
+    auto vinfos = _getVideoInfosDic(videoId).then(_extractDataFrom_VideoInfos);
 
     //handle augment
-    return downloadAll.then([=](const std::vector<promise::pm_any> &results) {
+    return promise::all({ embed, vinfos }).then([=](const std::vector<promise::pm_any> &results) {
 
         //prepare args
-        auto videoInfosRawData = static_cast<QByteArray*>(results[0].tuple_element(0));
-        auto rawPlayerSourceData = static_cast<QByteArray*>(results[1].tuple_element(0));
+        auto embed_Data  = results[0];
+            auto playerSourceUrl = static_cast<QString*>(embed_Data.tuple_element(0));
+            auto title = static_cast<QString*>(embed_Data.tuple_element(1));
+            auto duration = static_cast<int*>(embed_Data.tuple_element(2));
+        
+        //prepare args
+        auto vinfos_Data = results[1];
+            auto expirationDate = static_cast<QDateTime*>(vinfos_Data.tuple_element(0));
+            auto dashManifestUrl = static_cast<QString*>(vinfos_Data.tuple_element(1));
+            auto streamInfos_UrlEncoded = static_cast<QString*>(vinfos_Data.tuple_element(2));
+            auto streamInfos_JSON = static_cast<QJsonArray*>(vinfos_Data.tuple_element(3));
 
-        auto c_decipherer = cachedDecipherer ? cachedDecipherer : SignatureDecipherer::create(
-                                                                    ytPlayerSourceUrl,
-                                                                    QString::fromUtf8(*rawPlayerSourceData)
-                                                                  );
+        //define pConfig
+        PlayerConfiguration pConfig(
+            *playerSourceUrl,
+            *dashManifestUrl,
+            *streamInfos_UrlEncoded,
+            *streamInfos_JSON,
+            *expirationDate
+        );
 
-        //augment
-        return _augmentMetadataWithVideoInfos(metadata, c_decipherer, *videoInfosRawData, requestedAt);
+        //update metadata
+        metadata->setTitle(*title);
+        metadata->setDuration(*duration);
+        metadata->setExpirationDate(*expirationDate);
+
+        return pConfig;
 
     });
 }
 
-QString NetworkFetcher::_getApiUrl(const QString &videoId) {
-    return QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
+promise::Defer NetworkFetcher::_getPlayerConfiguration_WatchPage(VideoMetadata* metadata) {
+
 }
 
-promise::Defer NetworkFetcher::_getVideoInfosRawData(VideoMetadata* metadata) {
+
+promise::Defer NetworkFetcher::_extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt) {
+    return promise::newPromise([=](promise::Defer d) {
+ 
+        //as string then to query
+        QUrlQuery videoInfos(dl);
+        
+        //get player response
+        auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
+        auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
+        if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
+            throw std::logic_error("Player response is missing !");
+        }
+
+        //check if is live
+        auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
+        auto isLiveStream = videoDetails.value(QStringLiteral(u"isLive")).toBool();
+        if(isLiveStream) throw std::logic_error("Live streams are not handled for now!");
+
+        //check playability status, throw soft error
+        auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
+        auto pStatus = playabilityStatus.value(QStringLiteral(u"reason")).toString();
+        if(!pStatus.isNull()) {
+            throw QString(qUtf8Printable(QString("Video is not available though VideoInfo : %1").arg(pStatus)));
+        }
+
+        //get streamingData
+        auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
+        if(streamingData.isEmpty()) {
+            throw std::logic_error("An error occured while fetching video infos");
+        }
+
+        //find expiration
+        auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
+        if(expiresIn.isEmpty()) {
+            throw std::logic_error("An error occured while fetching video infos");
+        }
+
+        //set expiration date
+        auto expirationDate = requestedAt.addSecs((qint64)expiresIn.toDouble());
+        
+        d.resolve(
+            expirationDate,
+            streamingData.value(QStringLiteral(u"dashManifestUrl")).toString(),
+            videoInfos.queryItemValue(QStringLiteral(u"adaptive_fmts"), QUrl::ComponentFormattingOption::FullyDecoded),
+            streamingData[QStringLiteral(u"adaptiveFormats")].toArray()
+        );
+
+    });
+}
+
+promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData) {
+
+    return promise::newPromise([=](promise::Defer d) {
+        
+        QRegularExpression re("yt\\.setConfig\\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\\);");
+        auto playerConfigAsStr = re.match(videoEmbedPageRequestData).captured("playerConfig");
+        auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
+        
+        auto playerSourceUrl = playerConfig[QStringLiteral(u"assets")].toObject()[QStringLiteral(u"js")].toString();
+
+        auto args = playerConfig[QStringLiteral(u"args")].toObject();
+        auto title = args[QStringLiteral(u"title")].toString();
+        auto videoLength = args[QStringLiteral(u"length_seconds")].toInt();
+
+        if(playerSourceUrl.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
+        if(title.isEmpty()) throw std::logic_error("Video title cannot be found !");
+        if(!videoLength) throw std::logic_error("Video length cannot be found !");
+
+        d.resolve(
+            "https://www.youtube.com" + playerSourceUrl,
+            title,
+            videoLength
+        );
+
+    });
     
-    auto id = metadata->id();
-    auto apiUrl = _getApiUrl(id);
-    
-    auto encodedApiUrl = QString::fromUtf8(
-        QUrl::toPercentEncoding(apiUrl)
-    );
+}
+
+promise::Defer NetworkFetcher::_fetchDecipherer(const PlayerConfiguration &playerConfig) {
+    return promise::newPromise([=](promise::Defer d){
+        
+        auto ytPlayerSourceUrl = playerConfig.playerSourceUrl();
+        auto cachedDecipherer = SignatureDecipherer::fromCache(ytPlayerSourceUrl);
+
+        if(cachedDecipherer) d.resolve(cachedDecipherer);
+        else {
+            download(ytPlayerSourceUrl)
+            .then([=](const DownloadedUtf8 &dl){
+                
+                auto newDecipherer = SignatureDecipherer::create(
+                    ytPlayerSourceUrl,
+                    dl
+                );
+
+                d.resolve(cachedDecipherer);
+
+            });
+        }
+    });
+}
+
+promise::Defer NetworkFetcher::_getVideoInfosDic(const VideoMetadata::Id &videoId) {
+
+    auto apiUrl = QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
+    auto encodedApiUrl = QString::fromUtf8(QUrl::toPercentEncoding(apiUrl));
 
     auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%2&hl=en&sts=18333")
-        .arg(id)
+        .arg(videoId)
         .arg(encodedApiUrl);
-    
-    return download(requestUrl);
+
+    auto requestedAt = QDateTime::currentDateTime();
+
+    return promise::newPromise([=](promise::Defer d){
+        download(requestUrl)
+        .then([=](const DownloadedUtf8 &dlAsStr){
+            d.resolve(dlAsStr, requestedAt); 
+        });
+    });
 
 }
 
 
-QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const QByteArray &requestData) {
-        
-        //to string for pcre2 usage
-        auto str = QString::fromUtf8(requestData);
+promise::Defer NetworkFetcher::_getVideoEmbedPageHtml(const VideoMetadata::Id &videoId) {
+    auto videoEmbedPageHtmlUrl = QStringLiteral(u"https://www.youtube.com/embed/%1?hl=en").arg(videoId);
+    return download(videoEmbedPageHtmlUrl);
+}
+
+
+QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const QString &requestData) {
 
         //build regex
         QRegularExpression re("watch\\?v=(?<videoId>.*?)&amp;");
 
         //search...
-        auto results = re.globalMatch(str);
+        auto results = re.globalMatch(requestData);
         
         //return list
         QList<QString> idsList;

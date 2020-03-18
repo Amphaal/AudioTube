@@ -18,18 +18,17 @@ class PlayerConfiguration {
             UrlEncoded,
             JSON
         };
+        
         using AudioStreamUrlByITag = QPair<PreferedAudioStreamsInfosSource, QHash<uint, QUrl>>;
         PlayerConfiguration(
             const QString &playerSourceUrl, 
             const QString &dashManifestUrl, 
-            const QString &hlsManifestUrl,
             const QString &adaptiveStreamInfosUrlEncoded, 
             const QJsonArray &adaptiveStreamInfosJson, 
             const QDateTime &validUntil
         ) {
             _playerSourceUrl = playerSourceUrl;
             _dashManifestUrl = dashManifestUrl;
-            _hlsManifestUrl = hlsManifestUrl;
             _adaptiveStreamInfosUrlEncoded = _urlEncodedToJsonArray(adaptiveStreamInfosUrlEncoded);
             _adaptiveStreamInfosJson = adaptiveStreamInfosJson;
             _validUntil = validUntil;
@@ -47,10 +46,13 @@ class PlayerConfiguration {
         throw std::logic_error("Unhandled Stream infos type !");
     }
 
+    QString playerSourceUrl() const {
+        return _playerSourceUrl;
+    }
+
     private:
         QString _playerSourceUrl;
         QString _dashManifestUrl;
-        QString _hlsManifestUrl;
         QJsonArray _adaptiveStreamInfosUrlEncoded;
         QJsonArray _adaptiveStreamInfosJson;
         QDateTime _validUntil;

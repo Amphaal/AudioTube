@@ -31,15 +31,18 @@ class NetworkFetcher : public NetworkHelper {
         static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, bool* success = nullptr);
 
     private:
-        static promise::Defer _getVideoEmbedPageRawData(VideoMetadata* metadata);
-        static promise::Defer _getVideoInfoDic(VideoMetadata* metadata);
+        static promise::Defer _getVideoEmbedPageHtml(const VideoMetadata::Id &videoId);
+        static promise::Defer _getVideoInfosDic(const VideoMetadata::Id &videoId);
 
-        static VideoMetadata* _augmentMetadataWithPlayerConfiguration(VideoMetadata* metadata, const QByteArray &videoEmbedPageRequestData);
-        static VideoMetadata* _augmentMetadataWithVideoInfos(VideoMetadata* metadata, SignatureDecipherer* decipherer, const QByteArray &videoInfoRawResponse, const QDateTime &tsRequest);
+        static promise::Defer _getPlayerConfiguration(VideoMetadata* metadata);
+        static promise::Defer _getPlayerConfiguration_VideoInfo(VideoMetadata* metadata);
+        static promise::Defer _getPlayerConfiguration_WatchPage(VideoMetadata* metadata);
 
-        static promise::Defer _downloadVideoInfosAndAugmentMetadata(VideoMetadata* metadata);
-        static QString _getApiUrl(const QString &videoId);
-        static promise::Defer _getVideoInfosRawData(VideoMetadata* metadata);
-        static QList<QString> _extractVideoIdsFromHTTPRequest(const QByteArray &requestData);
+        static promise::Defer _extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
+        static promise::Defer _extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData);
+
+        static promise::Defer _fetchDecipherer(const PlayerConfiguration &playerConfig);
+
+        static QList<QString> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
         static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<QString> &videoIds);
 };
