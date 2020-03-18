@@ -9,6 +9,18 @@ VideoMetadata VideoMetadata::fromVideoId(const QString &videoId) {
     return VideoMetadata::fromVideoUrl(url);
 }
 
+void VideoMetadata::setPreferedPlayerConfigFetchingMethod(VideoMetadata::PreferedPlayerConfigFetchingMethod &method) {
+    this->_preferedPlayerConfigFetchingMethod = method;
+}
+
+VideoMetadata::PreferedPlayerConfigFetchingMethod VideoMetadata::preferedPlayerConfigFetchingMethod() const {
+    return this->_preferedPlayerConfigFetchingMethod;
+}
+
+PlayerConfiguration::PreferedAudioStreamsInfosSource VideoMetadata::preferedAudioStreamsInfosSource() const {
+    return this->_preferedAudioStreamsInfosSource;
+}
+
 VideoMetadata VideoMetadata::fromVideoUrl(const QString &url) {
     
     //find id
@@ -88,8 +100,13 @@ void VideoMetadata::setExpirationDate(const QDateTime &expiration) {
 }
 
 void VideoMetadata::setAudioStreamInfos(const PlayerConfiguration::AudioStreamUrlByITag &streamInfos) {
-    if(!streamInfos.count()) throw std::logic_error("Setting empty audio stream Infos is not allowed !");
+    
+    if(streamInfos.first == PlayerConfiguration::PreferedAudioStreamsInfosSource::Unknown || !streamInfos.second.count()) 
+        throw std::logic_error("Setting empty audio stream Infos is not allowed !");
+    
     this->_audioStreamInfos = streamInfos;
+    this->_preferedAudioStreamsInfosSource = streamInfos.first;
+
 }
 
 const PlayerConfiguration::AudioStreamUrlByITag& VideoMetadata::audioStreams() const {

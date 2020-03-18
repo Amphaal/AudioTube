@@ -20,6 +20,12 @@ class VideoMetadata : public QObject {
     Q_OBJECT
 
     public:
+        enum PreferedPlayerConfigFetchingMethod {
+            Unknown,
+            VideoInfo,
+            WatchPage
+        };
+
         using Id = QString;
         static VideoMetadata fromVideoUrl(const QString &url);
         static VideoMetadata fromVideoId(const QString &videoId);
@@ -36,6 +42,8 @@ class VideoMetadata : public QObject {
         bool isMetadataValid() const;
         bool hasFailed() const;
         bool ranOnce() const;
+        PreferedPlayerConfigFetchingMethod preferedPlayerConfigFetchingMethod() const;
+        PlayerConfiguration::PreferedAudioStreamsInfosSource preferedAudioStreamsInfosSource() const;
 
         void setPlayerSourceUrl(const QString &pSourceUrl);
         void setTitle(const QString &title);
@@ -44,6 +52,7 @@ class VideoMetadata : public QObject {
         void setAudioStreamInfos(const PlayerConfiguration::AudioStreamUrlByITag &streamInfos);
         void setFailure(bool failed);
         void setRanOnce();
+        void setPreferedPlayerConfigFetchingMethod(PreferedPlayerConfigFetchingMethod &method);
 
         const PlayerConfiguration::AudioStreamUrlByITag& audioStreams() const;
 
@@ -62,6 +71,9 @@ class VideoMetadata : public QObject {
         bool _ranOnce = false;
 
         PlayerConfiguration::AudioStreamUrlByITag _audioStreamInfos;
+
+        PreferedPlayerConfigFetchingMethod _preferedPlayerConfigFetchingMethod = PreferedPlayerConfigFetchingMethod::Unknown;
+        PlayerConfiguration::PreferedAudioStreamsInfosSource _preferedAudioStreamsInfosSource = PlayerConfiguration::PreferedAudioStreamsInfosSource::Unknown;
 
         QDateTime _validUntil;
 

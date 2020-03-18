@@ -12,7 +12,13 @@
 
 class PlayerConfiguration {
     public:
-        using AudioStreamUrlByITag = QHash<uint, QUrl>;
+        enum PreferedAudioStreamsInfosSource {
+            Unknown,
+            DASH, 
+            UrlEncoded,
+            JSON
+        };
+        using AudioStreamUrlByITag = QPair<PreferedAudioStreamsInfosSource, QHash<uint, QUrl>>;
         PlayerConfiguration(
             const QString &playerSourceUrl, 
             const QString &dashManifestUrl, 
@@ -53,13 +59,17 @@ class PlayerConfiguration {
         bool adaptiveStreamAsJson = false;
 
         AudioStreamUrlByITag getUrlsByAudioStreams_UrlEncoded(SignatureDecipherer* dcfrer) {
-            //TODO
-            throw std::runtime_error("Stream info format not handled yet !");
+            throw std::runtime_error("Stream info format not handled yet !"); //TODO
+        }
+
+        AudioStreamUrlByITag getUrlsByAudioStreams_DASH(SignatureDecipherer* dcfrer) {
+            throw std::runtime_error("Stream info format not handled yet !"); //TODO
         }
 
         AudioStreamUrlByITag getUrlsByAudioStreams_JSON(SignatureDecipherer* dcfrer) {
             
             AudioStreamUrlByITag out;
+            out.first = PreferedAudioStreamsInfosSource::JSON;
 
             for(auto itagGroup : _adaptiveStreamInfosJson) {
                 auto itagGroupObj = itagGroup.toObject();
@@ -85,7 +95,8 @@ class PlayerConfiguration {
                     url += QString("&%1=%2").arg(signatureParameter).arg(signature);
                 }
 
-                out.insert(itag, url);
+
+                out.second.insert(itag, url);
 
             }
 

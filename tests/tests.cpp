@@ -13,9 +13,11 @@
 
 bool stream_are_working(VideoMetadata &metadata) {
     
+    //fetch for a stream HEAD
     bool isStreamAvailable; bool ended;
     NetworkFetcher::isStreamAvailable(&metadata, &ended, &isStreamAvailable);
     
+    //wait processing
     while(!ended) {
       QCoreApplication::processEvents();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -27,16 +29,24 @@ bool stream_are_working(VideoMetadata &metadata) {
 
 
 bool youtube_metadata_fetching_succeeded(const QString &ytId) {
-    
+
+    //generating container
     auto container = VideoMetadata::fromVideoId(ytId);
+    qDebug() << qUtf8Printable(QString("Testing [%1]...").arg(container.url()));
+
+    //refresh...
     NetworkFetcher::refreshMetadata(&container);
     
+    //wait for a response
     while(!container.ranOnce()) {
       QCoreApplication::processEvents();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
+    //check if it has failed
     if(container.hasFailed()) return false;
+    
+    //check if a stream is working
     return stream_are_working(container);
 
 }

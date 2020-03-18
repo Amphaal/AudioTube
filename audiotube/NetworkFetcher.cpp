@@ -8,7 +8,7 @@ promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
 
 void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, bool* success) {
     
-    auto streams = toCheck->audioStreams();
+    auto streams = toCheck->audioStreams().second;
     auto firstUrl = streams.value(streams.uniqueKeys().first());
     
     download(firstUrl, true)
