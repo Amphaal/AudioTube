@@ -27,12 +27,12 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
 
         //try to get a player configuration
         _getPlayerConfiguration(toRefresh)
-
-        // _getVideoEmbedPageHtml(toRefresh)
-        // .then([toRefresh](const QString &htmlResponse) {
-        //     return _augmentMetadataWithPlayerConfiguration(toRefresh, htmlResponse);
-        // })
-        // .then(&_downloadVideoInfosAndAugmentMetadata)
+        .then([=](const PlayerConfiguration &pConfig) {
+            return _fetchDecipherer(pConfig).then([=](SignatureDecipherer* decipherer) {
+                auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
+                toRefresh->setAudioStreamInfos(audioStreams);
+            });
+        })
         .then([=]() {
             //success !
             toRefresh->setRanOnce();
@@ -56,18 +56,15 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
 };
 
 
-void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, bool* success) {
+void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
     
     auto streams = toCheck->audioStreams().second;
     auto firstUrl = streams.value(streams.uniqueKeys().first());
     
     download(firstUrl, true)
         .then([=](){
-            *success = true;
+            *urlSuccessfullyRequested = firstUrl.toString();
         })        
-        .fail([=](){
-            *success = false;
-        })
         .finally([=](){
             *checkEnded = true;
         });
@@ -146,7 +143,7 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* 
 }
 
 promise::Defer NetworkFetcher::_getPlayerConfiguration_WatchPage(VideoMetadata* metadata) {
-
+    throw std::runtime_error("not implemented yet !");
 }
 
 
@@ -244,7 +241,7 @@ promise::Defer NetworkFetcher::_fetchDecipherer(const PlayerConfiguration &playe
                     dl
                 );
 
-                d.resolve(cachedDecipherer);
+                d.resolve(newDecipherer);
 
             });
         }

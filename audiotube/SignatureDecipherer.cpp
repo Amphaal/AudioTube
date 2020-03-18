@@ -1,6 +1,6 @@
 #include "SignatureDecipherer.h"
 
-QString SignatureDecipherer::decipher(const QString &signature) {
+QString SignatureDecipherer::decipher(const QString &signature) const {
     
     auto modifiedSignature = signature;
     auto copyOfOperations = this->_operations;
@@ -40,6 +40,7 @@ QString SignatureDecipherer::decipher(const QString &signature) {
     }
 
     return modifiedSignature;
+    
 };
 
 SignatureDecipherer* SignatureDecipherer::create(const QString &clientPlayerUrl, const QString &ytPlayerSourceCode) {

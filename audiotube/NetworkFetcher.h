@@ -28,7 +28,7 @@ class NetworkFetcher : public NetworkHelper {
     public:
         static promise::Defer fromPlaylistUrl(const QString &url);
         static promise::Defer refreshMetadata(VideoMetadata* toRefresh, bool force = false);
-        static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, bool* success = nullptr);
+        static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, QString* urlSuccessfullyRequested = nullptr);
 
     private:
         static promise::Defer _getVideoEmbedPageHtml(const VideoMetadata::Id &videoId);

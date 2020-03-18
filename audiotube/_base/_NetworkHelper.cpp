@@ -17,7 +17,7 @@ promise::Defer NetworkHelper::download(const QUrl& url, bool head) {
 
             if (error == QNetworkReply::NoError) {
                 auto result = QString::fromUtf8(reply->readAll());
-                d.resolve(reinterpret_cast<DownloadedUtf8>(result));
+                d.resolve(static_cast<DownloadedUtf8>(result));
             } else {
                 qWarning() << qUtf8Printable(QString("AudioTube : Error downloading [%1] : %2!")
                     .arg(url.toString())

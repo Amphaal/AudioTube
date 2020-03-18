@@ -40,7 +40,7 @@ class PlayerConfiguration {
                 throw std::logic_error("Stream infos cannot be fetched !");
         }
     
-    AudioStreamUrlByITag getUrlsByAudioStreams(SignatureDecipherer* dcfrer) {
+    AudioStreamUrlByITag getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const {
         if(adaptiveStreamAsUrlEncoded) return getUrlsByAudioStreams_UrlEncoded(dcfrer);
         if(adaptiveStreamAsJson) return getUrlsByAudioStreams_JSON(dcfrer);
         throw std::logic_error("Unhandled Stream infos type !");
@@ -60,15 +60,15 @@ class PlayerConfiguration {
         bool adaptiveStreamAsUrlEncoded = false;
         bool adaptiveStreamAsJson = false;
 
-        AudioStreamUrlByITag getUrlsByAudioStreams_UrlEncoded(SignatureDecipherer* dcfrer) {
+        AudioStreamUrlByITag getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const {
             throw std::runtime_error("Stream info format not handled yet !"); //TODO
         }
 
-        AudioStreamUrlByITag getUrlsByAudioStreams_DASH(SignatureDecipherer* dcfrer) {
+        AudioStreamUrlByITag getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
             throw std::runtime_error("Stream info format not handled yet !"); //TODO
         }
 
-        AudioStreamUrlByITag getUrlsByAudioStreams_JSON(SignatureDecipherer* dcfrer) {
+        AudioStreamUrlByITag getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const {
             
             AudioStreamUrlByITag out;
             out.first = PreferedAudioStreamsInfosSource::JSON;

@@ -14,8 +14,8 @@
 bool stream_are_working(VideoMetadata &metadata) {
     
     //fetch for a stream HEAD
-    bool isStreamAvailable; bool ended;
-    NetworkFetcher::isStreamAvailable(&metadata, &ended, &isStreamAvailable);
+    QString urlSuccessfullyRequested; bool ended;
+    NetworkFetcher::isStreamAvailable(&metadata, &ended, &urlSuccessfullyRequested);
     
     //wait processing
     while(!ended) {
@@ -23,7 +23,12 @@ bool stream_are_working(VideoMetadata &metadata) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    return isStreamAvailable;
+    //check url
+    if(!urlSuccessfullyRequested.isEmpty()) {
+      qDebug() << qUtf8Printable(QString("Stream URL found : %1").arg(urlSuccessfullyRequested));
+      return true;
+    } 
+    else return false;
 
 }
 
@@ -73,10 +78,10 @@ int main(int argc, char *argv[]) {
 //   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
 // }
 
-// TEST_CASE( "OK from JSON Adaptative Stream - must decipher", "[metadata]" ) {
-//   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
-// }
-
-TEST_CASE( "Restricted viewing", "[metadata]" ) {
-  REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
+TEST_CASE( "OK from JSON Adaptative Stream - must decipher", "[metadata]" ) {
+  REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
 }
+
+// TEST_CASE( "Restricted viewing", "[metadata]" ) {
+//   REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
+// }

@@ -53,10 +53,6 @@ QString VideoMetadata::url() const {
     return this->_url;
 }
 
-QString VideoMetadata::playerSourceUrl() const {
-    return this->_playerSourceUrl;
-}
-
 int VideoMetadata::duration() const {
     return this->_durationInSeconds;
 }
@@ -81,10 +77,6 @@ bool VideoMetadata::ranOnce() const {
 void VideoMetadata::setFailure(bool failed) {
     if(failed == true && this->_failed != failed) emit streamFailed();
     this->_failed = failed;
-}
-
-void VideoMetadata::setPlayerSourceUrl(const QString &pSourceUrl) {
-    this->_playerSourceUrl = pSourceUrl;
 }
 
 void VideoMetadata::setTitle(const QString &title) {

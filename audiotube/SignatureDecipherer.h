@@ -18,7 +18,7 @@ class SignatureDecipherer {
     public:
         enum class CipherOperation { CO_Unknown, Reverse, Slice, Swap };
 
-        QString decipher(const QString &signature);
+        QString decipher(const QString &signature) const;
         static SignatureDecipherer* create(const QString &clientPlayerUrl, const QString &rawPlayerSourceData);
         static SignatureDecipherer* fromCache(const QString &clientPlayerUrl);
 
