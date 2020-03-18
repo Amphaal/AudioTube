@@ -31,14 +31,12 @@ class VideoMetadata : public QObject {
         VideoMetadata::Id id() const;
         QString title() const;
         QString url() const;
-        QString sts() const;
         QString playerSourceUrl() const;
-        int duration();
-        bool isMetadataValid();
+        int duration() const;
+        bool isMetadataValid() const;
         bool hasFailed() const;
         bool ranOnce() const;
 
-        void setSts(const QString &sts);
         void setPlayerSourceUrl(const QString &pSourceUrl);
         void setTitle(const QString &title);
         void setDuration(int durationInSeconds);
@@ -57,13 +55,11 @@ class VideoMetadata : public QObject {
     private:
         int _durationInSeconds = -1;
         VideoMetadata::Id _videoId;
+        QString _playerSourceUrl;
         QString _url;
         QString _title;
         bool _failed = false;
         bool _ranOnce = false;
-
-        QString _sts;
-        QString _playerSourceUrl;
 
         PlayerConfiguration::AudioStreamUrlByITag _audioStreamInfos;
 

@@ -41,19 +41,15 @@ QString VideoMetadata::url() const {
     return this->_url;
 }
 
-QString VideoMetadata::sts() const {
-    return this->_sts;
-}
-
 QString VideoMetadata::playerSourceUrl() const {
     return this->_playerSourceUrl;
 }
 
-int VideoMetadata::duration() {
+int VideoMetadata::duration() const {
     return this->_durationInSeconds;
 }
 
-bool VideoMetadata::isMetadataValid() {
+bool VideoMetadata::isMetadataValid() const {
     if(this->_validUntil.isNull()) return false;
     return QDateTime::currentDateTime() < this->_validUntil;
 }
@@ -74,10 +70,6 @@ void VideoMetadata::setFailure(bool failed) {
     if(failed == true && this->_failed != failed) emit streamFailed();
     this->_failed = failed;
 }
-
-void VideoMetadata::setSts(const QString &sts) {
-    this->_sts = sts;
-};
 
 void VideoMetadata::setPlayerSourceUrl(const QString &pSourceUrl) {
     this->_playerSourceUrl = pSourceUrl;
