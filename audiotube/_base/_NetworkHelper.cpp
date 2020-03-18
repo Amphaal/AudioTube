@@ -11,14 +11,16 @@ promise::Defer NetworkHelper::download(const QUrl& url, bool head) {
         QNetworkRequest request(url);
         auto reply = head ? _manager->head(request) : _manager->get(request);  
 
+        //use local event loop to mimic signal/slots same-thread async behavior
         QEventLoop loop;
         QObject::connect(
             reply, &QNetworkReply::finished, 
             &loop, &QEventLoop::quit
         );
         loop.exec();
-            
-        if (auto error = reply->error(); error == QNetworkReply::NoError) {
+
+        //if no error...    
+        if (auto error = reply->error(); !error) {
 
             auto result = static_cast<DownloadedUtf8>(QString::fromUtf8(reply->readAll()));
             
@@ -27,6 +29,7 @@ promise::Defer NetworkHelper::download(const QUrl& url, bool head) {
 
         }
 
+        //if error
         else {
 
             qWarning() << qUtf8Printable(QString("AudioTube : Error downloading [%1] : %2!")
