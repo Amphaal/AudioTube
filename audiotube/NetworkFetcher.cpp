@@ -26,12 +26,11 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
         };
         
         _getPlayerConfiguration(toRefresh) 
-        .then([=](const PlayerConfiguration &pConfig) {
-            return _fetchDecipherer(pConfig)
-                .then([=](SignatureDecipherer* decipherer) {
-                    auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
-                    toRefresh->setAudioStreamInfos(audioStreams);
-                });
+        .then(_fetchDecipherer)
+        .then(_mayFillDashManifestXml)
+        .then([=](const PlayerConfiguration &pConfig, const SignatureDecipherer* decipherer) {
+            auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
+            toRefresh->setAudioStreamInfos(audioStreams);
         })
         .then([=]() {
             //success !
@@ -51,6 +50,9 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
     });
 };
 
+promise::Defer NetworkFetcher::_mayFillDashManifestXml(PlayerConfiguration &playerConfig, const SignatureDecipherer* decipherer) {
+
+}
 
 void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
     
@@ -280,13 +282,13 @@ promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUt
     
 }
 
-promise::Defer NetworkFetcher::_fetchDecipherer(const PlayerConfiguration &playerConfig) {
+promise::Defer NetworkFetcher::_fetchDecipherer(PlayerConfiguration &playerConfig) {
     return promise::newPromise([=](promise::Defer d){
         
         auto ytPlayerSourceUrl = playerConfig.playerSourceUrl();
         auto cachedDecipherer = SignatureDecipherer::fromCache(ytPlayerSourceUrl);
 
-        if(cachedDecipherer) d.resolve(cachedDecipherer);
+        if(cachedDecipherer) d.resolve(playerConfig, cachedDecipherer);
         else {
             download(ytPlayerSourceUrl)
             .then([=](const DownloadedUtf8 &dl){
@@ -296,7 +298,7 @@ promise::Defer NetworkFetcher::_fetchDecipherer(const PlayerConfiguration &playe
                     dl
                 );
 
-                d.resolve(newDecipherer);
+                d.resolve(playerConfig, newDecipherer);
 
             });
         }

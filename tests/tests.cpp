@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 //   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
 // }
 
-TEST_CASE( "OK from JSON Adaptative Stream - must decipher", "[metadata]" ) {
+TEST_CASE( "OK from Dash Manifest - must decipher", "[metadata]" ) {
   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
 }
 

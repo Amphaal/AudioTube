@@ -58,7 +58,9 @@ class NetworkFetcher : public NetworkHelper {
         static QString _extractPlayerSourceUrlFromPlayerConfig(const QJsonObject &playerConfig);
         static QJsonObject _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex);
 
-        static promise::Defer _fetchDecipherer(const PlayerConfiguration &playerConfig);
+        static promise::Defer _fetchDecipherer(PlayerConfiguration &playerConfig);
+
+        static promise::Defer _mayFillDashManifestXml(PlayerConfiguration &playerConfig, const SignatureDecipherer* decipherer);
 
         static QList<QString> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
         static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<QString> &videoIds);

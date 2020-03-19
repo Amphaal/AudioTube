@@ -18,6 +18,7 @@ class PlayerConfiguration {
             UrlEncoded,
             JSON
         };
+        using RawDashManifest = QString;
         
         using AudioStreamUrlByITag = QPair<PreferedAudioStreamsInfosSource, QHash<uint, QUrl>>;
         PlayerConfiguration(
@@ -35,14 +36,16 @@ class PlayerConfiguration {
 
             adaptiveStreamAsUrlEncoded = !_adaptiveStreamInfosUrlEncoded.isEmpty();
             adaptiveStreamAsJson = _adaptiveStreamInfosJson.count();
+            adaptiveStreamAsDash = !_dashManifestUrl.isEmpty();
             
-            if(!adaptiveStreamAsUrlEncoded && !adaptiveStreamAsJson) 
+            if(!adaptiveStreamAsDash && !adaptiveStreamAsUrlEncoded && !adaptiveStreamAsJson) 
                 throw std::logic_error("Stream infos cannot be fetched !");
         }
     
     AudioStreamUrlByITag getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const {
-        if(adaptiveStreamAsUrlEncoded) return getUrlsByAudioStreams_UrlEncoded(dcfrer);
+        if(adaptiveStreamAsDash) return getUrlsByAudioStreams_DASH(dcfrer);
         if(adaptiveStreamAsJson) return getUrlsByAudioStreams_JSON(dcfrer);
+        if(adaptiveStreamAsUrlEncoded) return getUrlsByAudioStreams_UrlEncoded(dcfrer);
         throw std::logic_error("Unhandled Stream infos type !");
     }
 
@@ -50,21 +53,30 @@ class PlayerConfiguration {
         return _playerSourceUrl;
     }
 
+    void fillRawDashManifest(const RawDashManifest &rawDashManifest) {
+        _rawDashManifest = rawDashManifest;
+    }
+
     private:
         QString _playerSourceUrl;
         QString _dashManifestUrl;
+        RawDashManifest _rawDashManifest;
         QJsonArray _adaptiveStreamInfosUrlEncoded;
         QJsonArray _adaptiveStreamInfosJson;
         QDateTime _validUntil;
 
         bool adaptiveStreamAsUrlEncoded = false;
         bool adaptiveStreamAsJson = false;
+        bool adaptiveStreamAsDash = false;
 
         AudioStreamUrlByITag getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const {
             throw std::runtime_error("Stream info format not handled yet !"); //TODO
         }
 
         AudioStreamUrlByITag getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
+            if(_rawDashManifest.isEmpty())
+                throw std::runtime_error("Dash Manifest is empty !");
+
             throw std::runtime_error("Stream info format not handled yet !"); //TODO
         }
 
