@@ -7,7 +7,9 @@
 #include <QVariantHash>
 #include <QUrl>
 #include <QUrlQuery>
+#include <QRegularExpression>
 
+#include "_base/_DebugHelper.h"
 #include "SignatureDecipherer.h"
 
 class PlayerConfiguration {
@@ -53,6 +55,11 @@ class PlayerConfiguration {
         return _playerSourceUrl;
     }
 
+    //Dash manifest deciphering not handled yet ! //TODO
+    QString decipherDashManifestUrl(const SignatureDecipherer* dcfrer) const {
+        return _dashManifestUrl;
+    }
+
     void fillRawDashManifest(const RawDashManifest &rawDashManifest) {
         _rawDashManifest = rawDashManifest;
     }
@@ -74,10 +81,35 @@ class PlayerConfiguration {
         }
 
         AudioStreamUrlByITag getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
+            
+            //check if raw data is here
             if(_rawDashManifest.isEmpty())
                 throw std::runtime_error("Dash Manifest is empty !");
 
-            throw std::runtime_error("Stream info format not handled yet !"); //TODO
+            //find streams
+            QRegularExpression regex("<Representation id=\"(?<itag>.*?)\" codecs=\"(?<codec>.*?)\"[\\s\\S]*?<BaseURL>(?<url>.*?)<\\/BaseURL");
+            auto foundStreams = regex.globalMatch(_rawDashManifest);
+            
+            //container
+            AudioStreamUrlByITag out; 
+            out.first = PreferedAudioStreamsInfosSource::DASH;
+
+            //iterate
+            while(foundStreams.hasNext()) {
+                auto match = foundStreams.next();
+                
+                //check codec
+                auto codec = match.captured("codec");
+                if(!_isCodecAllowed(codec)) continue;
+
+                auto itag = match.captured("itag").toInt();
+                auto url = match.captured("url");
+
+                out.second.insert(itag, url);
+            }
+
+            return out;
+        
         }
 
         AudioStreamUrlByITag getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const {
@@ -118,10 +150,14 @@ class PlayerConfiguration {
 
         }
 
+        static bool _isCodecAllowed(const QString &codec) {
+            if(codec.contains(QStringLiteral(u"opus"))) return true;
+            return false;
+        }
+
         static bool _isMimeAllowed(const QString &mime) {
             if(!mime.contains(QStringLiteral(u"audio"))) return false;
-            if(mime.contains(QStringLiteral(u"opus"))) return true;
-            return false;
+            return _isCodecAllowed(mime);
         }
 
         static QJsonArray _urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {

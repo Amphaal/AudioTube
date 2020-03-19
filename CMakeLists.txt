@@ -23,7 +23,7 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 #find Qt5
 find_package(Qt5 REQUIRED COMPONENTS
     Core 
-    Network 
+    Network
 )
 
 add_subdirectory(audiotube)

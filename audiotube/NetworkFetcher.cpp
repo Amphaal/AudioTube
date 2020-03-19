@@ -28,7 +28,8 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
         _getPlayerConfiguration(toRefresh) 
         .then(_fetchDecipherer)
         .then(_mayFillDashManifestXml)
-        .then([=](const PlayerConfiguration &pConfig, const SignatureDecipherer* decipherer) {
+        .then([=](PlayerConfiguration &pConfig, const SignatureDecipherer* decipherer, const DownloadedUtf8 &rawDashManifest) {
+            pConfig.fillRawDashManifest(rawDashManifest);
             auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
             toRefresh->setAudioStreamInfos(audioStreams);
         })
@@ -51,7 +52,19 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
 };
 
 promise::Defer NetworkFetcher::_mayFillDashManifestXml(PlayerConfiguration &playerConfig, const SignatureDecipherer* decipherer) {
+    return promise::newPromise([=](promise::Defer d){
+        
+        //if Dash manifest url is empty, resolve
+        auto decipheredDMUrl = playerConfig.decipherDashManifestUrl(decipherer);
+        if(decipheredDMUrl.isEmpty()) return d.resolve(playerConfig, decipherer, QString());
 
+        //download then fill
+        download(decipheredDMUrl)
+        .then([=](const DownloadedUtf8 &dl) {
+            d.resolve(playerConfig, decipherer, dl);
+        });
+
+    });
 }
 
 void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {

@@ -79,6 +79,9 @@
         "qjsonarray": "cpp",
         "qurl": "cpp",
         "qjsonobject": "cpp",
-        "qvarianthash": "cpp"
+        "qvarianthash": "cpp",
+        "qxmlstreamreader": "cpp",
+        "qdomdocument": "cpp",
+        "qregularexpression": "cpp"
     }
 }
