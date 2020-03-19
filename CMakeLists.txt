@@ -27,4 +27,8 @@ find_package(Qt5 REQUIRED COMPONENTS
 )
 
 add_subdirectory(audiotube)
-add_subdirectory(tests)
+
+#dont build tests if included as submodule
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
