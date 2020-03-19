@@ -96,40 +96,44 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration(VideoMetadata* metadata) 
 
 promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* metadata) {
     
-    //mainly set player source URL to VideoMetadata
     auto videoId = metadata->id();
-    auto embed = _getVideoEmbedPageHtml(videoId).then(_extractDataFrom_EmbedPageHtml);
-    auto vinfos = _getVideoInfosDic(videoId).then(_extractDataFrom_VideoInfos);
+    auto temp_dh = new DataHolder;
+    
+    //fetch data
+    auto embed = _getVideoEmbedPageHtml(videoId)
+                .then(_extractDataFrom_EmbedPageHtml)
+                .then([=](const QString &playerSourceUrl, const QString &title, int duration) {
+                    temp_dh->playerSourceUrl = playerSourceUrl;
+                    temp_dh->title = title;
+                    temp_dh->duration = duration;
+                });
+    auto vinfos = _getVideoInfosDic(videoId)
+                  .then(_extractDataFrom_VideoInfos)
+                  .then([=](const QDateTime &expirationDate, const QString &dashManifestUrl, const QString &streamInfos_UrlEncoded, const QJsonArray &streamInfos_JSON) {
+                    temp_dh->expirationDate = expirationDate;
+                    temp_dh->dashManifestUrl = dashManifestUrl;
+                    temp_dh->streamInfos_UrlEncoded = streamInfos_UrlEncoded;
+                    temp_dh->streamInfos_JSON = streamInfos_JSON;
+                });
 
-    //handle augment
-    return promise::all({ embed, vinfos }).then([=](const std::vector<promise::pm_any> &results) {
-
-        //prepare args
-        auto embed_Data  = results[0];
-            auto playerSourceUrl = static_cast<QString*>(embed_Data.tuple_element(0));
-            auto title = static_cast<QString*>(embed_Data.tuple_element(1));
-            auto duration = static_cast<int*>(embed_Data.tuple_element(2));
-        
-        //prepare args
-        auto vinfos_Data = results[1];
-            auto expirationDate = static_cast<QDateTime*>(vinfos_Data.tuple_element(0));
-            auto dashManifestUrl = static_cast<QString*>(vinfos_Data.tuple_element(1));
-            auto streamInfos_UrlEncoded = static_cast<QString*>(vinfos_Data.tuple_element(2));
-            auto streamInfos_JSON = static_cast<QJsonArray*>(vinfos_Data.tuple_element(3));
+    // return promise::all({ embed, vinfos }) DO NOT USE promise::all as it fucks up upstream exceptions propagation
+    return embed
+    .then(vinfos)
+    .then([=]() {
 
         //define pConfig
         PlayerConfiguration pConfig(
-            *playerSourceUrl,
-            *dashManifestUrl,
-            *streamInfos_UrlEncoded,
-            *streamInfos_JSON,
-            *expirationDate
+            temp_dh->playerSourceUrl,
+            temp_dh->dashManifestUrl,
+            temp_dh->streamInfos_UrlEncoded,
+            temp_dh->streamInfos_JSON,
+            temp_dh->expirationDate
         );
 
         //update metadata
-        metadata->setTitle(*title);
-        metadata->setDuration(*duration);
-        metadata->setExpirationDate(*expirationDate);
+        metadata->setTitle(temp_dh->title);
+        metadata->setDuration(temp_dh->duration);
+        metadata->setExpirationDate(temp_dh->expirationDate);
         metadata->setPreferedPlayerConfigFetchingMethod(VideoMetadata::PreferedPlayerConfigFetchingMethod::VideoInfo);
 
         return pConfig;

@@ -26,6 +26,18 @@
 class NetworkFetcher : public NetworkHelper {
     
     public:
+    
+    //workaround for promise::all bug...
+    struct DataHolder {
+        QString playerSourceUrl;
+        QString title;
+        int duration;
+        QDateTime expirationDate;
+        QString dashManifestUrl;
+        QString streamInfos_UrlEncoded;
+        QJsonArray streamInfos_JSON;
+    };
+
         static promise::Defer fromPlaylistUrl(const QString &url);
         static promise::Defer refreshMetadata(VideoMetadata* toRefresh, bool force = false);
         static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, QString* urlSuccessfullyRequested = nullptr);
