@@ -46,10 +46,6 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
         .fail([=](const std::logic_error &exception) {
             qWarning() << "AudioTube :" << exception.what();     
             whenFailed();
-        })
-        .fail([=](){
-            qWarning() << "AudioTube : unknown failure !";
-            whenFailed();
         });
 
     });
@@ -229,12 +225,6 @@ promise::Defer NetworkFetcher::_extractDataFrom_VideoInfos(const DownloadedUtf8 
             streamingData[QStringLiteral(u"adaptiveFormats")].toArray()
         );
 
-    })
-    .fail([=](QString &softErr) {
-        return promise::reject(softErr);
-    })
-    .fail([=](std::logic_error &err) {
-        return promise::reject(err);
     });
 }
 
@@ -282,9 +272,6 @@ promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUt
             videoLength
         );
 
-    })
-    .fail([=](std::logic_error &err) {
-        return promise::reject(err);
     });
     
 }
@@ -387,9 +374,6 @@ promise::Defer NetworkFetcher::_extractDataFrom_WatchPage(const DownloadedUtf8 &
             streamingData[QStringLiteral(u"adaptiveFormats")].toArray()
         );
 
-    })
-    .fail([=](std::logic_error &err) {
-        return promise::reject(err);
     });
 
 }
