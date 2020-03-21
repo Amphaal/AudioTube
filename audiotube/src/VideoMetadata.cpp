@@ -21,6 +21,16 @@ PlayerConfiguration::PreferedAudioStreamsInfosSource VideoMetadata::preferedAudi
     return this->_preferedAudioStreamsInfosSource;
 }
 
+QUrl VideoMetadata::getBestAvailableStreamUrl() const {
+    
+    //sort itags [first is best]
+    auto itags = this->_audioStreamInfos.uniqueKeys();
+    std::sort(itags.begin(), itags.end());
+
+    return this->_audioStreamInfos.value(itags.first());
+
+}
+
 VideoMetadata VideoMetadata::fromVideoUrl(const QString &url) {
     
     //find id
@@ -91,12 +101,12 @@ void VideoMetadata::setExpirationDate(const QDateTime &expiration) {
     this->_validUntil = expiration;
 }
 
-void VideoMetadata::setAudioStreamInfos(const PlayerConfiguration::AudioStreamUrlByITag &streamInfos) {
+void VideoMetadata::setAudioStreamsPackage(const PlayerConfiguration::AudioStreamsPackage &streamInfos) {
     
     if(streamInfos.first == PlayerConfiguration::PreferedAudioStreamsInfosSource::Unknown || !streamInfos.second.count()) 
         throw std::logic_error("Setting empty audio stream Infos is not allowed !");
     
-    this->_audioStreamInfos = streamInfos;
+    this->_audioStreamInfos = streamInfos.second;
     this->_preferedAudioStreamsInfosSource = streamInfos.first;
 
 }

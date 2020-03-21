@@ -33,7 +33,8 @@ class VideoMetadata : public QObject {
         static QRegularExpression getUrlMatcher();
         
         VideoMetadata(const VideoMetadata::Id &videoId);
-
+        
+        QUrl getBestAvailableStreamUrl() const;
         VideoMetadata::Id id() const;
         QString title() const;
         QString url() const;
@@ -47,7 +48,7 @@ class VideoMetadata : public QObject {
         void setTitle(const QString &title);
         void setDuration(int durationInSeconds);
         void setExpirationDate(const QDateTime &expiration);
-        void setAudioStreamInfos(const PlayerConfiguration::AudioStreamUrlByITag &streamInfos);
+        void setAudioStreamsPackage(const PlayerConfiguration::AudioStreamsPackage &streamInfos);
         void setFailure(bool failed);
         void setRanOnce();
         void setPreferedPlayerConfigFetchingMethod(const PreferedPlayerConfigFetchingMethod &method);

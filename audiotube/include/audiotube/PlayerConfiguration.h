@@ -22,7 +22,8 @@ class PlayerConfiguration {
         };
         using RawDashManifest = QString;
         
-        using AudioStreamUrlByITag = QPair<PreferedAudioStreamsInfosSource, QHash<uint, QUrl>>;
+        using AudioStreamUrlByITag = QHash<uint, QUrl>;
+        using AudioStreamsPackage = QPair<PreferedAudioStreamsInfosSource, AudioStreamUrlByITag>;
         PlayerConfiguration(
             const QString &playerSourceUrl, 
             const QString &dashManifestUrl, 
@@ -31,7 +32,7 @@ class PlayerConfiguration {
             const QDateTime &validUntil
         );
     
-    AudioStreamUrlByITag getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const;
+    AudioStreamsPackage getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const;
     QString playerSourceUrl() const;
 
     //Dash manifest deciphering not handled yet ! //TODO
@@ -50,9 +51,9 @@ class PlayerConfiguration {
         bool adaptiveStreamAsJson = false;
         bool adaptiveStreamAsDash = false;
 
-        AudioStreamUrlByITag getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const;
-        AudioStreamUrlByITag getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const;
-        AudioStreamUrlByITag getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const;
+        AudioStreamsPackage getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const;
+        AudioStreamsPackage getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const;
+        AudioStreamsPackage getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const;
         static bool _isCodecAllowed(const QString &codec);
         static bool _isMimeAllowed(const QString &mime);
         static QJsonArray _urlEncodedToJsonArray(const QString &urlQueryAsRawStr);

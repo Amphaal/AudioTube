@@ -31,7 +31,7 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
         .then([=](PlayerConfiguration &pConfig, const SignatureDecipherer* decipherer, const DownloadedUtf8 &rawDashManifest) {
             pConfig.fillRawDashManifest(rawDashManifest);
             auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
-            toRefresh->setAudioStreamInfos(audioStreams);
+            toRefresh->setAudioStreamsPackage(audioStreams);
         })
         .then([=]() {
             //success !
@@ -69,12 +69,11 @@ promise::Defer NetworkFetcher::_mayFillDashManifestXml(PlayerConfiguration &play
 
 void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
     
-    auto streams = toCheck->audioStreams().second;
-    auto firstUrl = streams.value(streams.uniqueKeys().first());
+    auto bestUrl = toCheck->getBestAvailableStreamUrl();
     
-    download(firstUrl, true)
+    download(bestUrl, true)
         .then([=](){
-            *urlSuccessfullyRequested = firstUrl.toString();
+            *urlSuccessfullyRequested = bestUrl.toString();
         })        
         .finally([=](){
             *checkEnded = true;

@@ -21,7 +21,7 @@ PlayerConfiguration::PlayerConfiguration(
         throw std::logic_error("Stream infos cannot be fetched !");
 }
 
-PlayerConfiguration::AudioStreamUrlByITag PlayerConfiguration::getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const {
+PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const {
     if(adaptiveStreamAsDash) return getUrlsByAudioStreams_DASH(dcfrer);
     if(adaptiveStreamAsJson) return getUrlsByAudioStreams_JSON(dcfrer);
     if(adaptiveStreamAsUrlEncoded) return getUrlsByAudioStreams_UrlEncoded(dcfrer);
@@ -29,24 +29,26 @@ PlayerConfiguration::AudioStreamUrlByITag PlayerConfiguration::getUrlsByAudioStr
 }
 
 QString PlayerConfiguration::playerSourceUrl() const {
-return _playerSourceUrl;
+    return _playerSourceUrl;
 }
 
 //Dash manifest deciphering not handled yet ! //TODO
 QString PlayerConfiguration::decipherDashManifestUrl(const SignatureDecipherer* dcfrer) const {
-return _dashManifestUrl;
+    return _dashManifestUrl;
 }
 
 void PlayerConfiguration::fillRawDashManifest(const RawDashManifest &rawDashManifest) {
-_rawDashManifest = rawDashManifest;
+    _rawDashManifest = rawDashManifest;
 }
 
-
-PlayerConfiguration::AudioStreamUrlByITag PlayerConfiguration::getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const {
+PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const {
+    AudioStreamsPackage out;
+    out.first = PreferedAudioStreamsInfosSource::UrlEncoded;
+    
     throw std::runtime_error("Stream info format not handled yet !"); //TODO
 }
 
-PlayerConfiguration::AudioStreamUrlByITag PlayerConfiguration::getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
+PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
     
     //check if raw data is here
     if(_rawDashManifest.isEmpty())
@@ -57,7 +59,7 @@ PlayerConfiguration::AudioStreamUrlByITag PlayerConfiguration::getUrlsByAudioStr
     auto foundStreams = regex.globalMatch(_rawDashManifest);
     
     //container
-    AudioStreamUrlByITag out; 
+    AudioStreamsPackage out; 
     out.first = PreferedAudioStreamsInfosSource::DASH;
 
     //iterate
@@ -78,9 +80,9 @@ PlayerConfiguration::AudioStreamUrlByITag PlayerConfiguration::getUrlsByAudioStr
 
 }
 
-PlayerConfiguration::AudioStreamUrlByITag PlayerConfiguration::getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const {
+PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const {
     
-    AudioStreamUrlByITag out;
+    AudioStreamsPackage out;
     out.first = PreferedAudioStreamsInfosSource::JSON;
 
     for(auto itagGroup : _adaptiveStreamInfosJson) {
