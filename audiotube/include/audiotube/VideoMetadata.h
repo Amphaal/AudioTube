@@ -25,14 +25,17 @@ class VideoMetadata : public QObject {
             VideoInfo,
             WatchPage
         };
+        enum InstantiationType {
+            InstFromId,
+            InstFromUrl
+        };  
 
         using Id = QString;
-        static VideoMetadata fromVideoUrl(const QString &url);
-        static VideoMetadata fromVideoId(const QString &videoId);
-        static QString urlFromVideoId(const QString &videoId);
+        VideoMetadata(const QString &IdOrUrl, const InstantiationType &type);
+
+        static VideoMetadata* fromVideoUrl(const QString &url);
+        static VideoMetadata* fromVideoId(const QString &videoId);
         static QRegularExpression getUrlMatcher();
-        
-        VideoMetadata(const VideoMetadata::Id &videoId);
         
         QUrl getBestAvailableStreamUrl() const;
         VideoMetadata::Id id() const;
@@ -60,7 +63,9 @@ class VideoMetadata : public QObject {
         void metadataRefreshed();
         void streamFailed();
 
-    private:
+    private:    
+        static QString _urlFromVideoId(const QString &videoId);
+
         int _durationInSeconds = -1;
         VideoMetadata::Id _videoId;
         QString _url;

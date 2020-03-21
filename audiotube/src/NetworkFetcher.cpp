@@ -459,7 +459,7 @@ QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedU
 QList<VideoMetadata*> NetworkFetcher::_videoIdsToMetadataList(const QList<QString> &videoIds) {
     QList<VideoMetadata*> out;
     for(const auto &id : videoIds) {
-        out.append(new VideoMetadata(id));
+        out.append(VideoMetadata::fromVideoId(id));
     } 
     return out;
 };

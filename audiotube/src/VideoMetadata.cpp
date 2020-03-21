@@ -4,9 +4,12 @@ QRegularExpression VideoMetadata::getUrlMatcher() {
     return _ytRegexIdFinder;
 }
 
-VideoMetadata VideoMetadata::fromVideoId(const QString &videoId) {
-    auto url = VideoMetadata::urlFromVideoId(videoId);
-    return VideoMetadata::fromVideoUrl(url);
+VideoMetadata* VideoMetadata::fromVideoId(const QString &videoId) {
+    return new VideoMetadata(videoId, InstantiationType::InstFromId);
+}
+
+VideoMetadata* VideoMetadata::fromVideoUrl(const QString &url) {
+    return new VideoMetadata(url, InstantiationType::InstFromUrl);
 }
 
 void VideoMetadata::setPreferedPlayerConfigFetchingMethod(const VideoMetadata::PreferedPlayerConfigFetchingMethod &method) {
@@ -31,25 +34,34 @@ QUrl VideoMetadata::getBestAvailableStreamUrl() const {
 
 }
 
-VideoMetadata VideoMetadata::fromVideoUrl(const QString &url) {
-    
-    //find id
-    auto match = _ytRegexIdFinder.match(url);
-
-    //returns
-    if(!match.hasMatch()) {
-        throw std::invalid_argument("URL is not a valid  URL !");
-    }
-
-    auto videoId = match.captured("videoId");
-    return VideoMetadata(videoId);
-}
-
-QString VideoMetadata::urlFromVideoId(const QString &videoId) {
+QString VideoMetadata::_urlFromVideoId(const QString &videoId) {
     return QStringLiteral(u"https://www.youtube.com/watch?v=") + videoId;
 }
 
-VideoMetadata::VideoMetadata(const VideoMetadata::Id &videoId) : _videoId(videoId), _url(urlFromVideoId(videoId)) { };
+VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &type) {
+    switch(type) {
+        case InstantiationType::InstFromUrl: {
+            //find id
+            auto match = _ytRegexIdFinder.match(IdOrUrl);
+
+            //returns
+            if(!match.hasMatch()) {
+                throw std::invalid_argument("URL is not a valid  URL !");
+            }
+
+            this->_videoId = match.captured("videoId");
+            this->_url = IdOrUrl;
+
+        }
+        break;
+
+        case InstantiationType::InstFromId: {
+            this->_videoId = IdOrUrl;
+            this->_url = _urlFromVideoId(IdOrUrl);
+        }
+        break;
+    }
+}
 
 VideoMetadata::Id VideoMetadata::id() const {
     return this->_videoId;

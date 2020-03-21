@@ -36,7 +36,7 @@ bool stream_are_working(VideoMetadata &metadata) {
 bool youtube_metadata_fetching_succeeded(const QString &ytId) {
 
     //generating container
-    auto container = VideoMetadata::fromVideoId(ytId);
+    VideoMetadata container(ytId, VideoMetadata::InstantiationType::InstFromId);
     qDebug() << qUtf8Printable(QString("Testing [%1]...").arg(container.url()));
 
     //refresh...
