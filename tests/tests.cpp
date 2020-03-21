@@ -6,7 +6,7 @@
 
 #include <audiotube/VideoMetadata.h>
 #include <audiotube/NetworkFetcher.h>
-#include <audiotube/_base/_NetworkHelper.h>
+#include <audiotube/_NetworkHelper.h>
 
 #include <chrono>
 #include <thread>

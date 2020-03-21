@@ -17,10 +17,10 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-#include "_base/_NetworkHelper.h"
-#include "_base/_DebugHelper.h"
+#include "_NetworkHelper.h"
+#include "_DebugHelper.h"
 
-#include "PlayerConfiguration.hpp"
+#include "PlayerConfiguration.h"
 #include "VideoMetadata.h"
 
 class NetworkFetcher : public NetworkHelper {

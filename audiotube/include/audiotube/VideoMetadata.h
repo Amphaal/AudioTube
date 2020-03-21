@@ -13,7 +13,7 @@
 
 #include <QDebug>
 
-#include "PlayerConfiguration.hpp"
+#include "PlayerConfiguration.h"
 
 class VideoMetadata : public QObject {
     

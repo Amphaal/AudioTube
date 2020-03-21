@@ -82,6 +82,7 @@
         "qvarianthash": "cpp",
         "qxmlstreamreader": "cpp",
         "qdomdocument": "cpp",
-        "qregularexpression": "cpp"
+        "qregularexpression": "cpp",
+        "qnetworkreply": "cpp"
     }
 }

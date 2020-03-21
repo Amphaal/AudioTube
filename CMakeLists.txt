@@ -16,16 +16,6 @@ project(AudioTube
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#Qt moc 
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_INCLUDE_CURRENT_DIR ON) 
-
-#find Qt5
-find_package(Qt5 REQUIRED COMPONENTS
-    Core 
-    Network
-)
-
 add_subdirectory(audiotube)
 
 #dont build tests if included as submodule

@@ -1,3 +1,13 @@
+#Qt moc 
+SET(CMAKE_AUTOMOC ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR ON) 
+
+#find Qt5
+find_package(Qt5 REQUIRED COMPONENTS
+    Core 
+    Network
+)
+
 #create as static lib
 add_library(audiotube STATIC)
 
@@ -6,18 +16,28 @@ target_link_libraries(audiotube
     Qt5::Core
 )
 
-target_include_directories(audiotube 
-    PUBLIC ${CMAKE_SOURCE_DIR}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(audiotube
+    PRIVATE include/audiotube
+    INTERFACE .
+    INTERFACE include
 )
 
-#add source files
+#add submodule sources
 target_sources(audiotube PRIVATE
     promise-cpp/promise.hpp
-    NetworkFetcher.cpp
-    SignatureDecipherer.cpp
-    VideoMetadata.cpp
-    _base/_NetworkHelper.cpp
-    _base/_DebugHelper.cpp
+)
+
+#headers for MOC
+target_sources(audiotube PRIVATE
+    include/audiotube/VideoMetadata.h
+)
+
+#add lib files
+target_sources(audiotube PRIVATE
+    src/NetworkFetcher.cpp
+    src/SignatureDecipherer.cpp
+    src/PlayerConfiguration.cpp
+    src/VideoMetadata.cpp
+    src/_NetworkHelper.cpp
+    src/_DebugHelper.cpp
 )
