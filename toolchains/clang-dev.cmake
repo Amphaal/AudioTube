@@ -1,4 +1,3 @@
-SET(BUILD_TESTING ON)
 SET(CMAKE_BUILD_TYPE Debug) 
 
 SET (CMAKE_C_COMPILER             "clang")
