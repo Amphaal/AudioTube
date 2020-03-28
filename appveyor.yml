@@ -4,9 +4,8 @@ install:
     - cd %APPVEYOR_BUILD_FOLDER%
     - git submodule update --init --recursive
 build_script:
-    - cmake -GNinja -B_gen -H. -DBUILD_TESTING=1 -DCMAKE_BUILD_TYPE=Release -DQt5_DIR="C:/Qt/5.14/msvc2017_64/lib/cmake/Qt5"
-    - cd _gen
-    - ninja
+    - cmake -GNinja -B_gen -H. -DCMAKE_TOOLCHAIN_FILE=tollchains/clang-ci-appveyor.cmake
+    - ninja -C _gen
 test_script:
     - cd tests
     - C:/Qt/5.14/msvc2017_64/bin/windeployqt.exe audiotube_tests.exe
