@@ -13,6 +13,7 @@
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/audiotube",
+                "${workspaceFolder}/audiotube/include",
                 "C:/msys64/mingw64/include/QtNetwork",
                 "C:/msys64/mingw64/include/QtCore",
                 "${workspaceFolder}/tests/Catch2/single_include",
