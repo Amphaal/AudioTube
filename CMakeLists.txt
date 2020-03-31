@@ -4,7 +4,7 @@ if(COMMAND cmake_policy)
 endif()
 
 #declare project
-cmake_minimum_required(VERSION 3.13.4)
+cmake_minimum_required(VERSION 3.10.2) #stick to 18.04 Ubuntu LTS version
 project(AudioTube
     VERSION 0.0.1
     DESCRIPTION "Request  API to get audio streams"
