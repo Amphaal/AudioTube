@@ -1,4 +1,4 @@
-# AudioTube [![Build status](https://ci.appveyor.com/api/projects/status/1lqryici2cs46rjg?svg=true)](https://ci.appveyor.com/project/Amphaal/audiotube)
+# AudioTube C++ [![Build status](https://ci.appveyor.com/api/projects/status/1lqryici2cs46rjg?svg=true)](https://ci.appveyor.com/project/Amphaal/audiotube)
 
 #### Based on https://github.com/Tyrrrz/YoutubeExplode
 
