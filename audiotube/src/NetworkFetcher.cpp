@@ -120,6 +120,8 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration(VideoMetadata* metadata) 
 
     }
 
+    return promise::resolve();
+
 }
 
 promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* metadata) {
