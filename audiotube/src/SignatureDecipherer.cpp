@@ -199,9 +199,8 @@ SignatureDecipherer::YTDecipheringOperations SignatureDecipherer::_buildOperatio
         throw std::runtime_error("[Decipherer] No operations found !");
     }
     
-    // qDebug() << " >>" << operations;
-    
     return operations;
+    
 }
 
 SignatureDecipherer::SignatureDecipherer(const QString &ytPlayerSourceCode) {

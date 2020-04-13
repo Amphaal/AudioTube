@@ -24,6 +24,7 @@
 
 #include <chrono>
 #include <thread>
+#include <future>
 
 bool stream_are_working(VideoMetadata &metadata) {
     
@@ -39,7 +40,7 @@ bool stream_are_working(VideoMetadata &metadata) {
 
     //check url
     if(!urlSuccessfullyRequested.isEmpty()) {
-      qDebug() << qUtf8Printable(QString("Stream URL found : %1").arg(urlSuccessfullyRequested));
+      // qDebug() << qUtf8Printable(QString("Stream URL found : %1").arg(urlSuccessfullyRequested));
       return true;
     } 
     else return false;
@@ -98,4 +99,8 @@ TEST_CASE( "OK from Dash Manifest - no url deciphering", "[metadata]" ) {
 
 TEST_CASE( "Restricted viewing", "[metadata]" ) {
   REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
+}
+
+TEST_CASE("Exact STS required", "[metadata]") {
+  REQUIRE(youtube_metadata_fetching_succeeded("lkkHtuTdIj4"));
 }

@@ -83,6 +83,7 @@
         "qxmlstreamreader": "cpp",
         "qdomdocument": "cpp",
         "qregularexpression": "cpp",
-        "qnetworkreply": "cpp"
+        "qnetworkreply": "cpp",
+        "*.inc": "cpp"
     }
 }

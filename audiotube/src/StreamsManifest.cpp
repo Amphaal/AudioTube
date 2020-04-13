@@ -12,69 +12,18 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-#include "PlayerConfiguration.h"
+#include "StreamsManifest.h"
 
-PlayerConfiguration::PlayerConfiguration(
-    const QString &playerSourceUrl, 
-    const QString &dashManifestUrl, 
-    const QString &adaptiveStreamInfosUrlEncoded, 
-    const QJsonArray &adaptiveStreamInfosJson, 
-    const QDateTime &validUntil
-) {
-    _playerSourceUrl = playerSourceUrl;
-    _dashManifestUrl = dashManifestUrl;
-    _adaptiveStreamInfosUrlEncoded = _urlEncodedToJsonArray(adaptiveStreamInfosUrlEncoded);
-    _adaptiveStreamInfosJson = adaptiveStreamInfosJson;
-    _validUntil = validUntil;
+StreamsManifest::StreamsManifest() {}
 
-    adaptiveStreamAsUrlEncoded = !_adaptiveStreamInfosUrlEncoded.isEmpty();
-    adaptiveStreamAsJson = _adaptiveStreamInfosJson.count();
-    adaptiveStreamAsDash = !_dashManifestUrl.isEmpty();
-    
-    if(!adaptiveStreamAsDash && !adaptiveStreamAsUrlEncoded && !adaptiveStreamAsJson) 
-        throw std::logic_error("Stream infos cannot be fetched !");
-}
-
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const {
-    if(adaptiveStreamAsDash) return getUrlsByAudioStreams_DASH(dcfrer);
-    if(adaptiveStreamAsJson) return getUrlsByAudioStreams_JSON(dcfrer);
-    if(adaptiveStreamAsUrlEncoded) return getUrlsByAudioStreams_UrlEncoded(dcfrer);
-    throw std::logic_error("Unhandled Stream infos type !");
-}
-
-QString PlayerConfiguration::playerSourceUrl() const {
-    return _playerSourceUrl;
-}
-
-//Dash manifest deciphering not handled yet ! //TODO
-QString PlayerConfiguration::decipherDashManifestUrl(const SignatureDecipherer* dcfrer) const {
-    return _dashManifestUrl;
-}
-
-void PlayerConfiguration::fillRawDashManifest(const RawDashManifest &rawDashManifest) {
-    _rawDashManifest = rawDashManifest;
-}
-
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const {
-    AudioStreamsPackage out;
-    out.first = PreferedAudioStreamsInfosSource::UrlEncoded;
-    
-    throw std::runtime_error("Stream info format not handled yet !"); //TODO
-}
-
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
-    
-    //check if raw data is here
-    if(_rawDashManifest.isEmpty())
-        throw std::runtime_error("Dash Manifest is empty !");
+void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
 
     //find streams
     QRegularExpression regex("<Representation id=\"(?<itag>.*?)\" codecs=\"(?<codec>.*?)\"[\\s\\S]*?<BaseURL>(?<url>.*?)<\\/BaseURL");
-    auto foundStreams = regex.globalMatch(_rawDashManifest);
+    auto foundStreams = regex.globalMatch(raw);
     
     //container
-    AudioStreamsPackage out; 
-    out.first = PreferedAudioStreamsInfosSource::DASH;
+    AudioStreamUrlByITag streams;
 
     //iterate
     while(foundStreams.hasNext()) {
@@ -87,62 +36,107 @@ PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStre
         auto itag = match.captured("itag").toInt();
         auto url = match.captured("url");
 
-        out.second.insert(itag, url);
+        streams.insert(itag, url);
     }
 
-    return out;
+    //insert in package
+    this->_package.insert(AudioStreamsSource::DASH, streams);
 
 }
 
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const {
-    
-    AudioStreamsPackage out;
-    out.first = PreferedAudioStreamsInfosSource::JSON;
+void StreamsManifest::feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer) {
+    //TODO
+}
 
-    for(auto itagGroup : _adaptiveStreamInfosJson) {
+void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer) {
+
+    AudioStreamUrlByITag streams;
+
+    //iterate
+    for(auto itagGroup : raw) {
+
         auto itagGroupObj = itagGroup.toObject();
 
+        //check mime
         auto mimeType = itagGroupObj["mimeType"].toString();
         if(!_isMimeAllowed(mimeType)) continue;
 
+        //find itag + url
         uint itag = itagGroupObj["itag"].toInt();
         auto url = itagGroupObj["url"].toString();
-
-        //decipher
+        
+        //decipher if no url
         if(url.isEmpty()) {
             
+            //fetch cipher, url and signature
             auto cipher = QUrlQuery(itagGroupObj["cipher"].toString());
             url = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
-
             auto signature = cipher.queryItemValue("s", QUrl::ComponentFormattingOption::FullyDecoded);
+            
+            //find signature param
             auto signatureParameter = cipher.queryItemValue("sp", QUrl::ComponentFormattingOption::FullyDecoded);
             if(signatureParameter.isEmpty()) signatureParameter = "signature";
 
-            signature = dcfrer->decipher(signature);
-            
+            //decipher...
+            signature = decipherer->decipher(signature);
+
+            //append
             url += QString("&%1=%2").arg(signatureParameter).arg(signature);
+
         }
-
-
-        out.second.insert(itag, url);
+        
+        //add tag / url pair
+        streams.insert(itag, url);
 
     }
 
-    return out;
+    //insert in package
+    this->_package.insert(AudioStreamsSource::PlayerResponse, streams);
 
 }
 
-bool PlayerConfiguration::_isCodecAllowed(const QString &codec) {
+void StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {
+    this->_requestedAt = requestedAt;
+}
+void StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
+    this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
+}
+
+StreamsManifest::AudioStreamUrlByITag StreamsManifest::preferedStreamSource() const {
+
+    auto sources = this->_package.keys();
+    std::sort(sources.begin(), sources.end());
+
+    for(auto source : sources) {
+        auto ASUBIT = this->_package.value(source);
+        if(ASUBIT.count()) return ASUBIT;
+    }
+
+    throw std::logic_error("No audio stream source found !");
+    
+}
+
+QUrl StreamsManifest::preferedUrl() const {
+    return this->preferedStreamSource().values().first();
+}
+
+bool StreamsManifest::isExpired() const {
+    if(this->_validUntil.isNull()) return true;
+    return QDateTime::currentDateTime() > this->_validUntil;
+}
+
+
+bool StreamsManifest::_isCodecAllowed(const QString &codec) {
     if(codec.contains(QStringLiteral(u"opus"))) return true;
     return false;
 }
 
-bool PlayerConfiguration::_isMimeAllowed(const QString &mime) {
+bool StreamsManifest::_isMimeAllowed(const QString &mime) {
     if(!mime.contains(QStringLiteral(u"audio"))) return false;
     return _isCodecAllowed(mime);
 }
 
-QJsonArray PlayerConfiguration::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
+QJsonArray StreamsManifest::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
 
     QJsonArray out;
 
