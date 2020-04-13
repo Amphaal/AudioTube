@@ -101,6 +101,6 @@ TEST_CASE( "Restricted viewing", "[metadata]" ) {
   REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
 }
 
-// TEST_CASE("unknown", "[metadata]") {
-//   REQUIRE(youtube_metadata_fetching_succeeded("lkkHtuTdIj4"));
-// }
+TEST_CASE("Exact STS required", "[metadata]") {
+  REQUIRE(youtube_metadata_fetching_succeeded("lkkHtuTdIj4"));
+}

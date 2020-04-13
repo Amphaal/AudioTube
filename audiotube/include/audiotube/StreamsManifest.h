@@ -29,10 +29,10 @@
 
 class StreamsManifest : public NetworkHelper {
     public:
-        enum AudioStreamsSource {
-            DASH, 
+        enum class AudioStreamsSource {
+            PlayerResponse,
             PlayerConfig,
-            PlayerResponse
+            DASH
         };
 
         using RawDASHManifest = QString;
@@ -66,3 +66,5 @@ class StreamsManifest : public NetworkHelper {
         static bool _isMimeAllowed(const QString &mime);
         static QJsonArray _urlEncodedToJsonArray(const QString &urlQueryAsRawStr);
 };
+
+inline uint qHash(const StreamsManifest::AudioStreamsSource &key, uint seed = 0) {return uint(key) ^ seed;}

@@ -103,11 +103,21 @@ void StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
 }
 
 StreamsManifest::AudioStreamUrlByITag StreamsManifest::preferedStreamSource() const {
-    //TODO
+
+    auto sources = this->_package.keys();
+    std::sort(sources.begin(), sources.end());
+
+    for(auto source : sources) {
+        auto ASUBIT = this->_package.value(source);
+        if(ASUBIT.count()) return ASUBIT;
+    }
+
+    throw std::logic_error("No audio stream source found !");
+    
 }
 
 QUrl StreamsManifest::preferedUrl() const {
-    //TODO
+    return this->preferedStreamSource().values().first();
 }
 
 bool StreamsManifest::isExpired() const {

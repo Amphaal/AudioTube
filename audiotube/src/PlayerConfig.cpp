@@ -110,7 +110,7 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
         d.resolve((bool)cachedDecipherer, stsNeeded);
 
     })
-    .then([=](bool cachedDecipherer, bool stsNeeded){
+    .then([=](bool cachedDecipherer, bool stsNeeded) {
         
         //if no cached decipherer or if STS is needed
         if(!cachedDecipherer || stsNeeded) {
@@ -132,6 +132,8 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
 
             });
         }
+
+        return promise::resolve();
 
     });
 
