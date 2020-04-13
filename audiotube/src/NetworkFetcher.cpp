@@ -39,8 +39,8 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
            d.reject();
         };
         
-        _getPlayerConfiguration(toRefresh) 
-        .then(_fetchDecipherer)
+        _getStreamContext(toRefresh) 
+        .then(_extractDeciphererAndStsFromPlayerSource)
         .then(_mayFillDashManifestXml)
         .then([=](PlayerConfiguration &pConfig, const SignatureDecipherer* decipherer, const DownloadedUtf8 &rawDashManifest) {
             pConfig.fillRawDashManifest(rawDashManifest);
@@ -95,25 +95,25 @@ void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded,
 
 }
 
-promise::Defer NetworkFetcher::_getPlayerConfiguration(VideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_getStreamContext(VideoMetadata* metadata) {
     
-    switch (metadata->preferedPlayerConfigFetchingMethod()) {  
+    switch (metadata->preferedStreamContextSource()) {  
         
-        case VideoMetadata::PreferedPlayerConfigFetchingMethod::VideoInfo: {
-            return _getPlayerConfiguration_VideoInfo(metadata);
+        case VideoMetadata::PreferedStreamContextSource::VideoInfo: {
+            return _getStreamContext_VideoInfo(metadata);
         }
         break;
         
-        case VideoMetadata::PreferedPlayerConfigFetchingMethod::WatchPage: {
-            return _getPlayerConfiguration_WatchPage(metadata);
+        case VideoMetadata::PreferedStreamContextSource::WatchPage: {
+            return _getStreamContext_WatchPage(metadata);
         }
         break;        
         
-        case VideoMetadata::PreferedPlayerConfigFetchingMethod::Unknown: {
-            return _getPlayerConfiguration_VideoInfo(metadata)
+        case VideoMetadata::PreferedStreamContextSource::Unknown: {
+            return _getStreamContext_VideoInfo(metadata)
                    .fail([=](const QString &softErr){
                         qDebug() << qUtf8Printable(softErr);
-                        return _getPlayerConfiguration_WatchPage(metadata);
+                        return _getStreamContext_WatchPage(metadata);
                     });
         }
         break;
@@ -124,7 +124,7 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration(VideoMetadata* metadata) 
 
 }
 
-promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_getStreamContext_VideoInfo(VideoMetadata* metadata) {
     
     auto videoId = metadata->id();
     auto temp_dh = new DataHolder;
@@ -164,14 +164,14 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration_VideoInfo(VideoMetadata* 
         metadata->setTitle(temp_dh->title);
         metadata->setDuration(temp_dh->duration);
         metadata->setExpirationDate(temp_dh->expirationDate);
-        metadata->setPreferedPlayerConfigFetchingMethod(VideoMetadata::PreferedPlayerConfigFetchingMethod::VideoInfo);
+        metadata->setPreferedStreamContextSource(VideoMetadata::PreferedStreamContextSource::VideoInfo);
 
         return pConfig;
 
     });
 }
 
-promise::Defer NetworkFetcher::_getPlayerConfiguration_WatchPage(VideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_getStreamContext_WatchPage(VideoMetadata* metadata) {
     return _getWatchPageHtml(metadata->id())
             .then(_extractDataFrom_WatchPage)
             .then([=](
@@ -196,7 +196,7 @@ promise::Defer NetworkFetcher::_getPlayerConfiguration_WatchPage(VideoMetadata* 
                 metadata->setTitle(title);
                 metadata->setDuration(duration);
                 metadata->setExpirationDate(expirationDate);
-                metadata->setPreferedPlayerConfigFetchingMethod(VideoMetadata::PreferedPlayerConfigFetchingMethod::WatchPage);
+                metadata->setPreferedStreamContextSource(VideoMetadata::PreferedStreamContextSource::WatchPage);
 
                 return pConfig;
             
@@ -310,7 +310,7 @@ promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUt
     
 }
 
-promise::Defer NetworkFetcher::_fetchDecipherer(PlayerConfiguration &playerConfig) {
+promise::Defer NetworkFetcher::_extractDeciphererAndStsFromPlayerSource(PlayerConfiguration &playerConfig) {
     return promise::newPromise([=](promise::Defer d){
         
         auto ytPlayerSourceUrl = playerConfig.playerSourceUrl();
@@ -325,6 +325,8 @@ promise::Defer NetworkFetcher::_fetchDecipherer(PlayerConfiguration &playerConfi
                     ytPlayerSourceUrl,
                     dl
                 );
+
+                qDebug() << dl;
 
                 d.resolve(playerConfig, newDecipherer);
 
@@ -412,14 +414,15 @@ promise::Defer NetworkFetcher::_extractDataFrom_WatchPage(const DownloadedUtf8 &
 
 }
 
-promise::Defer NetworkFetcher::_getVideoInfosDic(const VideoMetadata::Id &videoId) {
+promise::Defer NetworkFetcher::_getVideoInfosDic(const VideoMetadata::Id &videoId, const QString &sts) {
 
     auto apiUrl = QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
     auto encodedApiUrl = QString::fromUtf8(QUrl::toPercentEncoding(apiUrl));
 
-    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%2&hl=en&sts=18333")
+    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%2&hl=en&sts=%3")
         .arg(videoId)
-        .arg(encodedApiUrl);
+        .arg(encodedApiUrl)
+        .arg(sts);
 
     auto requestedAt = QDateTime::currentDateTime();
 

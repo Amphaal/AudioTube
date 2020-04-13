@@ -55,11 +55,11 @@ class NetworkFetcher : public NetworkHelper {
     private:
         static promise::Defer _getVideoEmbedPageHtml(const VideoMetadata::Id &videoId);
         static promise::Defer _getWatchPageHtml(const VideoMetadata::Id &videoId);
-        static promise::Defer _getVideoInfosDic(const VideoMetadata::Id &videoId);
+        static promise::Defer _getVideoInfosDic(const VideoMetadata::Id &videoId, const QString &sts);
 
-        static promise::Defer _getPlayerConfiguration(VideoMetadata* metadata);
-        static promise::Defer _getPlayerConfiguration_VideoInfo(VideoMetadata* metadata);
-        static promise::Defer _getPlayerConfiguration_WatchPage(VideoMetadata* metadata);
+        static promise::Defer _getStreamContext(VideoMetadata* metadata);
+        static promise::Defer _getStreamContext_VideoInfo(VideoMetadata* metadata);
+        static promise::Defer _getStreamContext_WatchPage(VideoMetadata* metadata);
 
         static promise::Defer _extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
         static promise::Defer _extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData);
@@ -68,7 +68,7 @@ class NetworkFetcher : public NetworkHelper {
         static QString _extractPlayerSourceUrlFromPlayerConfig(const QJsonObject &playerConfig);
         static QJsonObject _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex);
 
-        static promise::Defer _fetchDecipherer(PlayerConfiguration &playerConfig);
+        static promise::Defer _extractDeciphererAndStsFromPlayerSource(PlayerConfiguration &playerConfig);
 
         static promise::Defer _mayFillDashManifestXml(PlayerConfiguration &playerConfig, const SignatureDecipherer* decipherer);
 

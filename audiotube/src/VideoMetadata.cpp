@@ -26,12 +26,12 @@ VideoMetadata* VideoMetadata::fromVideoUrl(const QString &url) {
     return new VideoMetadata(url, InstantiationType::InstFromUrl);
 }
 
-void VideoMetadata::setPreferedPlayerConfigFetchingMethod(const VideoMetadata::PreferedPlayerConfigFetchingMethod &method) {
-    this->_preferedPlayerConfigFetchingMethod = method;
+void VideoMetadata::setPreferedStreamContextSource(const VideoMetadata::PreferedStreamContextSource &method) {
+    this->_preferedStreamContextSource = method;
 }
 
-VideoMetadata::PreferedPlayerConfigFetchingMethod VideoMetadata::preferedPlayerConfigFetchingMethod() const {
-    return this->_preferedPlayerConfigFetchingMethod;
+VideoMetadata::PreferedStreamContextSource VideoMetadata::preferedStreamContextSource() const {
+    return this->_preferedStreamContextSource;
 }
 
 PlayerConfiguration::PreferedAudioStreamsInfosSource VideoMetadata::preferedAudioStreamsInfosSource() const {

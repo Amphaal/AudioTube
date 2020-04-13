@@ -102,10 +102,12 @@ PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStre
     for(auto itagGroup : _adaptiveStreamInfosJson) {
         auto itagGroupObj = itagGroup.toObject();
 
-        auto mimeType = itagGroupObj["mimeType"].toString();
-        if(!_isMimeAllowed(mimeType)) continue;
-
         uint itag = itagGroupObj["itag"].toInt();
+        if(itag != 18) continue;
+
+        // auto mimeType = itagGroupObj["mimeType"].toString();
+        // if(!_isMimeAllowed(mimeType)) continue;
+
         auto url = itagGroupObj["url"].toString();
 
         //decipher
@@ -114,13 +116,20 @@ PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStre
             auto cipher = QUrlQuery(itagGroupObj["cipher"].toString());
             url = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
 
+            qDebug() << url;
             auto signature = cipher.queryItemValue("s", QUrl::ComponentFormattingOption::FullyDecoded);
+            
+            //find signature param
             auto signatureParameter = cipher.queryItemValue("sp", QUrl::ComponentFormattingOption::FullyDecoded);
             if(signatureParameter.isEmpty()) signatureParameter = "signature";
 
+            //decipher...
             signature = dcfrer->decipher(signature);
-            
+            qDebug() << signature;
+
+            //append
             url += QString("&%1=%2").arg(signatureParameter).arg(signature);
+
         }
 
 
