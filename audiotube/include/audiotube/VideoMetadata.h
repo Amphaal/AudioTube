@@ -22,7 +22,7 @@
 
 #include <QDebug>
 
-#include "PlayerConfiguration.h"
+#include "VideoContext.h"
 
 class VideoMetadata : public QObject {
     
@@ -55,17 +55,17 @@ class VideoMetadata : public QObject {
         bool hasFailed() const;
         bool ranOnce() const;
         PreferedStreamContextSource preferedStreamContextSource() const;
-        PlayerConfiguration::PreferedAudioStreamsInfosSource preferedAudioStreamsInfosSource() const;
+        VideoContext::PreferedAudioStreamsInfosSource preferedAudioStreamsInfosSource() const;
 
         void setTitle(const QString &title);
         void setDuration(int durationInSeconds);
         void setExpirationDate(const QDateTime &expiration);
-        void setAudioStreamsPackage(const PlayerConfiguration::AudioStreamsPackage &streamInfos);
+        void setAudioStreamsPackage(const VideoContext::AudioStreamsPackage &streamInfos);
         void setFailure(bool failed);
         void setRanOnce();
         void setPreferedStreamContextSource(const PreferedStreamContextSource &method);
 
-        const PlayerConfiguration::AudioStreamUrlByITag& audioStreams() const;
+        const VideoContext::AudioStreamUrlByITag& audioStreams() const;
 
     signals:
         void metadataFetching();
@@ -82,10 +82,10 @@ class VideoMetadata : public QObject {
         bool _failed = false;
         bool _ranOnce = false;
 
-        PlayerConfiguration::AudioStreamUrlByITag _audioStreamInfos;
+        VideoContext::AudioStreamUrlByITag _audioStreamInfos;
 
         PreferedStreamContextSource _preferedStreamContextSource = PreferedStreamContextSource::Unknown;
-        PlayerConfiguration::PreferedAudioStreamsInfosSource _preferedAudioStreamsInfosSource = PlayerConfiguration::PreferedAudioStreamsInfosSource::Unknown;
+        VideoContext::PreferedAudioStreamsInfosSource _preferedAudioStreamsInfosSource = VideoContext::PreferedAudioStreamsInfosSource::Unknown;
 
         QDateTime _validUntil;
 

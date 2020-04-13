@@ -30,7 +30,7 @@
 #include "_NetworkHelper.h"
 #include "_DebugHelper.h"
 
-#include "PlayerConfiguration.h"
+#include "VideoContext.h"
 #include "VideoMetadata.h"
 
 class NetworkFetcher : public NetworkHelper {
@@ -53,8 +53,6 @@ class NetworkFetcher : public NetworkHelper {
         static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, QString* urlSuccessfullyRequested = nullptr);
 
     private:
-        static promise::Defer _getVideoEmbedPageHtml(const VideoMetadata::Id &videoId);
-        static promise::Defer _getWatchPageHtml(const VideoMetadata::Id &videoId);
         static promise::Defer _getVideoInfosDic(const VideoMetadata::Id &videoId, const QString &sts);
 
         static promise::Defer _getStreamContext(VideoMetadata* metadata);
@@ -68,9 +66,7 @@ class NetworkFetcher : public NetworkHelper {
         static QString _extractPlayerSourceUrlFromPlayerConfig(const QJsonObject &playerConfig);
         static QJsonObject _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex);
 
-        static promise::Defer _extractDeciphererAndStsFromPlayerSource(PlayerConfiguration &playerConfig);
-
-        static promise::Defer _mayFillDashManifestXml(PlayerConfiguration &playerConfig, const SignatureDecipherer* decipherer);
+        static promise::Defer _mayFillDashManifestXml(VideoContext &playerConfig, const SignatureDecipherer* decipherer);
 
         static QList<QString> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
         static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<QString> &videoIds);

@@ -40,9 +40,8 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
         };
         
         _getStreamContext(toRefresh) 
-        .then(_extractDeciphererAndStsFromPlayerSource)
         .then(_mayFillDashManifestXml)
-        .then([=](PlayerConfiguration &pConfig, const SignatureDecipherer* decipherer, const DownloadedUtf8 &rawDashManifest) {
+        .then([=](VideoContext &pConfig, const SignatureDecipherer* decipherer, const DownloadedUtf8 &rawDashManifest) {
             pConfig.fillRawDashManifest(rawDashManifest);
             auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
             toRefresh->setAudioStreamsPackage(audioStreams);
@@ -65,7 +64,7 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
     });
 };
 
-promise::Defer NetworkFetcher::_mayFillDashManifestXml(PlayerConfiguration &playerConfig, const SignatureDecipherer* decipherer) {
+promise::Defer NetworkFetcher::_mayFillDashManifestXml(VideoContext &playerConfig, const SignatureDecipherer* decipherer) {
     return promise::newPromise([=](promise::Defer d){
         
         //if Dash manifest url is empty, resolve
@@ -137,6 +136,10 @@ promise::Defer NetworkFetcher::_getStreamContext_VideoInfo(VideoMetadata* metada
                     temp_dh->title = title;
                     temp_dh->duration = duration;
                 });
+
+    // _extractDeciphererAndStsFromPlayerSource()
+
+                
     auto vinfos = _getVideoInfosDic(videoId)
                   .then(_extractDataFrom_VideoInfos)
                   .then([=](const QDateTime &expirationDate, const QString &dashManifestUrl, const QString &streamInfos_UrlEncoded, const QJsonArray &streamInfos_JSON) {
@@ -152,7 +155,7 @@ promise::Defer NetworkFetcher::_getStreamContext_VideoInfo(VideoMetadata* metada
     .then([=]() {
 
         //define pConfig
-        PlayerConfiguration pConfig(
+        VideoContext pConfig(
             temp_dh->playerSourceUrl,
             temp_dh->dashManifestUrl,
             temp_dh->streamInfos_UrlEncoded,
@@ -184,7 +187,7 @@ promise::Defer NetworkFetcher::_getStreamContext_WatchPage(VideoMetadata* metada
                 const QJsonArray &streamInfos_JSON
             ){
                 //define pConfig
-                PlayerConfiguration pConfig(
+                VideoContext pConfig(
                     playerSourceUrl,
                     dashManifestUrl,
                     streamInfos_UrlEncoded,
@@ -310,7 +313,7 @@ promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUt
     
 }
 
-promise::Defer NetworkFetcher::_extractDeciphererAndStsFromPlayerSource(PlayerConfiguration &playerConfig) {
+promise::Defer NetworkFetcher::_extractDeciphererAndStsFromPlayerSource(VideoContext &playerConfig) {
     return promise::newPromise([=](promise::Defer d){
         
         auto ytPlayerSourceUrl = playerConfig.playerSourceUrl();
@@ -332,18 +335,6 @@ promise::Defer NetworkFetcher::_extractDeciphererAndStsFromPlayerSource(PlayerCo
 
             });
         }
-    });
-}
-
-promise::Defer NetworkFetcher::_getWatchPageHtml(const VideoMetadata::Id &videoId) {
-    auto url = QStringLiteral("https://www.youtube.com/watch?v=%1&bpctr=9999999999&hl=en").arg(videoId);
-    auto requestedAt = QDateTime::currentDateTime();
-
-    return promise::newPromise([=](promise::Defer d){
-        download(url)
-        .then([=](const DownloadedUtf8 &dlAsStr){
-            d.resolve(dlAsStr, requestedAt); 
-        });
     });
 }
 
@@ -433,12 +424,6 @@ promise::Defer NetworkFetcher::_getVideoInfosDic(const VideoMetadata::Id &videoI
         });
     });
 
-}
-
-
-promise::Defer NetworkFetcher::_getVideoEmbedPageHtml(const VideoMetadata::Id &videoId) {
-    auto videoEmbedPageHtmlUrl = QStringLiteral(u"https://www.youtube.com/embed/%1?hl=en").arg(videoId);
-    return download(videoEmbedPageHtmlUrl);
 }
 
 

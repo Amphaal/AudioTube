@@ -34,7 +34,7 @@ VideoMetadata::PreferedStreamContextSource VideoMetadata::preferedStreamContextS
     return this->_preferedStreamContextSource;
 }
 
-PlayerConfiguration::PreferedAudioStreamsInfosSource VideoMetadata::preferedAudioStreamsInfosSource() const {
+VideoContext::PreferedAudioStreamsInfosSource VideoMetadata::preferedAudioStreamsInfosSource() const {
     return this->_preferedAudioStreamsInfosSource;
 }
 
@@ -127,9 +127,9 @@ void VideoMetadata::setExpirationDate(const QDateTime &expiration) {
     this->_validUntil = expiration;
 }
 
-void VideoMetadata::setAudioStreamsPackage(const PlayerConfiguration::AudioStreamsPackage &streamInfos) {
+void VideoMetadata::setAudioStreamsPackage(const VideoContext::AudioStreamsPackage &streamInfos) {
     
-    if(streamInfos.first == PlayerConfiguration::PreferedAudioStreamsInfosSource::Unknown || !streamInfos.second.count()) 
+    if(streamInfos.first == VideoContext::PreferedAudioStreamsInfosSource::Unknown || !streamInfos.second.count()) 
         throw std::logic_error("Setting empty audio stream Infos is not allowed !");
     
     this->_audioStreamInfos = streamInfos.second;
@@ -137,6 +137,6 @@ void VideoMetadata::setAudioStreamsPackage(const PlayerConfiguration::AudioStrea
 
 }
 
-const PlayerConfiguration::AudioStreamUrlByITag& VideoMetadata::audioStreams() const {
+const VideoContext::AudioStreamUrlByITag& VideoMetadata::audioStreams() const {
     return this->_audioStreamInfos;
 }

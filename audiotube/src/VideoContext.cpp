@@ -12,9 +12,9 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-#include "PlayerConfiguration.h"
+#include "VideoContext.h"
 
-PlayerConfiguration::PlayerConfiguration(
+VideoContext::VideoContext(
     const QString &playerSourceUrl, 
     const QString &dashManifestUrl, 
     const QString &adaptiveStreamInfosUrlEncoded, 
@@ -35,34 +35,34 @@ PlayerConfiguration::PlayerConfiguration(
         throw std::logic_error("Stream infos cannot be fetched !");
 }
 
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const {
+VideoContext::AudioStreamsPackage VideoContext::getUrlsByAudioStreams(const SignatureDecipherer* dcfrer) const {
     if(adaptiveStreamAsDash) return getUrlsByAudioStreams_DASH(dcfrer);
     if(adaptiveStreamAsJson) return getUrlsByAudioStreams_JSON(dcfrer);
     if(adaptiveStreamAsUrlEncoded) return getUrlsByAudioStreams_UrlEncoded(dcfrer);
     throw std::logic_error("Unhandled Stream infos type !");
 }
 
-QString PlayerConfiguration::playerSourceUrl() const {
+QString VideoContext::playerSourceUrl() const {
     return _playerSourceUrl;
 }
 
 //Dash manifest deciphering not handled yet ! //TODO
-QString PlayerConfiguration::decipherDashManifestUrl(const SignatureDecipherer* dcfrer) const {
+QString VideoContext::decipherDashManifestUrl(const SignatureDecipherer* dcfrer) const {
     return _dashManifestUrl;
 }
 
-void PlayerConfiguration::fillRawDashManifest(const RawDashManifest &rawDashManifest) {
+void VideoContext::fillRawDashManifest(const RawDashManifest &rawDashManifest) {
     _rawDashManifest = rawDashManifest;
 }
 
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const {
+VideoContext::AudioStreamsPackage VideoContext::getUrlsByAudioStreams_UrlEncoded(const SignatureDecipherer* dcfrer) const {
     AudioStreamsPackage out;
     out.first = PreferedAudioStreamsInfosSource::UrlEncoded;
     
     throw std::runtime_error("Stream info format not handled yet !"); //TODO
 }
 
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
+VideoContext::AudioStreamsPackage VideoContext::getUrlsByAudioStreams_DASH(const SignatureDecipherer* dcfrer) const {
     
     //check if raw data is here
     if(_rawDashManifest.isEmpty())
@@ -94,7 +94,7 @@ PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStre
 
 }
 
-PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const {
+VideoContext::AudioStreamsPackage VideoContext::getUrlsByAudioStreams_JSON(const SignatureDecipherer* dcfrer) const {
     
     AudioStreamsPackage out;
     out.first = PreferedAudioStreamsInfosSource::JSON;
@@ -141,17 +141,17 @@ PlayerConfiguration::AudioStreamsPackage PlayerConfiguration::getUrlsByAudioStre
 
 }
 
-bool PlayerConfiguration::_isCodecAllowed(const QString &codec) {
+bool VideoContext::_isCodecAllowed(const QString &codec) {
     if(codec.contains(QStringLiteral(u"opus"))) return true;
     return false;
 }
 
-bool PlayerConfiguration::_isMimeAllowed(const QString &mime) {
+bool VideoContext::_isMimeAllowed(const QString &mime) {
     if(!mime.contains(QStringLiteral(u"audio"))) return false;
     return _isCodecAllowed(mime);
 }
 
-QJsonArray PlayerConfiguration::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
+QJsonArray VideoContext::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
 
     QJsonArray out;
 

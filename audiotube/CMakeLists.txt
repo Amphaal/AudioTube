@@ -36,7 +36,7 @@ target_sources(audiotube PRIVATE
 target_sources(audiotube PRIVATE
     src/NetworkFetcher.cpp
     src/SignatureDecipherer.cpp
-    src/PlayerConfiguration.cpp
+    src/VideoContext.cpp
     src/VideoMetadata.cpp
     src/_NetworkHelper.cpp
     src/_DebugHelper.cpp

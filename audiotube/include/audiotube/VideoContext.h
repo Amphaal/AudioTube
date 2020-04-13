@@ -26,7 +26,7 @@
 #include "_DebugHelper.h"
 #include "SignatureDecipherer.h"
 
-class PlayerConfiguration {
+class VideoContext {
     public:
         enum PreferedAudioStreamsInfosSource {
             Unknown,
@@ -38,7 +38,7 @@ class PlayerConfiguration {
         
         using AudioStreamUrlByITag = QHash<uint, QUrl>;
         using AudioStreamsPackage = QPair<PreferedAudioStreamsInfosSource, AudioStreamUrlByITag>;
-        PlayerConfiguration(
+        VideoContext(
             const QString &playerSourceUrl, 
             const QString &dashManifestUrl, 
             const QString &adaptiveStreamInfosUrlEncoded, 
