@@ -17,7 +17,6 @@
 PlayerConfig::PlayerConfig(const VideoMetadata::PreferedStreamContextSource &streamContextSource, const VideoMetadata::Id &videoId) {
     this->_contextSource = streamContextSource;
     this->_videoId = videoId;
-    this->_requestedAt = QDateTime::currentDateTime();
 }
 
 promise::Defer PlayerConfig::from(const VideoMetadata::PreferedStreamContextSource &streamContextSource, const VideoMetadata::Id &videoId) {
@@ -39,11 +38,18 @@ promise::Defer PlayerConfig::from(const VideoMetadata::PreferedStreamContextSour
 }
     
 promise::Defer PlayerConfig::_from_VideoInfo(PlayerConfig &pConfig) {
-    //TODO
+    return _downloadRaw_VideoEmbedPageHtml(pConfig._videoId)
+            .then([=](const DownloadedUtf8 &dl) mutable {
+                return pConfig._fillFrom_VideoEmbedPageHtml(dl);
+            });
 }
 
 promise::Defer PlayerConfig::_from_WatchPage(PlayerConfig &pConfig) {
-    //TODO
+    pConfig._WatchPage_requestedAt = QDateTime::currentDateTime();
+    return _downloadRaw_WatchPageHtml(pConfig._videoId)
+            .then([=](const DownloadedUtf8 &dl) mutable {
+                return pConfig._fillFrom_WatchPageHtml(dl);
+            });
 }
 
 promise::Defer PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const VideoMetadata::Id &videoId) {
@@ -117,6 +123,28 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
     });
 }
 
+promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
+    return promise::newPromise([=](promise::Defer d) {
+        
+        auto playerConfig = _extractPlayerConfigFromRawSource(dl,
+            QRegularExpression("yt\\.setConfig\\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\\);")
+        );
+
+        //get title and duration
+        auto args = playerConfig[QStringLiteral(u"args")].toObject();
+        this->_title = args[QStringLiteral(u"title")].toString();
+        this->_duration = args[QStringLiteral(u"length_seconds")].toInt();
+
+        if(this->_title.isEmpty()) throw std::logic_error("Video title cannot be found !");
+        if(!this->_duration) throw std::logic_error("Video length cannot be found !");
+
+        //player source
+        auto playerSourceUrl = _playerSourceUrl(playerConfig);
+        return _downloadAndfillFrom_PlayerSource(playerSourceUrl);
+
+    });
+}
+
 promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl) {
     
     return promise::newPromise([=](promise::Defer d) {
@@ -164,20 +192,18 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl) {
         }
 
         //set expiration date
-        this->_expireAt = this->_requestedAt.addSecs((qint64)expiresIn.toDouble());
+        this->_WatchPage_expireAt = this->_WatchPage_requestedAt.addSecs((qint64)expiresIn.toDouble());
 
         //DASH manifest URL
-        auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
+        this->_WatchPage_dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
+
+        //raw stream infos
+        this->_WatchPage_raw_playerConfigStreams = args.value(QStringLiteral(u"adaptive_fmts")).toString();
+        this->_WatchPage_raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
 
         // Extract player source URL
         auto playerSourceUrl = _playerSourceUrl(playerConfig);
-        _downloadAndfillFrom_PlayerSource(playerSourceUrl).then([=]() {
-            
-            //TODO 
-            auto raw_playerConfigStreams = args.value(QStringLiteral(u"adaptive_fmts")).toString();
-            auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
-
-        });
+        return _downloadAndfillFrom_PlayerSource(playerSourceUrl);
 
     });
 

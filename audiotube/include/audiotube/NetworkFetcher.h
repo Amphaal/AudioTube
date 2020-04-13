@@ -56,15 +56,9 @@ class NetworkFetcher : public NetworkHelper {
         static promise::Defer _getVideoInfosDic(const VideoMetadata::Id &videoId, const QString &sts);
 
         static promise::Defer _getStreamContext(VideoMetadata* metadata);
-        static promise::Defer _getStreamContext_VideoInfo(VideoMetadata* metadata);
-        static promise::Defer _getStreamContext_WatchPage(VideoMetadata* metadata);
 
         static promise::Defer _extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
         static promise::Defer _extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData);
-        static promise::Defer _extractDataFrom_WatchPage(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
-
-        static QString _extractPlayerSourceUrlFromPlayerConfig(const QJsonObject &playerConfig);
-        static QJsonObject _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex);
 
         static promise::Defer _mayFillDashManifestXml(VideoContext &playerConfig, const SignatureDecipherer* decipherer);
 

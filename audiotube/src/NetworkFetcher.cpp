@@ -174,38 +174,6 @@ promise::Defer NetworkFetcher::_getStreamContext_VideoInfo(VideoMetadata* metada
     });
 }
 
-promise::Defer NetworkFetcher::_getStreamContext_WatchPage(VideoMetadata* metadata) {
-    return _getWatchPageHtml(metadata->id())
-            .then(_extractDataFrom_WatchPage)
-            .then([=](
-                const QDateTime &expirationDate, 
-                const QString &playerSourceUrl,
-                const QString &title, 
-                const int duration, 
-                const QString &dashManifestUrl,
-                const QString &streamInfos_UrlEncoded,
-                const QJsonArray &streamInfos_JSON
-            ){
-                //define pConfig
-                VideoContext pConfig(
-                    playerSourceUrl,
-                    dashManifestUrl,
-                    streamInfos_UrlEncoded,
-                    streamInfos_JSON,
-                    expirationDate
-                );
-
-                //update metadata
-                metadata->setTitle(title);
-                metadata->setDuration(duration);
-                metadata->setExpirationDate(expirationDate);
-                metadata->setPreferedStreamContextSource(VideoMetadata::PreferedStreamContextSource::WatchPage);
-
-                return pConfig;
-            
-            });
-}
-
 
 promise::Defer NetworkFetcher::_extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt) {
     return promise::newPromise([=](promise::Defer d) {
@@ -265,26 +233,6 @@ promise::Defer NetworkFetcher::_extractDataFrom_VideoInfos(const DownloadedUtf8 
     });
 }
 
-QString NetworkFetcher::_extractPlayerSourceUrlFromPlayerConfig(const QJsonObject &playerConfig) {
-    auto playerSourceUrlPath = playerConfig[QStringLiteral(u"assets")].toObject()[QStringLiteral(u"js")].toString();
-    if(playerSourceUrlPath.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
-    return QStringLiteral("https://www.youtube.com") + playerSourceUrlPath;
-}
-
-QJsonObject NetworkFetcher::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex) {
-    
-    auto playerConfigAsStr = regex.match(rawSource).captured("playerConfig");
-    auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
-
-    //check config exists
-    if(playerConfigAsStr.isEmpty() || playerConfig.isEmpty()) {
-        throw std::logic_error("Player response is missing !");
-    }
-
-    return playerConfig;
-
-}
-
 promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData) {
 
     return promise::newPromise([=](promise::Defer d) {
@@ -311,98 +259,6 @@ promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUt
 
     });
     
-}
-
-promise::Defer NetworkFetcher::_extractDeciphererAndStsFromPlayerSource(VideoContext &playerConfig) {
-    return promise::newPromise([=](promise::Defer d){
-        
-        auto ytPlayerSourceUrl = playerConfig.playerSourceUrl();
-        auto cachedDecipherer = SignatureDecipherer::fromCache(ytPlayerSourceUrl);
-
-        if(cachedDecipherer) d.resolve(playerConfig, cachedDecipherer);
-        else {
-            download(ytPlayerSourceUrl)
-            .then([=](const DownloadedUtf8 &dl){
-                
-                auto newDecipherer = SignatureDecipherer::create(
-                    ytPlayerSourceUrl,
-                    dl
-                );
-
-                qDebug() << dl;
-
-                d.resolve(playerConfig, newDecipherer);
-
-            });
-        }
-    });
-}
-
-promise::Defer NetworkFetcher::_extractDataFrom_WatchPage(const DownloadedUtf8 &dl, const QDateTime &requestedAt) {
-    
-    return promise::newPromise([=](promise::Defer d) {
-
-        //get player config JSON
-        auto playerConfig =_extractPlayerConfigFromRawSource(
-            dl,
-            QRegularExpression(QStringLiteral("ytplayer\\.config = (?<playerConfig>.*?)\\;ytplayer"))
-        );
-        
-        // Extract player source URL
-        auto playerSourceUrl = _extractPlayerSourceUrlFromPlayerConfig(playerConfig);
-
-        // Get player response JSON
-        auto args = playerConfig[QStringLiteral(u"args")].toObject();
-        auto playerResponseAsStr = args[QStringLiteral(u"player_response")].toString();
-        auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
-        if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
-            throw std::logic_error("Player response is missing !");
-        }
-
-        //fetch and check video infos
-        auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
-        auto title = videoDetails[QStringLiteral(u"title")].toString();
-        auto duration = videoDetails[QStringLiteral(u"lengthSeconds")].toString().toInt();
-        auto isLive = videoDetails[QStringLiteral(u"isLive")].toBool();
-
-        if(isLive) throw std::logic_error("Live streams are not handled for now!");
-        if(title.isEmpty()) throw std::logic_error("Video title cannot be found !");
-        if(!duration) throw std::logic_error("Video length cannot be found !");
-
-        //check playability status, throw err
-        auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
-        auto pReason = playabilityStatus.value(QStringLiteral(u"reason")).toString();
-        if(!pReason.isNull()) {
-            throw std::logic_error("This video is not available though WatchPage : %1");
-        }
-
-        //get streamingData
-        auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
-        if(streamingData.isEmpty()) {
-            throw std::logic_error("An error occured while fetching video infos");
-        }
-
-        //find expiration
-        auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
-        if(expiresIn.isEmpty()) {
-            throw std::logic_error("An error occured while fetching video infos");
-        }
-
-        //set expiration date
-        auto expirationDate = requestedAt.addSecs((qint64)expiresIn.toDouble());
-
-        d.resolve(
-            expirationDate,
-            playerSourceUrl,
-            title,
-            duration,
-            streamingData.value(QStringLiteral(u"dashManifestUrl")).toString(),
-            args.value(QStringLiteral(u"adaptive_fmts")).toString(),
-            streamingData[QStringLiteral(u"adaptiveFormats")].toArray()
-        );
-
-    });
-
 }
 
 promise::Defer NetworkFetcher::_getVideoInfosDic(const VideoMetadata::Id &videoId, const QString &sts) {

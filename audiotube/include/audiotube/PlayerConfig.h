@@ -29,13 +29,16 @@ class PlayerConfig : public NetworkHelper {
 
         VideoMetadata::PreferedStreamContextSource _contextSource;
         VideoMetadata::Id _videoId;
-
         SignatureDecipherer* _decipherer = nullptr;
-        QDateTime _requestedAt;
-        QDateTime _expireAt;
         QString _title;
         int _duration = 0;
         int _sts = 0;
+
+        QString _WatchPage_dashManifestUrl;
+        QString _WatchPage_raw_playerConfigStreams;
+        QJsonArray _WatchPage_raw_playerResponseStreams;
+        QDateTime _WatchPage_expireAt;
+        QDateTime _WatchPage_requestedAt;
 
         static promise::Defer _from_VideoInfo(PlayerConfig &pConfig);
         static promise::Defer _from_WatchPage(PlayerConfig &pConfig);
@@ -46,9 +49,12 @@ class PlayerConfig : public NetworkHelper {
         promise::Defer _downloadAndfillFrom_PlayerSource(const QString &playerSourceUrl);
 
         promise::Defer _fillFrom_WatchPageHtml(const DownloadedUtf8 &dl);
+        promise::Defer _fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl);
         promise::Defer _fillFrom_PlayerSource(const DownloadedUtf8 &dl, const QString &playerSourceUrl);
-
+        
         static QJsonObject _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex);
+        
+        //extraction helpers
         static QString _playerSourceUrl(const QJsonObject &playerConfig);
         static int _sts(const DownloadedUtf8 &dl);
         
