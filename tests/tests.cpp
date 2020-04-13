@@ -40,7 +40,7 @@ bool stream_are_working(VideoMetadata &metadata) {
 
     //check url
     if(!urlSuccessfullyRequested.isEmpty()) {
-      qDebug() << qUtf8Printable(QString("Stream URL found : %1").arg(urlSuccessfullyRequested));
+      // qDebug() << qUtf8Printable(QString("Stream URL found : %1").arg(urlSuccessfullyRequested));
       return true;
     } 
     else return false;
