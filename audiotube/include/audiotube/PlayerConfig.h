@@ -17,38 +17,41 @@
 #include "_NetworkHelper.h"
 #include "VideoMetadata.h"
 #include "SignatureDecipherer.h"
+#include "StreamsManifest.h"
 
 class PlayerConfig : public NetworkHelper {
     public:
-        static promise::Defer from(const VideoMetadata::PreferedStreamContextSource &streamContextSource, const VideoMetadata::Id &videoId);
+        enum ContextSource {
+            Unknown,
+            VideoInfo,
+            WatchPage
+        };
 
-        QString videoInfoUrl() const;
+        static promise::Defer from_VideoInfo(const VideoMetadata::Id &videoId);
+        static promise::Defer from_WatchPage(const VideoMetadata::Id &videoId, StreamsManifest &streamsManifest);
+
+        QString sts() const;
+        int duration() const;
+        QString title() const;
+        const SignatureDecipherer* decipherer() const;
+        ContextSource contextSource() const;
 
     private:
-        PlayerConfig(const VideoMetadata::PreferedStreamContextSource &streamContextSource, const VideoMetadata::Id &videoId);
+        PlayerConfig();
+        PlayerConfig(const ContextSource &streamContextSource, const VideoMetadata::Id &videoId);
 
-        VideoMetadata::PreferedStreamContextSource _contextSource;
-        VideoMetadata::Id _videoId;
+        ContextSource _contextSource = ContextSource::Unknown;
         SignatureDecipherer* _decipherer = nullptr;
         QString _title;
         int _duration = 0;
-        int _sts = 0;
-
-        QString _WatchPage_dashManifestUrl;
-        QString _WatchPage_raw_playerConfigStreams;
-        QJsonArray _WatchPage_raw_playerResponseStreams;
-        QDateTime _WatchPage_expireAt;
-        QDateTime _WatchPage_requestedAt;
-
-        static promise::Defer _from_VideoInfo(PlayerConfig &pConfig);
-        static promise::Defer _from_WatchPage(PlayerConfig &pConfig);
+        QString _sts;
 
         static promise::Defer _downloadRaw_VideoEmbedPageHtml(const VideoMetadata::Id &videoId);
         static promise::Defer _downloadRaw_WatchPageHtml(const VideoMetadata::Id &videoId);
         
         promise::Defer _downloadAndfillFrom_PlayerSource(const QString &playerSourceUrl);
 
-        promise::Defer _fillFrom_WatchPageHtml(const DownloadedUtf8 &dl);
+        promise::Defer _fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest &streamsManifest);
         promise::Defer _fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl);
         promise::Defer _fillFrom_PlayerSource(const DownloadedUtf8 &dl, const QString &playerSourceUrl);
         
@@ -56,6 +59,6 @@ class PlayerConfig : public NetworkHelper {
         
         //extraction helpers
         static QString _playerSourceUrl(const QJsonObject &playerConfig);
-        static int _sts(const DownloadedUtf8 &dl);
+        static QString _sts(const DownloadedUtf8 &dl);
         
 };

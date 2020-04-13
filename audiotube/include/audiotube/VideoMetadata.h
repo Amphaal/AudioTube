@@ -22,18 +22,14 @@
 
 #include <QDebug>
 
-#include "VideoContext.h"
+#include "PlayerConfig.h"
+#include "StreamsManifest.h"
 
 class VideoMetadata : public QObject {
     
     Q_OBJECT
 
     public:
-        enum PreferedStreamContextSource {
-            Unknown,
-            VideoInfo,
-            WatchPage
-        };
         enum InstantiationType {
             InstFromId,
             InstFromUrl
@@ -46,26 +42,18 @@ class VideoMetadata : public QObject {
         static VideoMetadata* fromVideoId(const QString &videoId);
         static QRegularExpression getUrlMatcher();
         
-        QUrl getBestAvailableStreamUrl() const;
         VideoMetadata::Id id() const;
-        QString title() const;
         QString url() const;
-        int duration() const;
-        bool isMetadataValid() const;
         bool hasFailed() const;
         bool ranOnce() const;
-        PreferedStreamContextSource preferedStreamContextSource() const;
-        VideoContext::PreferedAudioStreamsInfosSource preferedAudioStreamsInfosSource() const;
 
-        void setTitle(const QString &title);
-        void setDuration(int durationInSeconds);
-        void setExpirationDate(const QDateTime &expiration);
-        void setAudioStreamsPackage(const VideoContext::AudioStreamsPackage &streamInfos);
         void setFailure(bool failed);
         void setRanOnce();
-        void setPreferedStreamContextSource(const PreferedStreamContextSource &method);
 
-        const VideoContext::AudioStreamUrlByITag& audioStreams() const;
+        void setPlayerConfig(const PlayerConfig &playerConfig);
+
+        StreamsManifest& audioStreams();
+        const PlayerConfig& playerConfig() const;
 
     signals:
         void metadataFetching();
@@ -75,22 +63,13 @@ class VideoMetadata : public QObject {
     private:    
         static QString _urlFromVideoId(const QString &videoId);
 
-        int _durationInSeconds = -1;
         VideoMetadata::Id _videoId;
         QString _url;
-        QString _title;
         bool _failed = false;
         bool _ranOnce = false;
 
-        VideoContext::AudioStreamUrlByITag _audioStreamInfos;
-
-        PreferedStreamContextSource _preferedStreamContextSource = PreferedStreamContextSource::Unknown;
-        VideoContext::PreferedAudioStreamsInfosSource _preferedAudioStreamsInfosSource = VideoContext::PreferedAudioStreamsInfosSource::Unknown;
-
-        QDateTime _validUntil;
-
-        QHash<int, QHash<QString, QString>> _sourceUrlsByItag;
-        QHash<int, QString> _audioTypeByItag;
+        PlayerConfig _playerConfig;
+        StreamsManifest _audioStreams;
 
         static inline QRegularExpression _ytRegexIdFinder = QRegularExpression("(?:youtube\\.com|youtu.be).*?(?:v=|embed\\/)(?<videoId>[\\w\\-]+)");
 };

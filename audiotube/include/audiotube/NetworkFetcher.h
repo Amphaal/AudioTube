@@ -30,37 +30,18 @@
 #include "_NetworkHelper.h"
 #include "_DebugHelper.h"
 
-#include "VideoContext.h"
 #include "VideoMetadata.h"
 
 class NetworkFetcher : public NetworkHelper {
     
     public:
-    
-    //workaround for promise::all bug...
-    struct DataHolder {
-        QString playerSourceUrl;
-        QString title;
-        int duration;
-        QDateTime expirationDate;
-        QString dashManifestUrl;
-        QString streamInfos_UrlEncoded;
-        QJsonArray streamInfos_JSON;
-    };
 
         static promise::Defer fromPlaylistUrl(const QString &url);
         static promise::Defer refreshMetadata(VideoMetadata* toRefresh, bool force = false);
         static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, QString* urlSuccessfullyRequested = nullptr);
 
     private:
-        static promise::Defer _getVideoInfosDic(const VideoMetadata::Id &videoId, const QString &sts);
-
-        static promise::Defer _getStreamContext(VideoMetadata* metadata);
-
-        static promise::Defer _extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt);
-        static promise::Defer _extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData);
-
-        static promise::Defer _mayFillDashManifestXml(VideoContext &playerConfig, const SignatureDecipherer* decipherer);
+        static promise::Defer _refreshMetadata(VideoMetadata* metadata);
 
         static QList<QString> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
         static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<QString> &videoIds);

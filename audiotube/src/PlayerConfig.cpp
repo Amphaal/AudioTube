@@ -14,42 +14,65 @@
 
 #include "PlayerConfig.h"
 
-PlayerConfig::PlayerConfig(const VideoMetadata::PreferedStreamContextSource &streamContextSource, const VideoMetadata::Id &videoId) {
+PlayerConfig::PlayerConfig() {}
+
+PlayerConfig::PlayerConfig(const PlayerConfig::ContextSource &streamContextSource, const VideoMetadata::Id &videoId) {
     this->_contextSource = streamContextSource;
-    this->_videoId = videoId;
 }
 
-promise::Defer PlayerConfig::from(const VideoMetadata::PreferedStreamContextSource &streamContextSource, const VideoMetadata::Id &videoId) {
-    
-    PlayerConfig pConfig(streamContextSource, videoId);
-
-    switch(streamContextSource) {
-
-        case VideoMetadata::PreferedStreamContextSource::VideoInfo:
-            return _from_VideoInfo(pConfig);
-        break;
-
-        case VideoMetadata::PreferedStreamContextSource::WatchPage:
-            return _from_WatchPage(pConfig);
-        break;
-
-    }
-
+QString PlayerConfig::sts() const {
+    return this->_sts;
 }
+
+int PlayerConfig::duration() const {
+    return this->_duration;
+}
+
+QString PlayerConfig::title() const {
+    return this->_title;
+}
+
+const SignatureDecipherer* PlayerConfig::decipherer() const {
+    return this->_decipherer;
+}
+
+PlayerConfig::ContextSource PlayerConfig::contextSource() const {
+    return this->_contextSource;
+}
+
+promise::Defer PlayerConfig::from_VideoInfo(const VideoMetadata::Id &videoId) {
     
-promise::Defer PlayerConfig::_from_VideoInfo(PlayerConfig &pConfig) {
-    return _downloadRaw_VideoEmbedPageHtml(pConfig._videoId)
+    //inst
+    PlayerConfig pConfig(PlayerConfig::ContextSource::VideoInfo, videoId);
+    
+    //pipeline
+    return _downloadRaw_VideoEmbedPageHtml(videoId)
             .then([=](const DownloadedUtf8 &dl) mutable {
                 return pConfig._fillFrom_VideoEmbedPageHtml(dl);
+            })
+            .then([=]() {
+                return pConfig;
             });
+
 }
 
-promise::Defer PlayerConfig::_from_WatchPage(PlayerConfig &pConfig) {
-    pConfig._WatchPage_requestedAt = QDateTime::currentDateTime();
-    return _downloadRaw_WatchPageHtml(pConfig._videoId)
+promise::Defer PlayerConfig::from_WatchPage(const VideoMetadata::Id &videoId, StreamsManifest &streamsManifest) {
+    
+    //inst
+    PlayerConfig pConfig(PlayerConfig::ContextSource::WatchPage, videoId);
+
+    //define requested at timestamp
+    streamsManifest.setRequestedAt(QDateTime::currentDateTime());
+
+    //pipeline
+    return _downloadRaw_WatchPageHtml(videoId)
             .then([=](const DownloadedUtf8 &dl) mutable {
-                return pConfig._fillFrom_WatchPageHtml(dl);
+                return pConfig._fillFrom_WatchPageHtml(dl, streamsManifest);
+            })
+            .then([=]() {
+                return pConfig;
             });
+
 }
 
 promise::Defer PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const VideoMetadata::Id &videoId) {
@@ -93,7 +116,7 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
         }
 
         //if no cached decipherer or if STS is needed
-        auto stsNeeded = this->_contextSource == VideoMetadata::PreferedStreamContextSource::VideoInfo;
+        auto stsNeeded = this->_contextSource == PlayerConfig::ContextSource::VideoInfo;
         if(!cachedDecipherer || stsNeeded) {
             download(playerSourceUrl)
             .then([=](const DownloadedUtf8 &dl) {
@@ -145,9 +168,9 @@ promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &
     });
 }
 
-promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl) {
+promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest &streamsManifest) {
     
-    return promise::newPromise([=](promise::Defer d) {
+    return promise::newPromise([=](promise::Defer d) mutable {
 
         //get player config JSON
         auto playerConfig =_extractPlayerConfigFromRawSource(dl,
@@ -192,23 +215,32 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl) {
         }
 
         //set expiration date
-        this->_WatchPage_expireAt = this->_WatchPage_requestedAt.addSecs((qint64)expiresIn.toDouble());
+        streamsManifest.setSecondsUntilExpiration((qint64)expiresIn.toDouble()); 
 
-        //DASH manifest URL
-        this->_WatchPage_dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
+        //DASH manifest handling
+        auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
+        auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) mutable {
+            streamsManifest.feedRaw_DASH(dl, this->_decipherer);
+        });
 
         //raw stream infos
-        this->_WatchPage_raw_playerConfigStreams = args.value(QStringLiteral(u"adaptive_fmts")).toString();
-        this->_WatchPage_raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
+        auto raw_playerConfigStreams = args.value(QStringLiteral(u"adaptive_fmts")).toString();
+        auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
+
+        //feed
+        streamsManifest.feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
+        streamsManifest.feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
 
         // Extract player source URL
         auto playerSourceUrl = _playerSourceUrl(playerConfig);
-        return _downloadAndfillFrom_PlayerSource(playerSourceUrl);
+        return mayFetchRawDASH.then([=]() {
+            return _downloadAndfillFrom_PlayerSource(playerSourceUrl);
+        });
 
     });
 
 }
 
-int PlayerConfig::_sts(const DownloadedUtf8 &dl) {
+QString PlayerConfig::_sts(const DownloadedUtf8 &dl) {
     //TODO
 }

@@ -26,28 +26,6 @@ VideoMetadata* VideoMetadata::fromVideoUrl(const QString &url) {
     return new VideoMetadata(url, InstantiationType::InstFromUrl);
 }
 
-void VideoMetadata::setPreferedStreamContextSource(const VideoMetadata::PreferedStreamContextSource &method) {
-    this->_preferedStreamContextSource = method;
-}
-
-VideoMetadata::PreferedStreamContextSource VideoMetadata::preferedStreamContextSource() const {
-    return this->_preferedStreamContextSource;
-}
-
-VideoContext::PreferedAudioStreamsInfosSource VideoMetadata::preferedAudioStreamsInfosSource() const {
-    return this->_preferedAudioStreamsInfosSource;
-}
-
-QUrl VideoMetadata::getBestAvailableStreamUrl() const {
-    
-    //sort itags [first is best]
-    auto itags = this->_audioStreamInfos.uniqueKeys();
-    std::sort(itags.begin(), itags.end());
-
-    return this->_audioStreamInfos.value(itags.first());
-
-}
-
 QString VideoMetadata::_urlFromVideoId(const QString &videoId) {
     return QStringLiteral(u"https://www.youtube.com/watch?v=") + videoId;
 }
@@ -81,21 +59,8 @@ VideoMetadata::Id VideoMetadata::id() const {
     return this->_videoId;
 }
 
-QString VideoMetadata::title() const {
-    return this->_title;
-}
-
 QString VideoMetadata::url() const {
     return this->_url;
-}
-
-int VideoMetadata::duration() const {
-    return this->_durationInSeconds;
-}
-
-bool VideoMetadata::isMetadataValid() const {
-    if(this->_validUntil.isNull()) return false;
-    return QDateTime::currentDateTime() < this->_validUntil;
 }
 
 bool VideoMetadata::hasFailed() const {
@@ -115,28 +80,14 @@ void VideoMetadata::setFailure(bool failed) {
     this->_failed = failed;
 }
 
-void VideoMetadata::setTitle(const QString &title) {
-    this->_title = title;
+void VideoMetadata::setPlayerConfig(const PlayerConfig &playerConfig) {
+    this->_playerConfig = playerConfig;
 }
 
-void VideoMetadata::setDuration(int durationInSeconds) {
-    this->_durationInSeconds = durationInSeconds;
+StreamsManifest& VideoMetadata::audioStreams() {
+    return this->_audioStreams;
 }
 
-void VideoMetadata::setExpirationDate(const QDateTime &expiration) {
-    this->_validUntil = expiration;
-}
-
-void VideoMetadata::setAudioStreamsPackage(const VideoContext::AudioStreamsPackage &streamInfos) {
-    
-    if(streamInfos.first == VideoContext::PreferedAudioStreamsInfosSource::Unknown || !streamInfos.second.count()) 
-        throw std::logic_error("Setting empty audio stream Infos is not allowed !");
-    
-    this->_audioStreamInfos = streamInfos.second;
-    this->_preferedAudioStreamsInfosSource = streamInfos.first;
-
-}
-
-const VideoContext::AudioStreamUrlByITag& VideoMetadata::audioStreams() const {
-    return this->_audioStreamInfos;
+const PlayerConfig& VideoMetadata::playerConfig() const{
+    return this->_playerConfig;
 }

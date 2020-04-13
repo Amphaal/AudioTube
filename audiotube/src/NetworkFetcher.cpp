@@ -23,7 +23,7 @@ promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
 promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
     
     //check if soft refresh...
-    if(!force && toRefresh->isMetadataValid()) return promise::resolve(toRefresh);
+    if(!force && !toRefresh->audioStreams().isExpired()) return promise::resolve(toRefresh);
     
     //if not, reset failure flag and emit event
     toRefresh->setFailure(false);
@@ -39,13 +39,7 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
            d.reject();
         };
         
-        _getStreamContext(toRefresh) 
-        .then(_mayFillDashManifestXml)
-        .then([=](VideoContext &pConfig, const SignatureDecipherer* decipherer, const DownloadedUtf8 &rawDashManifest) {
-            pConfig.fillRawDashManifest(rawDashManifest);
-            auto audioStreams = pConfig.getUrlsByAudioStreams(decipherer);
-            toRefresh->setAudioStreamsPackage(audioStreams);
-        })
+        _refreshMetadata(toRefresh) 
         .then([=]() {
             //success !
             toRefresh->setRanOnce();
@@ -64,25 +58,9 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
     });
 };
 
-promise::Defer NetworkFetcher::_mayFillDashManifestXml(VideoContext &playerConfig, const SignatureDecipherer* decipherer) {
-    return promise::newPromise([=](promise::Defer d){
-        
-        //if Dash manifest url is empty, resolve
-        auto decipheredDMUrl = playerConfig.decipherDashManifestUrl(decipherer);
-        if(decipheredDMUrl.isEmpty()) return d.resolve(playerConfig, decipherer, QString());
-
-        //download then fill
-        download(decipheredDMUrl)
-        .then([=](const DownloadedUtf8 &dl) {
-            d.resolve(playerConfig, decipherer, dl);
-        });
-
-    });
-}
-
 void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
     
-    auto bestUrl = toCheck->getBestAvailableStreamUrl();
+    auto bestUrl = toCheck->audioStreams().preferedUrl();
     
     download(bestUrl, true)
         .then([=](){
@@ -94,21 +72,27 @@ void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded,
 
 }
 
-promise::Defer NetworkFetcher::_getStreamContext(VideoMetadata* metadata) {
+promise::Defer NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
     
-    switch (metadata->preferedStreamContextSource()) {  
+    //if player config has never been fetched
+    if(metadata->playerConfig().contextSource() == PlayerConfig::ContextSource::Unknown) {
+
+        PlayerConfig::from_VideoInfo(metadata->id());
+        PlayerConfig::from_WatchPage(metadata->id(), metadata->audioStreams());
+
+    }
         
-        case VideoMetadata::PreferedStreamContextSource::VideoInfo: {
+        case PlayerConfig::ContextSource::VideoInfo: {
             return _getStreamContext_VideoInfo(metadata);
         }
         break;
         
-        case VideoMetadata::PreferedStreamContextSource::WatchPage: {
+        case PlayerConfig::ContextSource::WatchPage: {
             return _getStreamContext_WatchPage(metadata);
         }
         break;        
         
-        case VideoMetadata::PreferedStreamContextSource::Unknown: {
+        case PlayerConfig::ContextSource::Unknown: {
             return _getStreamContext_VideoInfo(metadata)
                    .fail([=](const QString &softErr){
                         qDebug() << qUtf8Printable(softErr);
@@ -122,166 +106,6 @@ promise::Defer NetworkFetcher::_getStreamContext(VideoMetadata* metadata) {
     return promise::resolve();
 
 }
-
-promise::Defer NetworkFetcher::_getStreamContext_VideoInfo(VideoMetadata* metadata) {
-    
-    auto videoId = metadata->id();
-    auto temp_dh = new DataHolder;
-    
-    //fetch data
-    auto embed = _getVideoEmbedPageHtml(videoId)
-                .then(_extractDataFrom_EmbedPageHtml)
-                .then([=](const QString &playerSourceUrl, const QString &title, int duration) {
-                    temp_dh->playerSourceUrl = playerSourceUrl;
-                    temp_dh->title = title;
-                    temp_dh->duration = duration;
-                });
-
-    // _extractDeciphererAndStsFromPlayerSource()
-
-                
-    auto vinfos = _getVideoInfosDic(videoId)
-                  .then(_extractDataFrom_VideoInfos)
-                  .then([=](const QDateTime &expirationDate, const QString &dashManifestUrl, const QString &streamInfos_UrlEncoded, const QJsonArray &streamInfos_JSON) {
-                    temp_dh->expirationDate = expirationDate;
-                    temp_dh->dashManifestUrl = dashManifestUrl;
-                    temp_dh->streamInfos_UrlEncoded = streamInfos_UrlEncoded;
-                    temp_dh->streamInfos_JSON = streamInfos_JSON;
-                });
-
-    // return promise::all({ embed, vinfos }) DO NOT USE promise::all as it fucks up upstream exceptions propagation
-    return embed
-    .then(vinfos)
-    .then([=]() {
-
-        //define pConfig
-        VideoContext pConfig(
-            temp_dh->playerSourceUrl,
-            temp_dh->dashManifestUrl,
-            temp_dh->streamInfos_UrlEncoded,
-            temp_dh->streamInfos_JSON,
-            temp_dh->expirationDate
-        );
-
-        //update metadata
-        metadata->setTitle(temp_dh->title);
-        metadata->setDuration(temp_dh->duration);
-        metadata->setExpirationDate(temp_dh->expirationDate);
-        metadata->setPreferedStreamContextSource(VideoMetadata::PreferedStreamContextSource::VideoInfo);
-
-        return pConfig;
-
-    });
-}
-
-
-promise::Defer NetworkFetcher::_extractDataFrom_VideoInfos(const DownloadedUtf8 &dl, const QDateTime &requestedAt) {
-    return promise::newPromise([=](promise::Defer d) {
- 
-        //as string then to query
-        QUrlQuery videoInfos(dl);
-        
-        //get player response
-        auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
-        auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
-        if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
-            throw std::logic_error("Player response is missing !");
-        }
-
-        //check if is live
-        auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
-        auto isLiveStream = videoDetails.value(QStringLiteral(u"isLive")).toBool();
-        if(isLiveStream) {
-            throw std::logic_error("Live streams are not handled for now!");
-        }
-
-        //check playability status
-        auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
-        auto pStatus = playabilityStatus.value(QStringLiteral(u"status")).toString();
-        if(pStatus.toLower() == "error") {
-            throw std::logic_error("This video is not available !");
-        }
-
-        //check reason, throw soft error
-        auto pReason = playabilityStatus.value(QStringLiteral(u"reason")).toString();
-        if(!pReason.isNull()) {
-            throw QString(qUtf8Printable(QString("This video is not available though VideoInfo : %1").arg(pReason)));
-        }
-
-        //get streamingData
-        auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
-        if(streamingData.isEmpty()) {
-            throw std::logic_error("An error occured while fetching video infos");
-        }
-
-        //find expiration
-        auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
-        if(expiresIn.isEmpty()) {
-            throw std::logic_error("An error occured while fetching video infos");
-        }
-
-        //set expiration date
-        auto expirationDate = requestedAt.addSecs((qint64)expiresIn.toDouble());
-        
-        d.resolve(
-            expirationDate,
-            streamingData.value(QStringLiteral(u"dashManifestUrl")).toString(),
-            videoInfos.queryItemValue(QStringLiteral(u"adaptive_fmts"), QUrl::ComponentFormattingOption::FullyDecoded),
-            streamingData[QStringLiteral(u"adaptiveFormats")].toArray()
-        );
-
-    });
-}
-
-promise::Defer NetworkFetcher::_extractDataFrom_EmbedPageHtml(const DownloadedUtf8 &videoEmbedPageRequestData) {
-
-    return promise::newPromise([=](promise::Defer d) {
-        
-        auto playerConfig = _extractPlayerConfigFromRawSource(
-            videoEmbedPageRequestData,
-            QRegularExpression("yt\\.setConfig\\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\\);")
-        );
-
-        auto playerSourceUrl = _extractPlayerSourceUrlFromPlayerConfig(playerConfig);
-
-        auto args = playerConfig[QStringLiteral(u"args")].toObject();
-        auto title = args[QStringLiteral(u"title")].toString();
-        auto videoLength = args[QStringLiteral(u"length_seconds")].toInt();
-
-        if(title.isEmpty()) throw std::logic_error("Video title cannot be found !");
-        if(!videoLength) throw std::logic_error("Video length cannot be found !");
-
-        d.resolve(
-            playerSourceUrl,
-            title,
-            videoLength
-        );
-
-    });
-    
-}
-
-promise::Defer NetworkFetcher::_getVideoInfosDic(const VideoMetadata::Id &videoId, const QString &sts) {
-
-    auto apiUrl = QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
-    auto encodedApiUrl = QString::fromUtf8(QUrl::toPercentEncoding(apiUrl));
-
-    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%2&hl=en&sts=%3")
-        .arg(videoId)
-        .arg(encodedApiUrl)
-        .arg(sts);
-
-    auto requestedAt = QDateTime::currentDateTime();
-
-    return promise::newPromise([=](promise::Defer d){
-        download(requestUrl)
-        .then([=](const DownloadedUtf8 &dlAsStr){
-            d.resolve(dlAsStr, requestedAt); 
-        });
-    });
-
-}
-
 
 QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
 
