@@ -55,7 +55,7 @@ VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &ty
     }
 }
 
-VideoMetadata::Id VideoMetadata::id() const {
+PlayerConfig::VideoId VideoMetadata::id() const {
     return this->_videoId;
 }
 
@@ -84,8 +84,8 @@ void VideoMetadata::setPlayerConfig(const PlayerConfig &playerConfig) {
     this->_playerConfig = playerConfig;
 }
 
-StreamsManifest& VideoMetadata::audioStreams() {
-    return this->_audioStreams;
+StreamsManifest* VideoMetadata::audioStreams() {
+    return &this->_audioStreams;
 }
 
 const PlayerConfig& VideoMetadata::playerConfig() const{

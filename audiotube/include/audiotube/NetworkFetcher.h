@@ -31,6 +31,7 @@
 #include "_DebugHelper.h"
 
 #include "VideoMetadata.h"
+#include "VideoInfos.h"
 
 class NetworkFetcher : public NetworkHelper {
     

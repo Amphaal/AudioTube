@@ -23,7 +23,7 @@ promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
 promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
     
     //check if soft refresh...
-    if(!force && !toRefresh->audioStreams().isExpired()) return promise::resolve(toRefresh);
+    if(!force && !toRefresh->audioStreams()->isExpired()) return promise::resolve(toRefresh);
     
     //if not, reset failure flag and emit event
     toRefresh->setFailure(false);
@@ -60,7 +60,7 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
 
 void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
     
-    auto bestUrl = toCheck->audioStreams().preferedUrl();
+    auto bestUrl = toCheck->audioStreams()->preferedUrl();
     
     download(bestUrl, true)
         .then([=](){
@@ -73,37 +73,30 @@ void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded,
 }
 
 promise::Defer NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
-    
-    //if player config has never been fetched
-    if(metadata->playerConfig().contextSource() == PlayerConfig::ContextSource::Unknown) {
 
-        PlayerConfig::from_VideoInfo(metadata->id());
-        PlayerConfig::from_WatchPage(metadata->id(), metadata->audioStreams());
+    auto videoInfoPipeline = PlayerConfig::from_EmbedPage(metadata->id())
+    .then([=](const PlayerConfig &pConfig) {
+        metadata->setPlayerConfig(pConfig);
+        return VideoInfos::fillStreamsManifest(
+            metadata->id(), 
+            metadata->playerConfig(), 
+            metadata->audioStreams()
+        );
+    });
 
-    }
+    //try videoInfoPipeline first, then watchPagePipeline if 1st failed
+    return videoInfoPipeline.fail([=](const QString &softErr){
         
-        case PlayerConfig::ContextSource::VideoInfo: {
-            return _getStreamContext_VideoInfo(metadata);
-        }
-        break;
-        
-        case PlayerConfig::ContextSource::WatchPage: {
-            return _getStreamContext_WatchPage(metadata);
-        }
-        break;        
-        
-        case PlayerConfig::ContextSource::Unknown: {
-            return _getStreamContext_VideoInfo(metadata)
-                   .fail([=](const QString &softErr){
-                        qDebug() << qUtf8Printable(softErr);
-                        return _getStreamContext_WatchPage(metadata);
-                    });
-        }
-        break;
+        qDebug() << qUtf8Printable(softErr);
 
-    }
+        auto watchPagePipeline = PlayerConfig::from_WatchPage(metadata->id(), metadata->audioStreams())
+        .then([=](const PlayerConfig &pConfig) {
+            metadata->setPlayerConfig(pConfig);
+        });
 
-    return promise::resolve();
+        return watchPagePipeline;
+
+    });
 
 }
 

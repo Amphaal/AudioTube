@@ -23,9 +23,9 @@
 class VideoInfos : public NetworkHelper {
     
     public:
-        static promise::Defer fillStreamsManifest(const VideoMetadata::Id &videoId, const PlayerConfig &playerConfig, StreamsManifest &manifest);
+        static promise::Defer fillStreamsManifest(const PlayerConfig::VideoId &videoId, const PlayerConfig &playerConfig, StreamsManifest* manifest);
     
     private:
-        static promise::Defer _downloadRaw_VideoInfos(const VideoMetadata::Id &videoId, const QString &sts);
-        static promise::Defer _fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest &manifest, const PlayerConfig &playerConfig);
+        static promise::Defer _downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const QString &sts);
+        static promise::Defer _fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, const PlayerConfig &playerConfig);
 };

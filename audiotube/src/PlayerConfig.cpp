@@ -16,7 +16,7 @@
 
 PlayerConfig::PlayerConfig() {}
 
-PlayerConfig::PlayerConfig(const PlayerConfig::ContextSource &streamContextSource, const VideoMetadata::Id &videoId) {
+PlayerConfig::PlayerConfig(const PlayerConfig::ContextSource &streamContextSource, const PlayerConfig::VideoId &videoId) {
     this->_contextSource = streamContextSource;
 }
 
@@ -40,47 +40,37 @@ PlayerConfig::ContextSource PlayerConfig::contextSource() const {
     return this->_contextSource;
 }
 
-promise::Defer PlayerConfig::from_VideoInfo(const VideoMetadata::Id &videoId) {
-    
-    //inst
-    PlayerConfig pConfig(PlayerConfig::ContextSource::VideoInfo, videoId);
+promise::Defer PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
     
     //pipeline
     return _downloadRaw_VideoEmbedPageHtml(videoId)
-            .then([=](const DownloadedUtf8 &dl) mutable {
+            .then([=](const DownloadedUtf8 &dl) {
+                PlayerConfig pConfig(PlayerConfig::ContextSource::EmbedPage, videoId);
                 return pConfig._fillFrom_VideoEmbedPageHtml(dl);
-            })
-            .then([=]() {
-                return pConfig;
             });
 
 }
 
-promise::Defer PlayerConfig::from_WatchPage(const VideoMetadata::Id &videoId, StreamsManifest &streamsManifest) {
-    
-    //inst
-    PlayerConfig pConfig(PlayerConfig::ContextSource::WatchPage, videoId);
+promise::Defer PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
 
     //define requested at timestamp
-    streamsManifest.setRequestedAt(QDateTime::currentDateTime());
+    streamsManifest->setRequestedAt(QDateTime::currentDateTime());
 
     //pipeline
     return _downloadRaw_WatchPageHtml(videoId)
-            .then([=](const DownloadedUtf8 &dl) mutable {
+            .then([=](const DownloadedUtf8 &dl) {
+                PlayerConfig pConfig(PlayerConfig::ContextSource::WatchPage, videoId);
                 return pConfig._fillFrom_WatchPageHtml(dl, streamsManifest);
-            })
-            .then([=]() {
-                return pConfig;
             });
 
 }
 
-promise::Defer PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const VideoMetadata::Id &videoId) {
+promise::Defer PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = QStringLiteral(u"https://www.youtube.com/embed/%1?hl=en").arg(videoId);
     return download(url);
 }
 
-promise::Defer PlayerConfig::_downloadRaw_WatchPageHtml(const VideoMetadata::Id &videoId) {
+promise::Defer PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = QStringLiteral("https://www.youtube.com/watch?v=%1&bpctr=9999999999&hl=en").arg(videoId);
     return download(url);
 }
@@ -115,10 +105,16 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
             this->_decipherer = cachedDecipherer;
         }
 
+        auto stsNeeded = this->_contextSource == PlayerConfig::ContextSource::EmbedPage;
+
+        d.resolve((bool)cachedDecipherer, stsNeeded);
+
+    })
+    .then([=](bool cachedDecipherer, bool stsNeeded){
+        
         //if no cached decipherer or if STS is needed
-        auto stsNeeded = this->_contextSource == PlayerConfig::ContextSource::VideoInfo;
         if(!cachedDecipherer || stsNeeded) {
-            download(playerSourceUrl)
+            return download(playerSourceUrl)
             .then([=](const DownloadedUtf8 &dl) {
                 
                 //generate decipherer
@@ -131,19 +127,14 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
 
                 //fetch STS
                 if(stsNeeded) {
-                    this->_sts = _sts(dl);
+                    this->_sts = _getSts(dl);
                 }
-
-                //resolve at last
-                d.resolve();
 
             });
         }
-        
-        //else resolve immediately
-        d.resolve();
 
     });
+
 }
 
 promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
@@ -163,14 +154,20 @@ promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &
 
         //player source
         auto playerSourceUrl = _playerSourceUrl(playerConfig);
-        return _downloadAndfillFrom_PlayerSource(playerSourceUrl);
+        d.resolve(playerSourceUrl);
 
+    })
+    .then([=](const QString &playerSourceUrl){
+        return this->_downloadAndfillFrom_PlayerSource(playerSourceUrl);
+    })
+    .then([=]() {
+        return *this;
     });
 }
 
-promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest &streamsManifest) {
+promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
     
-    return promise::newPromise([=](promise::Defer d) mutable {
+    return promise::newPromise([=](promise::Defer d) {
 
         //get player config JSON
         auto playerConfig =_extractPlayerConfigFromRawSource(dl,
@@ -215,32 +212,58 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, S
         }
 
         //set expiration date
-        streamsManifest.setSecondsUntilExpiration((qint64)expiresIn.toDouble()); 
-
-        //DASH manifest handling
-        auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
-        auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) mutable {
-            streamsManifest.feedRaw_DASH(dl, this->_decipherer);
-        });
+        streamsManifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble()); 
 
         //raw stream infos
         auto raw_playerConfigStreams = args.value(QStringLiteral(u"adaptive_fmts")).toString();
         auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
 
         //feed
-        streamsManifest.feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
-        streamsManifest.feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
+        streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
+        streamsManifest->feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
+
+
+        //DASH manifest handling
+        auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
 
         // Extract player source URL
         auto playerSourceUrl = _playerSourceUrl(playerConfig);
-        return mayFetchRawDASH.then([=]() {
-            return _downloadAndfillFrom_PlayerSource(playerSourceUrl);
-        });
 
+        d.resolve(playerSourceUrl, dashManifestUrl);
+
+    })
+    .then([=](const QString &playerSourceUrl, const QString &dashManifestUrl){
+        return this->_downloadAndfillFrom_PlayerSource(playerSourceUrl)
+        .then([=](){
+            return dashManifestUrl;
+        });
+    })
+    .then([=](const QString &dashManifestUrl){
+       auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
+            streamsManifest->feedRaw_DASH(dl, this->_decipherer);
+        });
+        return mayFetchRawDASH;
+    })
+    .then([=]() {
+        return *this;
     });
 
 }
 
-QString PlayerConfig::_sts(const DownloadedUtf8 &dl) {
-    //TODO
+QString PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
+    
+    QRegularExpression findSts("invalid namespace.*?;var \\w\\s*=(?<sts>\\d+)");
+    
+    QString sts;
+
+    auto match = findSts.match(dl);
+    if (match.hasMatch()) {
+        sts = match.captured("sts"); //sts
+    }
+    else {
+        throw std::logic_error("STS value cannot be found !");
+    }
+
+    return sts;
+
 }

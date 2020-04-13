@@ -34,15 +34,13 @@ class VideoMetadata : public QObject {
             InstFromId,
             InstFromUrl
         };  
-
-        using Id = QString;
         VideoMetadata(const QString &IdOrUrl, const InstantiationType &type);
 
         static VideoMetadata* fromVideoUrl(const QString &url);
         static VideoMetadata* fromVideoId(const QString &videoId);
         static QRegularExpression getUrlMatcher();
         
-        VideoMetadata::Id id() const;
+        PlayerConfig::VideoId id() const;
         QString url() const;
         bool hasFailed() const;
         bool ranOnce() const;
@@ -52,7 +50,7 @@ class VideoMetadata : public QObject {
 
         void setPlayerConfig(const PlayerConfig &playerConfig);
 
-        StreamsManifest& audioStreams();
+        StreamsManifest* audioStreams();
         const PlayerConfig& playerConfig() const;
 
     signals:
@@ -63,7 +61,7 @@ class VideoMetadata : public QObject {
     private:    
         static QString _urlFromVideoId(const QString &videoId);
 
-        VideoMetadata::Id _videoId;
+        PlayerConfig::VideoId _videoId;
         QString _url;
         bool _failed = false;
         bool _ranOnce = false;

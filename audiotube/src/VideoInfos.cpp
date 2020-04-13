@@ -14,36 +14,36 @@
 
 #include "VideoInfos.h"
 
-promise::Defer VideoInfos::fillStreamsManifest(const VideoMetadata::Id &videoId, const PlayerConfig &playerConfig, StreamsManifest &manifest) {
+promise::Defer VideoInfos::fillStreamsManifest(const PlayerConfig::VideoId &videoId, const PlayerConfig &playerConfig, StreamsManifest* manifest) {
     
     //set request date
-    manifest.setRequestedAt(QDateTime::currentDateTime());
+    manifest->setRequestedAt(QDateTime::currentDateTime());
     
     //pipeline
     return _downloadRaw_VideoInfos(videoId, playerConfig.sts())
-            .then([=](const DownloadedUtf8 &dl) mutable {
+            .then([=](const DownloadedUtf8 &dl) {
                 return _fillFrom_VideoInfos(dl, manifest, playerConfig);
             });
 }
 
-promise::Defer VideoInfos::_downloadRaw_VideoInfos(const VideoMetadata::Id &videoId, const QString &sts) {
+promise::Defer VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const QString &sts) {
+    
     auto apiUrl = QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
     auto encodedApiUrl = QString::fromUtf8(QUrl::toPercentEncoding(apiUrl));
 
-    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%2&hl=en&sts=%3")
-        .arg(videoId)
-        .arg(encodedApiUrl)
-        .arg(sts);
+    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en&sts=%2")
+        .arg(videoId).arg(sts).arg(encodedApiUrl);
 
     return download(requestUrl);
+
 }
 
-promise::Defer VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest &manifest, const PlayerConfig &playerConfig) {
-    return promise::newPromise([=](promise::Defer d) mutable {
+promise::Defer VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, const PlayerConfig &playerConfig) {
+    return promise::newPromise([=](promise::Defer d) {
  
         //as string then to query
         QUrlQuery videoInfos(dl);
-        
+
         //get player response
         auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
         auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
@@ -84,23 +84,24 @@ promise::Defer VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, Stream
         }
 
         //set expiration date
-        manifest.setSecondsUntilExpiration((qint64)expiresIn.toDouble());
-        
-        //DASH manifest handling
-        auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
-        auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) mutable {
-            manifest.feedRaw_DASH(dl, playerConfig.decipherer());
-        });
+        manifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble());
 
         //raw stream infos
         auto raw_playerConfigStreams = videoInfos.queryItemValue(QStringLiteral(u"adaptive_fmts"), QUrl::ComponentFormattingOption::FullyDecoded);
         auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
 
         //feed
-        manifest.feedRaw_PlayerConfig(raw_playerConfigStreams, playerConfig.decipherer());
-        manifest.feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig.decipherer());
-
-        return mayFetchRawDASH;
+        manifest->feedRaw_PlayerConfig(raw_playerConfigStreams, playerConfig.decipherer());
+        manifest->feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig.decipherer());
         
+        //DASH manifest handling
+        auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
+        d.resolve(dashManifestUrl);
+        
+    }).then([=](const QString &dashManifestUrl){
+        auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
+            manifest->feedRaw_DASH(dl, playerConfig.decipherer());
+        });
+        return mayFetchRawDASH;
     });
 }
