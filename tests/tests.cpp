@@ -12,9 +12,6 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-#define CATCH_CONFIG_RUNNER
-#include <catch2/catch.hpp>
-
 #include <QCoreApplication>
 #include <QTimer>
 
@@ -26,52 +23,50 @@
 #include <thread>
 #include <future>
 
+#define CATCH_CONFIG_RUNNER
+#include <catch2/catch.hpp>
+
 bool stream_are_working(VideoMetadata &metadata) {
-    
-    //fetch for a stream HEAD
-    QString urlSuccessfullyRequested; bool ended;
+    // fetch for a stream HEAD
+    QString urlSuccessfullyRequested;
+    bool ended;
     NetworkFetcher::isStreamAvailable(&metadata, &ended, &urlSuccessfullyRequested);
-    
-    //wait processing
-    while(!ended) {
+
+    // wait processing
+    while (!ended) {
       QCoreApplication::processEvents();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    //check url
-    if(!urlSuccessfullyRequested.isEmpty()) {
+    // check url
+    if (!urlSuccessfullyRequested.isEmpty()) {
       // qDebug() << qUtf8Printable(QString("Stream URL found : %1").arg(urlSuccessfullyRequested));
       return true;
-    } 
-    else return false;
-
+    } else {
+        return false;
+    }
 }
 
-
 bool youtube_metadata_fetching_succeeded(const QString &ytId) {
-
-    //generating container
+    // generating container
     VideoMetadata container(ytId, VideoMetadata::InstantiationType::InstFromId);
     qDebug() << qUtf8Printable(QString("Testing [%1]...").arg(container.url()));
 
-    //refresh...
+    // refresh...
     NetworkFetcher::refreshMetadata(&container);
-    
-    //wait for a response
-    while(!container.ranOnce()) {
+
+    // wait for a response
+    while (!container.ranOnce()) {
       QCoreApplication::processEvents();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    
-    //check if it has failed
-    if(container.hasFailed()) return false;
-    
-    //check if a stream is working
+
+    // check if it has failed
+    if (container.hasFailed()) return false;
+
+    // check if a stream is working
     return stream_are_working(container);
-
 }
-
-
 
 int main(int argc, char *argv[]) {
   QCoreApplication app(argc, argv);
@@ -85,19 +80,19 @@ int main(int argc, char *argv[]) {
 // Test cases
 //
 
-TEST_CASE( "Unavailable video", "[metadata]" ) {
+TEST_CASE("Unavailable video", "[metadata]") {
   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
 }
 
-TEST_CASE( "OK from JSON Adaptative Stream - no deciphering", "[metadata]" ) {
+TEST_CASE("OK from JSON Adaptative Stream - no deciphering", "[metadata]") {
   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
 }
 
-TEST_CASE( "OK from Dash Manifest - no url deciphering", "[metadata]" ) {
+TEST_CASE("OK from Dash Manifest - no url deciphering", "[metadata]") {
   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
 }
 
-TEST_CASE( "Restricted viewing", "[metadata]" ) {
+TEST_CASE("Restricted viewing", "[metadata]") {
   REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
 }
 
