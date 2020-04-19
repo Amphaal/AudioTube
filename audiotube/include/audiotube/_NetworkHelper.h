@@ -14,19 +14,19 @@
 
 #pragma once
 
-#include <promise-cpp/promise.hpp>
-
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
 #include <QEventLoop>
 
+#include <promise-cpp/promise.hpp>
+
 class NetworkHelper {
-    public:
-        using DownloadedUtf8 = QString;
+ public:
+    using DownloadedUtf8 = QString;
 
-    protected:
-        static promise::Defer download(const QUrl& url, bool head = false);
+ protected:
+    static promise::Defer download(const QUrl& url, bool head = false);
 
-    private:
-        static inline QNetworkAccessManager* _manager = nullptr;
+ private:
+    static inline QNetworkAccessManager* _manager = nullptr;
 };

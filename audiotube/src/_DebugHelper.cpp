@@ -15,15 +15,13 @@
 #include "_DebugHelper.h"
 
 void DebugHelper::_dumpAsJSON(const QUrlQuery &query) {
-    
     QJsonObject dump;
-    
-    for(const auto &item : query.queryItems(QUrl::ComponentFormattingOption::FullyDecoded)) {
+
+    for (const auto &item : query.queryItems(QUrl::ComponentFormattingOption::FullyDecoded)) {
         dump.insert(item.first, item.second);
     }
 
     _dumpAsJSON(dump);
-
 }
 
 void DebugHelper::_dumpAsJSON(const QJsonObject &obj) {
@@ -35,18 +33,15 @@ void DebugHelper::_dumpAsJSON(const QJsonArray &arr) {
 }
 
 void DebugHelper::_dumpAsFile(const QString &str) {
-
     QFile fh("yt.txt");
     fh.open(QFile::WriteOnly);
         fh.write(str.toUtf8());
     fh.close();
 
     qDebug() << fh.fileName() << " created !";
-
 }
 
 void DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
-    
     auto bytes = doc.toJson(QJsonDocument::JsonFormat::Indented);
 
     QFile fh("yt.json");
@@ -55,5 +50,4 @@ void DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
     fh.close();
 
     qDebug() << fh.fileName() << " created !";
-
 }

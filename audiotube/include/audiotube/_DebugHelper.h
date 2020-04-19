@@ -22,10 +22,10 @@
 #include <QFile>
 
 class DebugHelper {
-    public:
-        static void _dumpAsJSON(const QUrlQuery &query);
-        static void _dumpAsJSON(const QJsonObject &obj);
-        static void _dumpAsJSON(const QJsonArray &arr);
-        static void _dumpAsJSON(const QJsonDocument &doc);
-        static void _dumpAsFile(const QString &str);
+ public:
+    static void _dumpAsJSON(const QUrlQuery &query);
+    static void _dumpAsJSON(const QJsonObject &obj);
+    static void _dumpAsJSON(const QJsonArray &arr);
+    static void _dumpAsJSON(const QJsonDocument &doc);
+    static void _dumpAsFile(const QString &str);
 };

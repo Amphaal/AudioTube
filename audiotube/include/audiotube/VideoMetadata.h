@@ -26,50 +26,49 @@
 #include "StreamsManifest.h"
 
 class VideoMetadata : public QObject {
-    
     Q_OBJECT
 
-    public:
-        enum InstantiationType {
-            InstFromId,
-            InstFromUrl
-        };  
-        VideoMetadata(const QString &IdOrUrl, const InstantiationType &type);
+ public:
+    enum InstantiationType {
+        InstFromId,
+        InstFromUrl
+    };
+    VideoMetadata(const QString &IdOrUrl, const InstantiationType &type);
 
-        static VideoMetadata* fromVideoUrl(const QString &url);
-        static VideoMetadata* fromVideoId(const QString &videoId);
-        static QRegularExpression getUrlMatcher();
-        
-        PlayerConfig::VideoId id() const;
-        QString url() const;
-        bool hasFailed() const;
-        bool ranOnce() const;
+    static VideoMetadata* fromVideoUrl(const QString &url);
+    static VideoMetadata* fromVideoId(const QString &videoId);
+    static QRegularExpression getUrlMatcher();
 
-        void setFailure(bool failed);
-        void setRanOnce();
+    PlayerConfig::VideoId id() const;
+    QString url() const;
+    bool hasFailed() const;
+    bool ranOnce() const;
 
-        void setPlayerConfig(const PlayerConfig &playerConfig);
+    void setFailure(bool failed);
+    void setRanOnce();
 
-        StreamsManifest* audioStreams();
-        const PlayerConfig& playerConfig() const;
+    void setPlayerConfig(const PlayerConfig &playerConfig);
 
-    signals:
-        void metadataFetching();
-        void metadataRefreshed();
-        void streamFailed();
+    StreamsManifest* audioStreams();
+    const PlayerConfig& playerConfig() const;
 
-    private:    
-        static QString _urlFromVideoId(const QString &videoId);
+ signals:
+    void metadataFetching();
+    void metadataRefreshed();
+    void streamFailed();
 
-        PlayerConfig::VideoId _videoId;
-        QString _url;
-        bool _failed = false;
-        bool _ranOnce = false;
+ private:
+    static QString _urlFromVideoId(const QString &videoId);
 
-        PlayerConfig _playerConfig;
-        StreamsManifest _audioStreams;
+    PlayerConfig::VideoId _videoId;
+    QString _url;
+    bool _failed = false;
+    bool _ranOnce = false;
 
-        static inline QRegularExpression _ytRegexIdFinder = QRegularExpression("(?:youtube\\.com|youtu.be).*?(?:v=|embed\\/)(?<videoId>[\\w\\-]+)");
+    PlayerConfig _playerConfig;
+    StreamsManifest _audioStreams;
+
+    static inline QRegularExpression _ytRegexIdFinder = QRegularExpression("(?:youtube\\.com|youtu.be).*?(?:v=|embed\\/)(?<videoId>[\\w\\-]+)");
 };
 
 Q_DECLARE_METATYPE(VideoMetadata*)

@@ -14,12 +14,14 @@
 
 #include "VideoInfos.h"
 
-promise::Defer VideoInfos::fillStreamsManifest(const PlayerConfig::VideoId &videoId, const PlayerConfig &playerConfig, StreamsManifest* manifest) {
-    
-    //set request date
+promise::Defer VideoInfos::fillStreamsManifest(
+    const PlayerConfig::VideoId &videoId,
+    const PlayerConfig &playerConfig,
+    StreamsManifest* manifest) {
+    // set request date
     manifest->setRequestedAt(QDateTime::currentDateTime());
-    
-    //pipeline
+
+    // pipeline
     return _downloadRaw_VideoInfos(videoId, playerConfig.sts())
             .then([=](const DownloadedUtf8 &dl) {
                 return _fillFrom_VideoInfos(dl, manifest, playerConfig);
@@ -27,7 +29,6 @@ promise::Defer VideoInfos::fillStreamsManifest(const PlayerConfig::VideoId &vide
 }
 
 promise::Defer VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const QString &sts) {
-    
     auto apiUrl = QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
     auto encodedApiUrl = QString::fromUtf8(QUrl::toPercentEncoding(apiUrl));
 
@@ -35,70 +36,68 @@ promise::Defer VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &
         .arg(videoId).arg(sts).arg(encodedApiUrl);
 
     return download(requestUrl);
-
 }
 
 promise::Defer VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, const PlayerConfig &playerConfig) {
     return promise::newPromise([=](promise::Defer d) {
- 
-        //as string then to query
+        // as string then to query
         QUrlQuery videoInfos(dl);
 
-        //get player response
+        // get player response
         auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
         auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
-        if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
+        if (playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
             throw std::logic_error("Player response is missing !");
         }
 
-        //check if is live
+        // check if is live
         auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
         auto isLiveStream = videoDetails.value(QStringLiteral(u"isLive")).toBool();
-        if(isLiveStream) {
+        if (isLiveStream) {
             throw std::logic_error("Live streams are not handled for now!");
         }
 
-        //check playability status
+        // check playability status
         auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
         auto pStatus = playabilityStatus.value(QStringLiteral(u"status")).toString();
-        if(pStatus.toLower() == "error") {
+        if (pStatus.toLower() == "error") {
             throw std::logic_error("This video is not available !");
         }
 
-        //check reason, throw soft error
+        // check reason, throw soft error
         auto pReason = playabilityStatus.value(QStringLiteral(u"reason")).toString();
-        if(!pReason.isNull()) {
+        if (!pReason.isNull()) {
             throw QString(qUtf8Printable(QString("This video is not available though VideoInfo : %1").arg(pReason)));
         }
 
-        //get streamingData
+        // get streamingData
         auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
-        if(streamingData.isEmpty()) {
+        if (streamingData.isEmpty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
-        //find expiration
+        // find expiration
         auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
-        if(expiresIn.isEmpty()) {
+        if (expiresIn.isEmpty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
-        //set expiration date
+        // set expiration date
         manifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble());
 
-        //raw stream infos
+        // raw stream infos
         auto raw_playerConfigStreams = videoInfos.queryItemValue(QStringLiteral(u"adaptive_fmts"), QUrl::ComponentFormattingOption::FullyDecoded);
         auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
 
-        //feed
+        // feed
         manifest->feedRaw_PlayerConfig(raw_playerConfigStreams, playerConfig.decipherer());
         manifest->feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig.decipherer());
-        
-        //DASH manifest handling
+
+        // DASH manifest handling
         auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
         d.resolve(dashManifestUrl);
-        
-    }).then([=](const QString &dashManifestUrl){
+    })
+    .then([=](const QString &dashManifestUrl){
         auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
             manifest->feedRaw_DASH(dl, playerConfig.decipherer());
         });

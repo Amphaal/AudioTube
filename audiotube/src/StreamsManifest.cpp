@@ -17,21 +17,20 @@
 StreamsManifest::StreamsManifest() {}
 
 void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
-
-    //find streams
+    // find streams
     QRegularExpression regex("<Representation id=\"(?<itag>.*?)\" codecs=\"(?<codec>.*?)\"[\\s\\S]*?<BaseURL>(?<url>.*?)<\\/BaseURL");
     auto foundStreams = regex.globalMatch(raw);
-    
-    //container
+
+    // container
     AudioStreamUrlByITag streams;
 
-    //iterate
-    while(foundStreams.hasNext()) {
+    // iterate
+    while (foundStreams.hasNext()) {
         auto match = foundStreams.next();
-        
-        //check codec
+
+        // check codec
         auto codec = match.captured("codec");
-        if(!_isCodecAllowed(codec)) continue;
+        if (!_isCodecAllowed(codec)) continue;
 
         auto itag = match.captured("itag").toInt();
         auto url = match.captured("url");
@@ -39,60 +38,53 @@ void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDe
         streams.insert(itag, url);
     }
 
-    //insert in package
+    // insert in package
     this->_package.insert(AudioStreamsSource::DASH, streams);
-
 }
 
 void StreamsManifest::feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer) {
-    //TODO
+    // TODO(amphaal)
 }
 
 void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer) {
-
     AudioStreamUrlByITag streams;
 
-    //iterate
-    for(auto itagGroup : raw) {
-
+    // iterate
+    for (auto itagGroup : raw) {
         auto itagGroupObj = itagGroup.toObject();
 
-        //check mime
+        // check mime
         auto mimeType = itagGroupObj["mimeType"].toString();
-        if(!_isMimeAllowed(mimeType)) continue;
+        if (!_isMimeAllowed(mimeType)) continue;
 
-        //find itag + url
+        // find itag + url
         uint itag = itagGroupObj["itag"].toInt();
         auto url = itagGroupObj["url"].toString();
-        
-        //decipher if no url
-        if(url.isEmpty()) {
-            
-            //fetch cipher, url and signature
+
+        // decipher if no url
+        if (url.isEmpty()) {
+            // fetch cipher, url and signature
             auto cipher = QUrlQuery(itagGroupObj["cipher"].toString());
             url = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
             auto signature = cipher.queryItemValue("s", QUrl::ComponentFormattingOption::FullyDecoded);
-            
-            //find signature param
-            auto signatureParameter = cipher.queryItemValue("sp", QUrl::ComponentFormattingOption::FullyDecoded);
-            if(signatureParameter.isEmpty()) signatureParameter = "signature";
 
-            //decipher...
+            // find signature param
+            auto signatureParameter = cipher.queryItemValue("sp", QUrl::ComponentFormattingOption::FullyDecoded);
+            if (signatureParameter.isEmpty()) signatureParameter = "signature";
+
+            // decipher...
             signature = decipherer->decipher(signature);
 
-            //append
+            // append
             url += QString("&%1=%2").arg(signatureParameter).arg(signature);
-
         }
-        
-        //add tag / url pair
-        streams.insert(itag, url);
 
+        // add tag / url pair
+        streams.insert(itag, url);
     }
 
-    //insert in package
+    // insert in package
     this->_package.insert(AudioStreamsSource::PlayerResponse, streams);
-
 }
 
 void StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {
@@ -103,17 +95,15 @@ void StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
 }
 
 StreamsManifest::AudioStreamUrlByITag StreamsManifest::preferedStreamSource() const {
-
     auto sources = this->_package.keys();
     std::sort(sources.begin(), sources.end());
 
-    for(auto source : sources) {
+    for (auto source : sources) {
         auto ASUBIT = this->_package.value(source);
-        if(ASUBIT.count()) return ASUBIT;
+        if (ASUBIT.count()) return ASUBIT;
     }
 
     throw std::logic_error("No audio stream source found !");
-    
 }
 
 QUrl StreamsManifest::preferedUrl() const {
@@ -121,61 +111,55 @@ QUrl StreamsManifest::preferedUrl() const {
 }
 
 bool StreamsManifest::isExpired() const {
-    if(this->_validUntil.isNull()) return true;
+    if (this->_validUntil.isNull()) return true;
     return QDateTime::currentDateTime() > this->_validUntil;
 }
 
 
 bool StreamsManifest::_isCodecAllowed(const QString &codec) {
-    if(codec.contains(QStringLiteral(u"opus"))) return true;
+    if (codec.contains(QStringLiteral(u"opus"))) return true;
     return false;
 }
 
 bool StreamsManifest::_isMimeAllowed(const QString &mime) {
-    if(!mime.contains(QStringLiteral(u"audio"))) return false;
+    if (!mime.contains(QStringLiteral(u"audio"))) return false;
     return _isCodecAllowed(mime);
 }
 
 QJsonArray StreamsManifest::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
-
     QJsonArray out;
 
-    //for each group
+    // for each group
     auto itagsDataGroupsAsStr = urlQueryAsRawStr.split(
-        QStringLiteral(u","), 
+        QStringLiteral(u","),
         QString::SplitBehavior::SkipEmptyParts
     );
-    for(auto &dataGroupAsString : itagsDataGroupsAsStr) {
-
+    for (auto &dataGroupAsString : itagsDataGroupsAsStr) {
         QJsonObject group;
-        
-        //for each pair
+
+        // for each pair
         auto pairs = dataGroupAsString.split(
-            QStringLiteral(u"&"), 
+            QStringLiteral(u"&"),
             QString::SplitBehavior::SkipEmptyParts
         );
 
-        for(const auto &pair : pairs) {
-            
-            //current key/value pair
+        for (const auto &pair : pairs) {
+            // current key/value pair
             auto kvpAsList = pair.split(
-                QStringLiteral(u"="), 
+                QStringLiteral(u"="),
                 QString::SplitBehavior::KeepEmptyParts
             );
             auto kvp = QPair<QString, QString>(kvpAsList.at(0), kvpAsList.at(1));
 
-            //add to temporary group
+            // add to temporary group
             group.insert(
-                kvp.first, 
+                kvp.first,
                 QUrlQuery(kvp.second).toString(QUrl::ComponentFormattingOption::FullyDecoded)
             );
-
         }
 
         out.append(group);
-
     }
 
     return out;
-
 }

@@ -28,43 +28,43 @@
 #include "SignatureDecipherer.h"
 
 class StreamsManifest : public NetworkHelper {
-    public:
-        enum class AudioStreamsSource {
-            PlayerResponse,
-            PlayerConfig,
-            DASH
-        };
+ public:
+    enum class AudioStreamsSource {
+        PlayerResponse,
+        PlayerConfig,
+        DASH
+    };
 
-        using RawDASHManifest = QString;
-        using RawPlayerConfigStreams = QString;
-        using RawPlayerResponseStreams = QJsonArray;
-        
-        using AudioStreamUrlByITag = QHash<uint, QUrl>;
-        using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByITag>;
+    using RawDASHManifest = QString;
+    using RawPlayerConfigStreams = QString;
+    using RawPlayerResponseStreams = QJsonArray;
 
-        StreamsManifest();
+    using AudioStreamUrlByITag = QHash<uint, QUrl>;
+    using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByITag>;
 
-        //TODO add deciphering
-        void feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer);
-        void feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer);
-        void feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer);
+    StreamsManifest();
 
-        void setRequestedAt(const QDateTime &requestedAt);
-        void setSecondsUntilExpiration(const uint secsUntilExp);
+    // TODO(amphaal) add deciphering
+    void feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer);
+    void feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer);
+    void feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer);
 
-        AudioStreamUrlByITag preferedStreamSource() const;
-        QUrl preferedUrl() const;
-        bool isExpired() const;
+    void setRequestedAt(const QDateTime &requestedAt);
+    void setSecondsUntilExpiration(const uint secsUntilExp);
 
-    private:
-        QDateTime _requestedAt;
-        QDateTime _validUntil;
+    AudioStreamUrlByITag preferedStreamSource() const;
+    QUrl preferedUrl() const;
+    bool isExpired() const;
 
-        AudioStreamsPackage _package;
+ private:
+    QDateTime _requestedAt;
+    QDateTime _validUntil;
 
-        static bool _isCodecAllowed(const QString &codec);
-        static bool _isMimeAllowed(const QString &mime);
-        static QJsonArray _urlEncodedToJsonArray(const QString &urlQueryAsRawStr);
+    AudioStreamsPackage _package;
+
+    static bool _isCodecAllowed(const QString &codec);
+    static bool _isMimeAllowed(const QString &mime);
+    static QJsonArray _urlEncodedToJsonArray(const QString &urlQueryAsRawStr);
 };
 
 inline uint qHash(const StreamsManifest::AudioStreamsSource &key, uint seed = 0) {return uint(key) ^ seed;}

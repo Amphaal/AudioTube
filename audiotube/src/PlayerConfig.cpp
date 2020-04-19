@@ -41,28 +41,24 @@ PlayerConfig::ContextSource PlayerConfig::contextSource() const {
 }
 
 promise::Defer PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
-    
-    //pipeline
+    // pipeline
     return _downloadRaw_VideoEmbedPageHtml(videoId)
             .then([=](const DownloadedUtf8 &dl) {
                 PlayerConfig pConfig(PlayerConfig::ContextSource::EmbedPage, videoId);
                 return pConfig._fillFrom_VideoEmbedPageHtml(dl);
             });
-
 }
 
 promise::Defer PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
-
-    //define requested at timestamp
+    // define requested at timestamp
     streamsManifest->setRequestedAt(QDateTime::currentDateTime());
 
-    //pipeline
+    // pipeline
     return _downloadRaw_WatchPageHtml(videoId)
             .then([=](const DownloadedUtf8 &dl) {
                 PlayerConfig pConfig(PlayerConfig::ContextSource::WatchPage, videoId);
                 return pConfig._fillFrom_WatchPageHtml(dl, streamsManifest);
             });
-
 }
 
 promise::Defer PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const PlayerConfig::VideoId &videoId) {
@@ -77,87 +73,76 @@ promise::Defer PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerConfig::Vide
 
 
 QJsonObject PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex) {
-
     auto playerConfigAsStr = regex.match(rawSource).captured("playerConfig");
     auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
 
-    //check config exists
-    if(playerConfigAsStr.isEmpty() || playerConfig.isEmpty()) {
+    // check config exists
+    if (playerConfigAsStr.isEmpty() || playerConfig.isEmpty()) {
         throw std::logic_error("Player response is missing !");
     }
 
     return playerConfig;
-
 }
 
 QString PlayerConfig::_playerSourceUrl(const QJsonObject &playerConfig) {
     auto playerSourceUrlPath = playerConfig[QStringLiteral(u"assets")].toObject()[QStringLiteral(u"js")].toString();
-    if(playerSourceUrlPath.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
+    if (playerSourceUrlPath.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
     return QStringLiteral("https://www.youtube.com") + playerSourceUrlPath;
 }
 
 promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &playerSourceUrl) {
     return promise::newPromise([=](promise::Defer d){
-        
-        //if cached is found, return it
+        // if cached is found, return it
         auto cachedDecipherer = SignatureDecipherer::fromCache(playerSourceUrl);
-        if(cachedDecipherer) {
+        if (cachedDecipherer) {
             this->_decipherer = cachedDecipherer;
         }
 
         auto stsNeeded = this->_contextSource == PlayerConfig::ContextSource::EmbedPage;
 
         d.resolve((bool)cachedDecipherer, stsNeeded);
-
     })
     .then([=](bool cachedDecipherer, bool stsNeeded) {
-        
-        //if no cached decipherer or if STS is needed
-        if(!cachedDecipherer || stsNeeded) {
+        // if no cached decipherer or if STS is needed
+        if (!cachedDecipherer || stsNeeded) {
             return download(playerSourceUrl)
             .then([=](const DownloadedUtf8 &dl) {
-                
-                //generate decipherer
-                if(!cachedDecipherer) {
+                // generate decipherer
+                if (!cachedDecipherer) {
                     this->_decipherer = SignatureDecipherer::create(
                         playerSourceUrl,
                         dl
                     );
                 }
 
-                //fetch STS
-                if(stsNeeded) {
+                // fetch STS
+                if (stsNeeded) {
                     this->_sts = _getSts(dl);
                 }
-
             });
         }
 
         return promise::resolve();
-
     });
-
 }
 
 promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
     return promise::newPromise([=](promise::Defer d) {
-        
         auto playerConfig = _extractPlayerConfigFromRawSource(dl,
             QRegularExpression("yt\\.setConfig\\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\\);")
         );
 
-        //get title and duration
+        // get title and duration
         auto args = playerConfig[QStringLiteral(u"args")].toObject();
         this->_title = args[QStringLiteral(u"title")].toString();
         this->_duration = args[QStringLiteral(u"length_seconds")].toInt();
 
-        if(this->_title.isEmpty()) throw std::logic_error("Video title cannot be found !");
-        if(!this->_duration) throw std::logic_error("Video length cannot be found !");
+        if (this->_title.isEmpty()) throw std::logic_error("Video title cannot be found !");
+        if (!this->_duration) throw std::logic_error("Video length cannot be found !");
 
-        //player source
+        // player source
         auto playerSourceUrl = _playerSourceUrl(playerConfig);
         d.resolve(playerSourceUrl);
-
     })
     .then([=](const QString &playerSourceUrl){
         return this->_downloadAndfillFrom_PlayerSource(playerSourceUrl);
@@ -168,11 +153,9 @@ promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &
 }
 
 promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
-    
     return promise::newPromise([=](promise::Defer d) {
-
-        //get player config JSON
-        auto playerConfig =_extractPlayerConfigFromRawSource(dl,
+        // get player config JSON
+        auto playerConfig = _extractPlayerConfigFromRawSource(dl,
             QRegularExpression(QStringLiteral("ytplayer\\.config = (?<playerConfig>.*?)\\;ytplayer"))
         );
 
@@ -180,59 +163,58 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, S
         auto args = playerConfig[QStringLiteral(u"args")].toObject();
         auto playerResponseAsStr = args[QStringLiteral(u"player_response")].toString();
         auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
-        if(playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
+        if (playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
             throw std::logic_error("Player response is missing !");
         }
 
-        //fetch and check video infos
+        // fetch and check video infos
         auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
         this->_title = videoDetails[QStringLiteral(u"title")].toString();
         this->_duration = videoDetails[QStringLiteral(u"lengthSeconds")].toString().toInt();
         auto isLive = videoDetails[QStringLiteral(u"isLive")].toBool();
 
-        if(isLive) throw std::logic_error("Live streams are not handled for now!");
-        if(this->_title.isEmpty()) throw std::logic_error("Video title cannot be found !");
-        if(!this->_duration) throw std::logic_error("Video length cannot be found !");
+        if (isLive) throw std::logic_error("Live streams are not handled for now!");
+        if (this->_title.isEmpty()) throw std::logic_error("Video title cannot be found !");
+        if (!this->_duration) throw std::logic_error("Video length cannot be found !");
 
-        //check playability status, throw err
+        // check playability status, throw err
         auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
         auto pReason = playabilityStatus.value(QStringLiteral(u"reason")).toString();
-        if(!pReason.isNull()) {
+        if (!pReason.isNull()) {
             throw std::logic_error("This video is not available though WatchPage : %1");
         }
 
-        //get streamingData
+        // get streamingData
         auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
-        if(streamingData.isEmpty()) {
+        if (streamingData.isEmpty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
-        //find expiration
+        // find expiration
         auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
-        if(expiresIn.isEmpty()) {
+        if (expiresIn.isEmpty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
-        //set expiration date
-        streamsManifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble()); 
+        // set expiration date
+        streamsManifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble());
 
-        //raw stream infos
+        // raw stream infos
         auto raw_playerConfigStreams = args.value(QStringLiteral(u"adaptive_fmts")).toString();
         auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
 
-        //feed
+        // feed
         streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
         streamsManifest->feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
 
 
-        //DASH manifest handling
+        // DASH manifest handling
         auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
 
         // Extract player source URL
         auto playerSourceUrl = _playerSourceUrl(playerConfig);
 
         d.resolve(playerSourceUrl, dashManifestUrl);
-
     })
     .then([=](const QString &playerSourceUrl, const QString &dashManifestUrl){
         return this->_downloadAndfillFrom_PlayerSource(playerSourceUrl)
@@ -249,23 +231,19 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, S
     .then([=]() {
         return *this;
     });
-
 }
 
 QString PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
-    
     QRegularExpression findSts("invalid namespace.*?;var \\w\\s*=(?<sts>\\d+)");
-    
+
     QString sts;
 
     auto match = findSts.match(dl);
     if (match.hasMatch()) {
-        sts = match.captured("sts"); //sts
-    }
-    else {
+        sts = match.captured("sts");  // sts
+    } else {
         throw std::logic_error("STS value cannot be found !");
     }
 
     return sts;
-
 }

@@ -17,76 +17,69 @@
 promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
     return download(url)
             .then(&_extractVideoIdsFromHTTPRequest)
-            .then(&_videoIdsToMetadataList);         
-};
+            .then(&_videoIdsToMetadataList);
+}
 
 promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
-    
-    //check if soft refresh...
-    if(!force && !toRefresh->audioStreams()->isExpired()) return promise::resolve(toRefresh);
-    
-    //if not, reset failure flag and emit event
+    // check if soft refresh...
+    if (!force && !toRefresh->audioStreams()->isExpired()) return promise::resolve(toRefresh);
+
+    // if not, reset failure flag and emit event
     toRefresh->setFailure(false);
     emit toRefresh->metadataFetching();
 
-    //workflow...
+    // workflow...
     return promise::newPromise([=](promise::Defer d){
-        
-        //on error default behavior 
+        // on error default behavior
         auto whenFailed = [=]() {
            toRefresh->setFailure(true);
-           toRefresh->setRanOnce(); 
+           toRefresh->setRanOnce();
            d.reject();
         };
-        
-        _refreshMetadata(toRefresh) 
+
+        _refreshMetadata(toRefresh)
         .then([=]() {
-            //success !
+            // success !
             toRefresh->setRanOnce();
             emit toRefresh->metadataRefreshed();
             d.resolve(toRefresh);
         })
         .fail([=](const std::runtime_error &exception) {
-            qWarning() << "AudioTube :" << exception.what();     
+            qWarning() << "AudioTube :" << exception.what();
             whenFailed();
         })
         .fail([=](const std::logic_error &exception) {
-            qWarning() << "AudioTube :" << exception.what();     
+            qWarning() << "AudioTube :" << exception.what();
             whenFailed();
         });
-
     });
-};
+}
 
 void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
-    
     auto bestUrl = toCheck->audioStreams()->preferedUrl();
-    
+
     download(bestUrl, true)
         .then([=](){
             *urlSuccessfullyRequested = bestUrl.toString();
-        })        
+        })
         .finally([=](){
             *checkEnded = true;
         });
-
 }
 
 promise::Defer NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
-
     auto videoInfoPipeline = PlayerConfig::from_EmbedPage(metadata->id())
     .then([=](const PlayerConfig &pConfig) {
         metadata->setPlayerConfig(pConfig);
         return VideoInfos::fillStreamsManifest(
-            metadata->id(), 
-            metadata->playerConfig(), 
+            metadata->id(),
+            metadata->playerConfig(),
             metadata->audioStreams()
         );
     });
 
-    //try videoInfoPipeline first, then watchPagePipeline if 1st failed
+    // try videoInfoPipeline first, then watchPagePipeline if 1st failed
     return videoInfoPipeline.fail([=](const QString &softErr){
-        
         qDebug() << qUtf8Printable(softErr);
 
         auto watchPagePipeline = PlayerConfig::from_WatchPage(metadata->id(), metadata->audioStreams())
@@ -95,48 +88,44 @@ promise::Defer NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
         });
 
         return watchPagePipeline;
-
     });
-
 }
 
 QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
-
-    //build regex
+    // build regex
     QRegularExpression re("watch\\?v=(?<videoId>.*?)&amp;");
 
-    //search...
+    // search...
     auto results = re.globalMatch(requestData);
-    
-    //return list
+
+    // return list
     QList<QString> idsList;
 
-    //iterate
+    // iterate
     while (results.hasNext()) {
-        QRegularExpressionMatch match = results.next(); //next
-        
-        //if match
+        QRegularExpressionMatch match = results.next();  // next
+
+        // if match
         if (match.hasMatch()) {
-            auto found = match.captured("videoId"); //videoId
-            
-            if(!idsList.contains(found)) {
+            auto found = match.captured("videoId");  // videoId
+
+            if (!idsList.contains(found)) {
                 idsList.append(found);
             }
         }
     }
 
-    //if no ids
-    if(!idsList.count()) throw std::logic_error("no playlist metadata container found !");
+    // if no ids
+    if (!idsList.count()) throw std::logic_error("no playlist metadata container found !");
 
-    //return
+    // return
     return idsList;
-
 }
 
 QList<VideoMetadata*> NetworkFetcher::_videoIdsToMetadataList(const QList<QString> &videoIds) {
     QList<VideoMetadata*> out;
-    for(const auto &id : videoIds) {
+    for (const auto &id : videoIds) {
         out.append(VideoMetadata::fromVideoId(id));
-    } 
+    }
     return out;
-};
+}

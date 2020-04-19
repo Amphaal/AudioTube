@@ -24,26 +24,27 @@
 #include <QDebug>
 
 class SignatureDecipherer {
-    
-    public:
-        enum class CipherOperation { CO_Unknown, Reverse, Slice, Swap };
+ public:
+    enum class CipherOperation { CO_Unknown, Reverse, Slice, Swap };
 
-        QString decipher(const QString &signature) const;
-        static SignatureDecipherer* create(const QString &clientPlayerUrl, const QString &rawPlayerSourceData);
-        static SignatureDecipherer* fromCache(const QString &clientPlayerUrl);
+    QString decipher(const QString &signature) const;
+    static SignatureDecipherer* create(const QString &clientPlayerUrl, const QString &rawPlayerSourceData);
+    static SignatureDecipherer* fromCache(const QString &clientPlayerUrl);
 
-    private:
-        using YTDecipheringOperations = QQueue<QPair<SignatureDecipherer::CipherOperation, QVariant>>;
-        using YTClientMethod = QString;
+ private:
+    using YTDecipheringOperations = QQueue<QPair<SignatureDecipherer::CipherOperation, QVariant>>;
+    using YTClientMethod = QString;
 
-        SignatureDecipherer(const QString &rawPlayerSourceData);
-        
-        QQueue<QPair<SignatureDecipherer::CipherOperation, QVariant>> _operations;
-        static inline QHash<QString, SignatureDecipherer*> _cache;
+    explicit SignatureDecipherer(const QString &rawPlayerSourceData);
 
-        static YTClientMethod _findObfuscatedDecipheringFunctionName(const QString &ytPlayerSourceCode);
-        static QList<QString> _findJSDecipheringOperations(const QString &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName);
-        static QHash<SignatureDecipherer::CipherOperation, YTClientMethod> _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, QList<QString> &javascriptDecipheringOperations);
-        static YTDecipheringOperations _buildOperations(QHash<SignatureDecipherer::CipherOperation, YTClientMethod> &functionNamesByOperation, 
-                                                        QList<QString> &javascriptOperations);
+    QQueue<QPair<SignatureDecipherer::CipherOperation, QVariant>> _operations;
+    static inline QHash<QString, SignatureDecipherer*> _cache;
+
+    static YTClientMethod _findObfuscatedDecipheringFunctionName(const QString &ytPlayerSourceCode);
+    static QList<QString>
+        _findJSDecipheringOperations(const QString &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName);
+    static QHash<SignatureDecipherer::CipherOperation, YTClientMethod>
+        _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, QList<QString> &javascriptDecipheringOperations);
+    static YTDecipheringOperations
+        _buildOperations(QHash<SignatureDecipherer::CipherOperation, YTClientMethod> &functionNamesByOperation, QList<QString> &javascriptOperations);
 };

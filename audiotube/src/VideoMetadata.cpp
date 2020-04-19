@@ -31,19 +31,18 @@ QString VideoMetadata::_urlFromVideoId(const QString &videoId) {
 }
 
 VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &type) {
-    switch(type) {
+    switch (type) {
         case InstantiationType::InstFromUrl: {
-            //find id
+            // find id
             auto match = _ytRegexIdFinder.match(IdOrUrl);
 
-            //returns
-            if(!match.hasMatch()) {
+            // returns
+            if (!match.hasMatch()) {
                 throw std::invalid_argument("URL is not a valid  URL !");
             }
 
             this->_videoId = match.captured("videoId");
             this->_url = IdOrUrl;
-
         }
         break;
 
@@ -76,7 +75,7 @@ bool VideoMetadata::ranOnce() const {
 }
 
 void VideoMetadata::setFailure(bool failed) {
-    if(failed == true && this->_failed != failed) emit streamFailed();
+    if (failed == true && this->_failed != failed) emit streamFailed();
     this->_failed = failed;
 }
 
@@ -88,6 +87,6 @@ StreamsManifest* VideoMetadata::audioStreams() {
     return &this->_audioStreams;
 }
 
-const PlayerConfig& VideoMetadata::playerConfig() const{
+const PlayerConfig& VideoMetadata::playerConfig() const {
     return this->_playerConfig;
 }
