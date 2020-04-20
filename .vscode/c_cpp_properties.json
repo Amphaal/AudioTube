@@ -29,6 +29,32 @@
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64"
+        },
+        {
+            "name": "MacOS",
+            "cStandard": "c11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "/usr/local/opt/qt/include"
+                ]
+            },
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/**",
+                "/usr/local/Cellar/qt/5.14.1/include",
+                "/usr/local/Cellar/qt/5.14.1/lib/QtCore.framework/Versions/5/Headers",
+                "/usr/local/Cellar/qt/5.14.1/lib/QtWidgets.framework/Versions/5/Headers",
+                "/usr/local/Cellar/qt/5.14.1/lib/QtNetwork.framework/Versions/5/Headers",
+                "/usr/local/Cellar/qt/5.14.1/lib/QtGui.framework/Versions/5/Headers",
+                "/usr/local/Cellar/qt/5.14.1/lib/QtOpenGL.framework/Versions/5/Headers",
+                "/usr/local/Cellar/miniupnpc/2.1/include/miniupnpc",
+                "/usr/local/Cellar/qt/5.14.1/lib/QtSvg.framework/Versions/5/Headers",
+                "/usr/local/Cellar/gstreamer/1.16.2/include/gstreamer-1.0",
+                "/usr/local/Cellar/glib/2.64.2/include/glib-2.0",
+                "/usr/local/Cellar/glib/2.64.2/lib/glib-2.0/include"
+            ]
         }
     ],
     "version": 4

@@ -22,7 +22,7 @@ void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDe
     auto foundStreams = regex.globalMatch(raw);
 
     // container
-    AudioStreamUrlByITag streams;
+    AudioStreamUrlByBitrate streams;
 
     // iterate
     while (foundStreams.hasNext()) {
@@ -47,7 +47,7 @@ void StreamsManifest::feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, co
 }
 
 void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer) {
-    AudioStreamUrlByITag streams;
+    AudioStreamUrlByBitrate streams;
 
     // iterate
     for (auto itagGroup : raw) {
@@ -58,7 +58,7 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
         if (!_isMimeAllowed(mimeType)) continue;
 
         // find itag + url
-        uint itag = itagGroupObj["itag"].toInt();
+        auto bitrate = itagGroupObj["bitrate"].toDouble();
         auto url = itagGroupObj["url"].toString();
 
         // decipher if no url
@@ -80,7 +80,7 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
         }
 
         // add tag / url pair
-        streams.insert(itag, url);
+        streams.insert(bitrate, url);
     }
 
     // insert in package
@@ -94,10 +94,12 @@ void StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
     this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
 }
 
-StreamsManifest::AudioStreamUrlByITag StreamsManifest::preferedStreamSource() const {
+StreamsManifest::AudioStreamUrlByBitrate StreamsManifest::preferedStreamSource() const {
+    // sort sources
     auto sources = this->_package.keys();
     std::sort(sources.begin(), sources.end());
 
+    // try to fetch in order of preference
     for (auto source : sources) {
         auto ASUBIT = this->_package.value(source);
         if (ASUBIT.count()) return ASUBIT;
@@ -107,7 +109,7 @@ StreamsManifest::AudioStreamUrlByITag StreamsManifest::preferedStreamSource() co
 }
 
 QUrl StreamsManifest::preferedUrl() const {
-    return this->preferedStreamSource().values().first();
+    return this->preferedStreamSource().last();  // since bitrates are asc-ordered, take latest for fastest
 }
 
 bool StreamsManifest::isExpired() const {

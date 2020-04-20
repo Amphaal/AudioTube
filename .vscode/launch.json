@@ -5,10 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "(lldb) Lancer",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/_genDebug/tests/audiotube_tests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "2+. Build"
+        },
+        {
             "name": "(gdb) Lancer",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/_genDebug/tests/audiotube_tests.exe",
+            "program": "${workspaceFolder}/_genDebug/tests/audiotube_tests",
+            "windows": {
+                "program": "${workspaceFolder}/_genDebug/tests/audiotube_tests.exe",
+                "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
+            },
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -16,7 +33,6 @@
             "externalConsole": false,
             "MIMode": "gdb",
             "preLaunchTask": "2+. Build",
-            "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
             "setupCommands": [
                 {
                     "description": "Activer l'impression en mode Pretty pour gdb",

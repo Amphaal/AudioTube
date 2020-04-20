@@ -23,6 +23,9 @@
 #include <QUrlQuery>
 #include <QRegularExpression>
 
+#include <algorithm>
+#include <functional>
+
 #include "_DebugHelper.h"
 #include "_NetworkHelper.h"
 #include "SignatureDecipherer.h"
@@ -39,8 +42,8 @@ class StreamsManifest : public NetworkHelper {
     using RawPlayerConfigStreams = QString;
     using RawPlayerResponseStreams = QJsonArray;
 
-    using AudioStreamUrlByITag = QHash<uint, QUrl>;
-    using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByITag>;
+    using AudioStreamUrlByBitrate = QMap<double, QUrl>;
+    using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByBitrate>;
 
     StreamsManifest();
 
@@ -52,7 +55,7 @@ class StreamsManifest : public NetworkHelper {
     void setRequestedAt(const QDateTime &requestedAt);
     void setSecondsUntilExpiration(const uint secsUntilExp);
 
-    AudioStreamUrlByITag preferedStreamSource() const;
+    AudioStreamUrlByBitrate preferedStreamSource() const;
     QUrl preferedUrl() const;
     bool isExpired() const;
 
