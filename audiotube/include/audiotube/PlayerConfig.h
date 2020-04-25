@@ -18,6 +18,8 @@
 #include "SignatureDecipherer.h"
 #include "StreamsManifest.h"
 
+namespace AudioTube {
+
 class PlayerConfig : public NetworkHelper {
  public:
     enum ContextSource {
@@ -63,3 +65,5 @@ class PlayerConfig : public NetworkHelper {
     static QString _playerSourceUrl(const QJsonObject &playerConfig);
     static QString _getSts(const DownloadedUtf8 &dl);
 };
+
+}  // namespace AudioTube

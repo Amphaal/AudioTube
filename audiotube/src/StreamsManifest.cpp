@@ -14,9 +14,9 @@
 
 #include "StreamsManifest.h"
 
-StreamsManifest::StreamsManifest() {}
+AudioTube::StreamsManifest::StreamsManifest() {}
 
-void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
+void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
     // find streams
     auto foundStreams = Regexes::DASHManifestExtractor.globalMatch(raw);
 
@@ -42,11 +42,11 @@ void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDe
     this->_package.insert(AudioStreamsSource::DASH, streams);
 }
 
-void StreamsManifest::feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer) {
+void AudioTube::StreamsManifest::feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer) {
     // TODO(amphaal)
 }
 
-void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer) {
+void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer) {
     AudioStreamUrlByBitrate streams;
 
     // iterate
@@ -89,7 +89,7 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
     this->_package.insert(AudioStreamsSource::PlayerResponse, streams);
 }
 
-QString StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey) {
+QString AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey) {
     QString out = cipheredUrl;
 
     // find signature param, set default if empty
@@ -106,14 +106,14 @@ QString StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, c
     return out;
 }
 
-void StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {
+void AudioTube::StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {
     this->_requestedAt = requestedAt;
 }
-void StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
+void AudioTube::StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
     this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
 }
 
-QPair<StreamsManifest::AudioStreamsSource, StreamsManifest::AudioStreamUrlByBitrate> StreamsManifest::preferedStreamSource() const {
+QPair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsManifest::AudioStreamUrlByBitrate> AudioTube::StreamsManifest::preferedStreamSource() const {
     // sort sources
     auto sources = this->_package.keys();
     std::sort(sources.begin(), sources.end());
@@ -127,29 +127,29 @@ QPair<StreamsManifest::AudioStreamsSource, StreamsManifest::AudioStreamUrlByBitr
     throw std::logic_error("No audio stream source found !");
 }
 
-QUrl StreamsManifest::preferedUrl() const {
+QUrl AudioTube::StreamsManifest::preferedUrl() const {
     auto source = this->preferedStreamSource();
     qDebug() << "Picking stream URL from source : " << qUtf8Printable(QVariant::fromValue(source.first).toString());
     return source.second.last().second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
-bool StreamsManifest::isExpired() const {
+bool AudioTube::StreamsManifest::isExpired() const {
     if (this->_validUntil.isNull()) return true;
     return QDateTime::currentDateTime() > this->_validUntil;
 }
 
 
-bool StreamsManifest::_isCodecAllowed(const QString &codec) {
+bool AudioTube::StreamsManifest::_isCodecAllowed(const QString &codec) {
     if (codec.contains(QStringLiteral(u"opus"))) return true;
     return false;
 }
 
-bool StreamsManifest::_isMimeAllowed(const QString &mime) {
+bool AudioTube::StreamsManifest::_isMimeAllowed(const QString &mime) {
     if (!mime.contains(QStringLiteral(u"audio"))) return false;
     return _isCodecAllowed(mime);
 }
 
-QJsonArray StreamsManifest::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
+QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
     QJsonArray out;
 
     // for each group

@@ -24,6 +24,8 @@
 #include "PlayerConfig.h"
 #include "StreamsManifest.h"
 
+namespace AudioTube {
+
 class VideoMetadata : public QObject {
     Q_OBJECT
 
@@ -67,4 +69,6 @@ class VideoMetadata : public QObject {
     StreamsManifest _audioStreams;
 };
 
-Q_DECLARE_METATYPE(VideoMetadata*)
+}  // namespace AudioTube
+
+Q_DECLARE_METATYPE(AudioTube::VideoMetadata*)

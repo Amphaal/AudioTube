@@ -30,6 +30,8 @@
 #include "SignatureDecipherer.h"
 #include "Regexes.h"
 
+namespace AudioTube {
+
 class StreamsManifest : public NetworkHelper {
     Q_GADGET
 
@@ -76,4 +78,6 @@ class StreamsManifest : public NetworkHelper {
     static QString _decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey = QString());
 };
 
-inline uint qHash(const StreamsManifest::AudioStreamsSource &key, uint seed = 0) {return uint(key) ^ seed;}
+inline uint qHash(const AudioTube::StreamsManifest::AudioStreamsSource &key, uint seed = 0) {return uint(key) ^ seed;}
+
+}  // namespace AudioTube

@@ -14,33 +14,33 @@
 
 #include "PlayerConfig.h"
 
-PlayerConfig::PlayerConfig() {}
+AudioTube::PlayerConfig::PlayerConfig() {}
 
-PlayerConfig::PlayerConfig(const PlayerConfig::ContextSource &streamContextSource, const PlayerConfig::VideoId &videoId) {
+AudioTube::PlayerConfig::PlayerConfig(const PlayerConfig::ContextSource &streamContextSource, const PlayerConfig::VideoId &videoId) {
     this->_contextSource = streamContextSource;
 }
 
-QString PlayerConfig::sts() const {
+QString AudioTube::PlayerConfig::sts() const {
     return this->_sts;
 }
 
-int PlayerConfig::duration() const {
+int AudioTube::PlayerConfig::duration() const {
     return this->_duration;
 }
 
-QString PlayerConfig::title() const {
+QString AudioTube::PlayerConfig::title() const {
     return this->_title;
 }
 
-const SignatureDecipherer* PlayerConfig::decipherer() const {
+const AudioTube::SignatureDecipherer* AudioTube::PlayerConfig::decipherer() const {
     return this->_decipherer;
 }
 
-PlayerConfig::ContextSource PlayerConfig::contextSource() const {
+AudioTube::PlayerConfig::ContextSource AudioTube::PlayerConfig::contextSource() const {
     return this->_contextSource;
 }
 
-promise::Defer PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
+promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
     // pipeline
     return _downloadRaw_VideoEmbedPageHtml(videoId)
             .then([=](const DownloadedUtf8 &dl) {
@@ -49,7 +49,7 @@ promise::Defer PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId
             });
 }
 
-promise::Defer PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
+promise::Defer AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
     // define requested at timestamp
     streamsManifest->setRequestedAt(QDateTime::currentDateTime());
 
@@ -61,18 +61,18 @@ promise::Defer PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId
             });
 }
 
-promise::Defer PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const PlayerConfig::VideoId &videoId) {
+promise::Defer AudioTube::PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = QStringLiteral(u"https://www.youtube.com/embed/%1?hl=en").arg(videoId);
     return download(url);
 }
 
-promise::Defer PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerConfig::VideoId &videoId) {
+promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = QStringLiteral("https://www.youtube.com/watch?v=%1&bpctr=9999999999&hl=en").arg(videoId);
     return download(url);
 }
 
 
-QJsonObject PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex) {
+QJsonObject AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const QRegularExpression &regex) {
     auto playerConfigAsStr = regex.match(rawSource).captured("playerConfig");
     auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
 
@@ -84,13 +84,13 @@ QJsonObject PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8
     return playerConfig;
 }
 
-QString PlayerConfig::_playerSourceUrl(const QJsonObject &playerConfig) {
+QString AudioTube::PlayerConfig::_playerSourceUrl(const QJsonObject &playerConfig) {
     auto playerSourceUrlPath = playerConfig[QStringLiteral(u"assets")].toObject()[QStringLiteral(u"js")].toString();
     if (playerSourceUrlPath.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
     return QStringLiteral("https://www.youtube.com") + playerSourceUrlPath;
 }
 
-promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &playerSourceUrl) {
+promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &playerSourceUrl) {
     return promise::newPromise([=](promise::Defer d){
         // if cached is found, return it
         auto cachedDecipherer = SignatureDecipherer::fromCache(playerSourceUrl);
@@ -126,7 +126,7 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
     });
 }
 
-promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
+promise::Defer AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
     return promise::newPromise([=](promise::Defer d) {
         auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromEmbed);
 
@@ -150,7 +150,7 @@ promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &
     });
 }
 
-promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
+promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
     return promise::newPromise([=](promise::Defer d) {
         // get player config JSON
         auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromWatchPage);
@@ -228,7 +228,7 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, S
     });
 }
 
-QString PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
+QString AudioTube::PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
     QString sts;
 
     auto match = Regexes::STSFinder.match(dl);

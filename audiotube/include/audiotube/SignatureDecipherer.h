@@ -27,6 +27,8 @@
 #include "CipherOperation.h"
 #include "_DebugHelper.h"
 
+namespace AudioTube {
+
 class SignatureDecipherer {
  public:
     QString decipher(const QString &signature) const;
@@ -50,3 +52,5 @@ class SignatureDecipherer {
     static YTDecipheringOperations
         _buildOperations(const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation, const QList<QString> &javascriptOperations);
 };
+
+}  // namespace AudioTube

@@ -26,11 +26,11 @@
 #define CATCH_CONFIG_RUNNER
 #include <catch2/catch.hpp>
 
-bool stream_are_working(VideoMetadata &metadata) {
+bool stream_are_working(AudioTube::VideoMetadata &metadata) {
     // fetch for a stream HEAD
     QString urlSuccessfullyRequested;
     bool ended;
-    NetworkFetcher::isStreamAvailable(&metadata, &ended, &urlSuccessfullyRequested);
+    AudioTube::NetworkFetcher::isStreamAvailable(&metadata, &ended, &urlSuccessfullyRequested);
 
     // wait processing
     while (!ended) {
@@ -49,11 +49,11 @@ bool stream_are_working(VideoMetadata &metadata) {
 
 bool youtube_metadata_fetching_succeeded(const QString &ytId) {
     // generating container
-    VideoMetadata container(ytId, VideoMetadata::InstantiationType::InstFromId);
+    AudioTube::VideoMetadata container(ytId, AudioTube::VideoMetadata::InstantiationType::InstFromId);
     qDebug() << qUtf8Printable(QString("Testing [%1]...").arg(container.url()));
 
     // refresh...
-    NetworkFetcher::refreshMetadata(&container);
+    AudioTube::NetworkFetcher::refreshMetadata(&container);
 
     // wait for a response
     while (!container.ranOnce()) {

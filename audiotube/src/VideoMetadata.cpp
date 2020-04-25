@@ -14,19 +14,19 @@
 
 #include "VideoMetadata.h"
 
-VideoMetadata* VideoMetadata::fromVideoId(const QString &videoId) {
+AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoId(const QString &videoId) {
     return new VideoMetadata(videoId, InstantiationType::InstFromId);
 }
 
-VideoMetadata* VideoMetadata::fromVideoUrl(const QString &url) {
+AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoUrl(const QString &url) {
     return new VideoMetadata(url, InstantiationType::InstFromUrl);
 }
 
-QString VideoMetadata::_urlFromVideoId(const QString &videoId) {
+QString AudioTube::VideoMetadata::_urlFromVideoId(const QString &videoId) {
     return QStringLiteral(u"https://www.youtube.com/watch?v=") + videoId;
 }
 
-VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &type) {
+AudioTube::VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &type) {
     switch (type) {
         case InstantiationType::InstFromUrl: {
             // find id
@@ -50,39 +50,39 @@ VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &ty
     }
 }
 
-PlayerConfig::VideoId VideoMetadata::id() const {
+AudioTube::PlayerConfig::VideoId AudioTube::VideoMetadata::id() const {
     return this->_videoId;
 }
 
-QString VideoMetadata::url() const {
+QString AudioTube::VideoMetadata::url() const {
     return this->_url;
 }
 
-bool VideoMetadata::hasFailed() const {
+bool AudioTube::VideoMetadata::hasFailed() const {
     return this->_failed;
 }
 
-void VideoMetadata::setRanOnce() {
+void AudioTube::VideoMetadata::setRanOnce() {
     this->_ranOnce = true;
 }
 
-bool VideoMetadata::ranOnce() const {
+bool AudioTube::VideoMetadata::ranOnce() const {
     return this->_ranOnce;
 }
 
-void VideoMetadata::setFailure(bool failed) {
+void AudioTube::VideoMetadata::setFailure(bool failed) {
     if (failed == true && this->_failed != failed) emit streamFailed();
     this->_failed = failed;
 }
 
-void VideoMetadata::setPlayerConfig(const PlayerConfig &playerConfig) {
+void AudioTube::VideoMetadata::setPlayerConfig(const PlayerConfig &playerConfig) {
     this->_playerConfig = playerConfig;
 }
 
-StreamsManifest* VideoMetadata::audioStreams() {
+AudioTube::StreamsManifest* AudioTube::VideoMetadata::audioStreams() {
     return &this->_audioStreams;
 }
 
-const PlayerConfig& VideoMetadata::playerConfig() const {
+const AudioTube::PlayerConfig& AudioTube::VideoMetadata::playerConfig() const {
     return this->_playerConfig;
 }

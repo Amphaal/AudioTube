@@ -33,6 +33,8 @@
 #include "VideoMetadata.h"
 #include "VideoInfos.h"
 
+namespace AudioTube {
+
 class NetworkFetcher : public NetworkHelper {
  public:
     static promise::Defer fromPlaylistUrl(const QString &url);
@@ -45,3 +47,5 @@ class NetworkFetcher : public NetworkHelper {
     static QList<QString> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
     static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<QString> &videoIds);
 };
+
+}  // namespace AudioTube

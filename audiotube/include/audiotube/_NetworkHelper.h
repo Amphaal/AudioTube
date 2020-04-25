@@ -20,6 +20,8 @@
 
 #include <promise-cpp/promise.hpp>
 
+namespace AudioTube {
+
 class NetworkHelper {
  public:
     using DownloadedUtf8 = QString;
@@ -30,3 +32,5 @@ class NetworkHelper {
  private:
     static inline QNetworkAccessManager* _manager = nullptr;
 };
+
+}  // namespace AudioTube
