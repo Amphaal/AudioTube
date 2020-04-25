@@ -21,7 +21,6 @@
 #include <QVariantHash>
 #include <QUrl>
 #include <QUrlQuery>
-#include <QRegularExpression>
 
 #include <algorithm>
 #include <functional>
@@ -29,6 +28,7 @@
 #include "_DebugHelper.h"
 #include "_NetworkHelper.h"
 #include "SignatureDecipherer.h"
+#include "Regexes.h"
 
 class StreamsManifest : public NetworkHelper {
  public:
@@ -41,8 +41,9 @@ class StreamsManifest : public NetworkHelper {
     using RawDASHManifest = QString;
     using RawPlayerConfigStreams = QString;
     using RawPlayerResponseStreams = QJsonArray;
+    using ITag = int;
 
-    using AudioStreamUrlByBitrate = QMap<double, QUrl>;
+    using AudioStreamUrlByBitrate = QMap<double, QPair<ITag, QUrl>>;
     using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByBitrate>;
 
     StreamsManifest();

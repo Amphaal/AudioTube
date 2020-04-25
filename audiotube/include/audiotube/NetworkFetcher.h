@@ -18,7 +18,7 @@
 
 #include <QDebug>
 
-#include <QRegularExpression>
+
 #include <QUrlQuery>
 #include <QString>
 #include <QFile>

@@ -18,8 +18,7 @@ StreamsManifest::StreamsManifest() {}
 
 void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
     // find streams
-    QRegularExpression regex("<Representation id=\"(?<itag>.*?)\" codecs=\"(?<codec>.*?)\"[\\s\\S]*?<BaseURL>(?<url>.*?)<\\/BaseURL");
-    auto foundStreams = regex.globalMatch(raw);
+    auto foundStreams = Regexes::DASHManifestExtractor.globalMatch(raw);
 
     // container
     AudioStreamUrlByBitrate streams;
@@ -34,8 +33,9 @@ void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDe
 
         auto itag = match.captured("itag").toInt();
         auto url = match.captured("url");
+        auto bitrate = match.captured("bitrate").toDouble();
 
-        streams.insert(itag, url);
+        streams.insert(bitrate, { itag, url });
     }
 
     // insert in package
@@ -60,12 +60,13 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
         // find itag + url
         auto bitrate = itagGroupObj["bitrate"].toDouble();
         auto url = itagGroupObj["url"].toString();
+        auto tag = itagGroupObj["itag"].toInt();
 
         // decipher if no url
         if (url.isEmpty()) {
             // fetch cipher, url and signature
             auto cipher = QUrlQuery(itagGroupObj["cipher"].toString());
-            url = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
+            url =  cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
             auto signature = cipher.queryItemValue("s", QUrl::ComponentFormattingOption::FullyDecoded);
 
             // find signature param
@@ -77,10 +78,12 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
 
             // append
             url += QString("&%1=%2").arg(signatureParameter).arg(signature);
+
+            qDebug() << url;
         }
 
         // add tag / url pair
-        streams.insert(bitrate, url);
+        streams.insert(bitrate, { tag, url });
     }
 
     // insert in package
@@ -109,7 +112,7 @@ StreamsManifest::AudioStreamUrlByBitrate StreamsManifest::preferedStreamSource()
 }
 
 QUrl StreamsManifest::preferedUrl() const {
-    return this->preferedStreamSource().last();  // since bitrates are asc-ordered, take latest for fastest
+    return this->preferedStreamSource().last().second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
 bool StreamsManifest::isExpired() const {

@@ -14,10 +14,6 @@
 
 #include "VideoMetadata.h"
 
-QRegularExpression VideoMetadata::getUrlMatcher() {
-    return _ytRegexIdFinder;
-}
-
 VideoMetadata* VideoMetadata::fromVideoId(const QString &videoId) {
     return new VideoMetadata(videoId, InstantiationType::InstFromId);
 }
@@ -34,7 +30,7 @@ VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &ty
     switch (type) {
         case InstantiationType::InstFromUrl: {
             // find id
-            auto match = _ytRegexIdFinder.match(IdOrUrl);
+            auto match = Regexes::YoutubeIdFinder.match(IdOrUrl);
 
             // returns
             if (!match.hasMatch()) {
