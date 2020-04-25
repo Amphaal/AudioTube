@@ -31,12 +31,15 @@
 #include "Regexes.h"
 
 class StreamsManifest : public NetworkHelper {
+    Q_GADGET
+
  public:
-    enum class AudioStreamsSource {
+    enum AudioStreamsSource {
         PlayerResponse,
         PlayerConfig,
         DASH
     };
+    Q_ENUM(AudioStreamsSource)
 
     using RawDASHManifest = QString;
     using RawPlayerConfigStreams = QString;
@@ -56,7 +59,7 @@ class StreamsManifest : public NetworkHelper {
     void setRequestedAt(const QDateTime &requestedAt);
     void setSecondsUntilExpiration(const uint secsUntilExp);
 
-    AudioStreamUrlByBitrate preferedStreamSource() const;
+    QPair<StreamsManifest::AudioStreamsSource, AudioStreamUrlByBitrate> preferedStreamSource() const;
     QUrl preferedUrl() const;
     bool isExpired() const;
 

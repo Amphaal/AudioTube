@@ -32,6 +32,11 @@ target_sources(audiotube PRIVATE
     include/audiotube/VideoMetadata.h
 )
 
+#force headers for MOC
+target_sources(audiotube PRIVATE
+    include/audiotube/StreamsManifest.h
+)
+
 #add lib files
 target_sources(audiotube PRIVATE
     src/NetworkFetcher.cpp
@@ -40,6 +45,6 @@ target_sources(audiotube PRIVATE
     src/PlayerConfig.cpp
     src/StreamsManifest.cpp
     src/VideoMetadata.cpp
-    src/_NetworkHelper.cpp
-    src/_DebugHelper.cpp
+    src/\_NetworkHelper.cpp
+    src/\_DebugHelper.cpp
 )

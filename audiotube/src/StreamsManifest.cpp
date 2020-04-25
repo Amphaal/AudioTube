@@ -78,8 +78,6 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
 
             // append
             url += QString("&%1=%2").arg(signatureParameter).arg(signature);
-
-            qDebug() << url;
         }
 
         // add tag / url pair
@@ -97,7 +95,7 @@ void StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
     this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
 }
 
-StreamsManifest::AudioStreamUrlByBitrate StreamsManifest::preferedStreamSource() const {
+QPair<StreamsManifest::AudioStreamsSource, StreamsManifest::AudioStreamUrlByBitrate> StreamsManifest::preferedStreamSource() const {
     // sort sources
     auto sources = this->_package.keys();
     std::sort(sources.begin(), sources.end());
@@ -105,14 +103,16 @@ StreamsManifest::AudioStreamUrlByBitrate StreamsManifest::preferedStreamSource()
     // try to fetch in order of preference
     for (auto source : sources) {
         auto ASUBIT = this->_package.value(source);
-        if (ASUBIT.count()) return ASUBIT;
+        if (ASUBIT.count()) return { source, ASUBIT };
     }
 
     throw std::logic_error("No audio stream source found !");
 }
 
 QUrl StreamsManifest::preferedUrl() const {
-    return this->preferedStreamSource().last().second;  // since bitrates are asc-ordered, take latest for fastest
+    auto source = this->preferedStreamSource();
+    qDebug() << "Picking stream URL from source : " << qUtf8Printable(QVariant::fromValue(source.first).toString());
+    return source.second.last().second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
 bool StreamsManifest::isExpired() const {

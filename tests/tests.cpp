@@ -88,14 +88,14 @@ int main(int argc, char *argv[]) {
 //   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
 // }
 
-TEST_CASE("OK from Dash Manifest - no url deciphering", "[metadata]") {
-  REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
-}
+// TEST_CASE("OK from Dash Manifest - no url deciphering", "[metadata]") {
+//   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
+// }
 
 // TEST_CASE("Restricted viewing", "[metadata]") {
 //   REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
 // }
 
-// TEST_CASE("Exact STS required", "[metadata]") {
-//   REQUIRE(youtube_metadata_fetching_succeeded("lkkHtuTdIj4"));
-// }
+TEST_CASE("Exact STS required", "[metadata]") {
+  REQUIRE(youtube_metadata_fetching_succeeded("lkkHtuTdIj4"));
+}
