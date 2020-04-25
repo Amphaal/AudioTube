@@ -20,6 +20,8 @@
 #include "SignatureDecipherer.h"
 #include "StreamsManifest.h"
 
+namespace AudioTube {
+
 class VideoInfos : public NetworkHelper {
  public:
     static promise::Defer fillStreamsManifest(const PlayerConfig::VideoId &videoId, const PlayerConfig &playerConfig, StreamsManifest* manifest);
@@ -28,3 +30,5 @@ class VideoInfos : public NetworkHelper {
     static promise::Defer _downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const QString &sts);
     static promise::Defer _fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, const PlayerConfig &playerConfig);
 };
+
+}  // namespace AudioTube

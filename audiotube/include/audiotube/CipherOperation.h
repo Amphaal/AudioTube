@@ -14,6 +14,8 @@
 
 #pragma once
 
+namespace AudioTube {
+
 // Careful, order is important !
 enum class CipherOperation {
     CO_Unknown,
@@ -22,4 +24,6 @@ enum class CipherOperation {
     Reverse
 };
 
-inline uint qHash(const CipherOperation &key, uint seed = 0) {return uint(key) ^ seed;}
+inline uint qHash(const AudioTube::CipherOperation &key, uint seed = 0) {return uint(key) ^ seed;}
+
+}  // namespace AudioTube

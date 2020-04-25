@@ -14,7 +14,7 @@
 
 #include "VideoInfos.h"
 
-promise::Defer VideoInfos::fillStreamsManifest(
+promise::Defer AudioTube::VideoInfos::fillStreamsManifest(
     const PlayerConfig::VideoId &videoId,
     const PlayerConfig &playerConfig,
     StreamsManifest* manifest) {
@@ -28,7 +28,7 @@ promise::Defer VideoInfos::fillStreamsManifest(
             });
 }
 
-promise::Defer VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const QString &sts) {
+promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const QString &sts) {
     auto apiUrl = QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
     auto encodedApiUrl = QString::fromUtf8(QUrl::toPercentEncoding(apiUrl));
 
@@ -38,7 +38,7 @@ promise::Defer VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &
     return download(requestUrl);
 }
 
-promise::Defer VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, const PlayerConfig &playerConfig) {
+promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, const PlayerConfig &playerConfig) {
     return promise::newPromise([=](promise::Defer d) {
         // as string then to query
         QUrlQuery videoInfos(dl);

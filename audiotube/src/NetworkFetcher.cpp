@@ -14,13 +14,13 @@
 
 #include "NetworkFetcher.h"
 
-promise::Defer NetworkFetcher::fromPlaylistUrl(const QString &url) {
+promise::Defer AudioTube::NetworkFetcher::fromPlaylistUrl(const QString &url) {
     return download(url)
             .then(&_extractVideoIdsFromHTTPRequest)
             .then(&_videoIdsToMetadataList);
 }
 
-promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
+promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
     // check if soft refresh...
     if (!force && !toRefresh->audioStreams()->isExpired()) return promise::resolve(toRefresh);
 
@@ -55,7 +55,7 @@ promise::Defer NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool fo
     });
 }
 
-void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
+void AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
     auto bestUrl = toCheck->audioStreams()->preferedUrl();
 
     download(bestUrl, true)
@@ -67,7 +67,7 @@ void NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded,
         });
 }
 
-promise::Defer NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
+promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
     auto videoInfoPipeline = PlayerConfig::from_EmbedPage(metadata->id())
     .then([=](const PlayerConfig &pConfig) {
         metadata->setPlayerConfig(pConfig);
@@ -91,7 +91,7 @@ promise::Defer NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
     });
 }
 
-QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
+QList<QString> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
     // search...
     auto results = Regexes::HTTPRequestYTVideoIdExtractor.globalMatch(requestData);
 
@@ -119,7 +119,7 @@ QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedU
     return idsList;
 }
 
-QList<VideoMetadata*> NetworkFetcher::_videoIdsToMetadataList(const QList<QString> &videoIds) {
+QList<AudioTube::VideoMetadata*> AudioTube::NetworkFetcher::_videoIdsToMetadataList(const QList<QString> &videoIds) {
     QList<VideoMetadata*> out;
     for (const auto &id : videoIds) {
         out.append(VideoMetadata::fromVideoId(id));

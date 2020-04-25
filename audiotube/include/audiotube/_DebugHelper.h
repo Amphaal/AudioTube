@@ -21,6 +21,8 @@
 #include <QDebug>
 #include <QFile>
 
+namespace AudioTube {
+
 class DebugHelper {
  public:
     static void _dumpAsJSON(const QUrlQuery &query);
@@ -29,3 +31,5 @@ class DebugHelper {
     static void _dumpAsJSON(const QJsonDocument &doc);
     static void _dumpAsFile(const QString &str);
 };
+
+}  // namespace AudioTube

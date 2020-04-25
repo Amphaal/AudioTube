@@ -14,7 +14,7 @@
 
 #include "_NetworkHelper.h"
 
-promise::Defer NetworkHelper::download(const QUrl& url, bool head) {
+promise::Defer AudioTube::NetworkHelper::download(const QUrl& url, bool head) {
     if (!_manager) {
         _manager = new QNetworkAccessManager;
     }

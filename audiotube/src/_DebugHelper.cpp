@@ -14,7 +14,7 @@
 
 #include "_DebugHelper.h"
 
-void DebugHelper::_dumpAsJSON(const QUrlQuery &query) {
+void AudioTube::DebugHelper::_dumpAsJSON(const QUrlQuery &query) {
     QJsonObject dump;
 
     for (const auto &item : query.queryItems(QUrl::ComponentFormattingOption::FullyDecoded)) {
@@ -24,15 +24,15 @@ void DebugHelper::_dumpAsJSON(const QUrlQuery &query) {
     _dumpAsJSON(dump);
 }
 
-void DebugHelper::_dumpAsJSON(const QJsonObject &obj) {
+void AudioTube::DebugHelper::_dumpAsJSON(const QJsonObject &obj) {
     return _dumpAsJSON(QJsonDocument(obj));
 }
 
-void DebugHelper::_dumpAsJSON(const QJsonArray &arr) {
+void AudioTube::DebugHelper::_dumpAsJSON(const QJsonArray &arr) {
     return _dumpAsJSON(QJsonDocument(arr));
 }
 
-void DebugHelper::_dumpAsFile(const QString &str) {
+void AudioTube::DebugHelper::_dumpAsFile(const QString &str) {
     QFile fh("yt.txt");
     fh.open(QFile::WriteOnly);
         fh.write(str.toUtf8());
@@ -41,7 +41,7 @@ void DebugHelper::_dumpAsFile(const QString &str) {
     qDebug() << fh.fileName() << " created !";
 }
 
-void DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
+void AudioTube::DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
     auto bytes = doc.toJson(QJsonDocument::JsonFormat::Indented);
 
     QFile fh("yt.json");

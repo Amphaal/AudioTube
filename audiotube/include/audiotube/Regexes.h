@@ -18,6 +18,8 @@
 
 #include "CipherOperation.h"
 
+namespace AudioTube {
+
 class Regexes {
  public:
     static inline QRegularExpression DASHManifestExtractor = QRegularExpression(
@@ -80,3 +82,5 @@ class Regexes {
         { CipherOperation::Reverse, R"|(%1:\bfunction\b\(\w+\))|" }
     };
 };
+
+}  // namespace AudioTube
