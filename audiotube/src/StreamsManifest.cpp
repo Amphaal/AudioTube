@@ -66,18 +66,19 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
         if (url.isEmpty()) {
             // fetch cipher, url and signature
             auto cipher = QUrlQuery(itagGroupObj["cipher"].toString());
-            url =  cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
+
+            // find params
+            auto cipheredUrl = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
             auto signature = cipher.queryItemValue("s", QUrl::ComponentFormattingOption::FullyDecoded);
-
-            // find signature param
             auto signatureParameter = cipher.queryItemValue("sp", QUrl::ComponentFormattingOption::FullyDecoded);
-            if (signatureParameter.isEmpty()) signatureParameter = "signature";
 
-            // decipher...
-            signature = decipherer->decipher(signature);
-
-            // append
-            url += QString("&%1=%2").arg(signatureParameter).arg(signature);
+            // decipher
+            url = _decipheredUrl(
+                decipherer,
+                cipheredUrl,
+                signature,
+                signatureParameter
+            );
         }
 
         // add tag / url pair
@@ -86,6 +87,23 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
 
     // insert in package
     this->_package.insert(AudioStreamsSource::PlayerResponse, streams);
+}
+
+QString StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey) {
+    QString out = cipheredUrl;
+
+    // find signature param, set default if empty
+    if (sigKey.isEmpty()) sigKey = "signature";
+
+    // decipher...
+    signature = decipherer->decipher(signature);
+
+    // append
+    out += QString("&%1=%2")
+            .arg(sigKey)
+            .arg(signature);
+    qDebug() << out;
+    return out;
 }
 
 void StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {

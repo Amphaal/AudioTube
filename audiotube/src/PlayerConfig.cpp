@@ -203,7 +203,6 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, S
         streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
         streamsManifest->feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
 
-
         // DASH manifest handling
         auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
 

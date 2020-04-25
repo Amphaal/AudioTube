@@ -91,21 +91,26 @@ QList<QString> SignatureDecipherer::_findJSDecipheringOperations(const QString &
 }
 
 QHash<CipherOperation, SignatureDecipherer::YTClientMethod> SignatureDecipherer::
-    _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, QList<QString> &javascriptDecipheringOperations) {
+    _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, const QList<QString> &javascriptDecipheringOperations) {
     // define out
     QHash<CipherOperation, YTClientMethod> functionNamesByOperation;
-    // find subjacent functions used by decipherer
-    for (const auto &call : javascriptDecipheringOperations) {
-        // once all are found, break
-        if (functionNamesByOperation.count() == 3) break;
 
-        // find which function is called
+    // find subjacent functions names used by decipherer
+    QSet<QString> uniqueOperations;
+    for (const auto &call : javascriptDecipheringOperations) {
+        // find function name in method call
         auto match = Regexes::Decipherer_findCalledFunction.match(call);
         if (!match.hasMatch()) continue;
         auto calledFunctionName = match.captured("functionName");
 
-        // custom regexes to find decipherer methods
-        QHash<CipherOperation, QRegularExpression> customRegexes = Regexes::Decipherer_DecipheringOps(calledFunctionName);
+        // add to set
+        uniqueOperations.insert(calledFunctionName);
+    }
+
+    // iterate through unique operations
+    for (const auto &calledFunctionName : uniqueOperations) {
+        // custom regexes to determine associated decipherer method
+        auto customRegexes = Regexes::Decipherer_DecipheringOps(calledFunctionName);
 
         // find...
         for (auto i = customRegexes.begin(); i != customRegexes.end(); ++i) {
@@ -117,6 +122,7 @@ QHash<CipherOperation, SignatureDecipherer::YTClientMethod> SignatureDecipherer:
             auto regex = i.value();
             if (regex.match(ytPlayerSourceCode).hasMatch()) {
                 functionNamesByOperation.insert(co, calledFunctionName);
+                break;
             }
         }
     }
@@ -129,8 +135,8 @@ QHash<CipherOperation, SignatureDecipherer::YTClientMethod> SignatureDecipherer:
 }
 
 SignatureDecipherer::YTDecipheringOperations SignatureDecipherer::_buildOperations(
-        QHash<CipherOperation, YTClientMethod> &functionNamesByOperation,
-        QList<QString> &javascriptOperations
+        const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation,
+        const QList<QString> &javascriptOperations
     ) {
     YTDecipheringOperations operations;
 

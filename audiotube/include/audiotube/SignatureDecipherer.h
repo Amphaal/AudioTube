@@ -25,6 +25,7 @@
 
 #include "Regexes.h"
 #include "CipherOperation.h"
+#include "_DebugHelper.h"
 
 class SignatureDecipherer {
  public:
@@ -45,7 +46,7 @@ class SignatureDecipherer {
     static QList<QString>
         _findJSDecipheringOperations(const QString &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName);
     static QHash<CipherOperation, YTClientMethod>
-        _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, QList<QString> &javascriptDecipheringOperations);
+        _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, const QList<QString> &javascriptDecipheringOperations);
     static YTDecipheringOperations
-        _buildOperations(QHash<CipherOperation, YTClientMethod> &functionNamesByOperation, QList<QString> &javascriptOperations);
+        _buildOperations(const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation, const QList<QString> &javascriptOperations);
 };

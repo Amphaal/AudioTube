@@ -52,8 +52,9 @@ class Regexes {
         return _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName);
     }
 
-    static QHash<CipherOperation, QRegularExpression> Decipherer_DecipheringOps(const QString &obfuscatedDecipheringFunctionName) {
-        QHash<CipherOperation, QRegularExpression> out;
+    // Careful, order is important !
+    static QMap<CipherOperation, QRegularExpression> Decipherer_DecipheringOps(const QString &obfuscatedDecipheringFunctionName) {
+        QMap<CipherOperation, QRegularExpression> out;
         for (auto i = _cipherOperationRegexBase.begin(); i != _cipherOperationRegexBase.end(); ++i) {
             auto regex = _Decipherer_generateRegex(i.value(), obfuscatedDecipheringFunctionName);
             out.insert(i.key(), regex);
@@ -72,9 +73,10 @@ class Regexes {
         R"|((?!h\.)%1=function\(\w+\)\{(?<functionBody>.*?)\})|"
     );
 
-    static inline QHash<CipherOperation, QString> _cipherOperationRegexBase {
-        { CipherOperation::Reverse, R"|(%1:\bfunction\b\(\w+\))|" },
+    // Careful, order is important !
+    static inline QMap<CipherOperation, QString> _cipherOperationRegexBase {
         { CipherOperation::Slice, R"|(%1:\bfunction\b\([a],b\).(\breturn\b)?.?\w+\.)|" },
-        { CipherOperation::Swap, R"|(%1:\bfunction\b\(\w+\,\w\).\bvar\b.\bc=a\b)|" }
+        { CipherOperation::Swap, R"|(%1:\bfunction\b\(\w+\,\w\).\bvar\b.\bc=a\b)|" },
+        { CipherOperation::Reverse, R"|(%1:\bfunction\b\(\w+\))|" }
     };
 };

@@ -14,11 +14,12 @@
 
 #pragma once
 
+// Careful, order is important !
 enum class CipherOperation {
     CO_Unknown,
-    Reverse,
     Slice,
-    Swap
+    Swap,
+    Reverse
 };
 
 inline uint qHash(const CipherOperation &key, uint seed = 0) {return uint(key) ^ seed;}
