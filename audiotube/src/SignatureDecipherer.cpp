@@ -64,11 +64,8 @@ SignatureDecipherer* SignatureDecipherer::fromCache(const QString &clientPlayerU
 }
 
 SignatureDecipherer::YTClientMethod SignatureDecipherer::_findObfuscatedDecipheringFunctionName(const QString &ytPlayerSourceCode) {
-    auto regex = R"((\w+)=function\(\w+\){(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)})";
-    QRegularExpression findFunctionName(regex);
-
-    auto match = findFunctionName.match(ytPlayerSourceCode);
-    auto functionName = match.captured(1);
+    auto match = Regexes::Decipherer_findFunctionName.match(ytPlayerSourceCode);
+    auto functionName = match.captured("functionName");
 
     if (functionName.isEmpty()) {
         throw std::runtime_error("[Decipherer] No function name found !");
@@ -79,14 +76,10 @@ SignatureDecipherer::YTClientMethod SignatureDecipherer::_findObfuscatedDecipher
 
 QList<QString> SignatureDecipherer::_findJSDecipheringOperations(const QString &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName) {
     // get the body of the function
-    auto regex = QString(R"((?!h\.)%1=function\(\w+\)\{(.*?)\})");
-    auto escapedArg = QRegularExpression::escape(obfuscatedDecipheringFunctionName);
-    regex = regex.arg(escapedArg);
+    auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
+    auto match = regex.match(ytPlayerSourceCode);
 
-    QRegularExpression findFunctionBody(regex);
-    auto match = findFunctionBody.match(ytPlayerSourceCode);
-
-    auto functionBody = match.captured(1);
+    auto functionBody = match.captured("functionBody");
     if (functionBody.isEmpty()) {
         throw std::runtime_error("[Decipherer] No function body found !");
     }
@@ -97,29 +90,27 @@ QList<QString> SignatureDecipherer::_findJSDecipheringOperations(const QString &
     return std::move(javascriptFunctionCalls);
 }
 
-QHash<SignatureDecipherer::CipherOperation, SignatureDecipherer::YTClientMethod> SignatureDecipherer::
-    _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, QList<QString> &javascriptDecipheringOperations) {
+QHash<CipherOperation, SignatureDecipherer::YTClientMethod> SignatureDecipherer::
+    _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, const QList<QString> &javascriptDecipheringOperations) {
+    // define out
     QHash<CipherOperation, YTClientMethod> functionNamesByOperation;
-    // regex
-    auto regex = R"(\w+\.(\w+)\()";
-    QRegularExpression findCalledFunction(regex);
 
-    // find subjacent functions used by decipherer
+    // find subjacent functions names used by decipherer
+    QSet<QString> uniqueOperations;
     for (const auto &call : javascriptDecipheringOperations) {
-        // once all are found, break
-        if (functionNamesByOperation.count() == 3) break;
-
-        // find which function is called
-        auto match = findCalledFunction.match(call);
+        // find function name in method call
+        auto match = Regexes::Decipherer_findCalledFunction.match(call);
         if (!match.hasMatch()) continue;
-        auto calledFunctionName = match.captured(1);
+        auto calledFunctionName = match.captured("functionName");
 
-        // custom regexes to find decipherer methods
-        QHash<SignatureDecipherer::CipherOperation, QRegularExpression> customRegexes {
-            { CipherOperation::Reverse, QRegularExpression(QRegularExpression::escape(calledFunctionName) + ":\\bfunction\\b\\(\\w+\\)")},
-            { CipherOperation::Slice, QRegularExpression(QRegularExpression::escape(calledFunctionName) + ":\\bfunction\\b\\([a],b\\).(\\breturn\\b)?.?\\w+\\.")},
-            { CipherOperation::Swap, QRegularExpression(QRegularExpression::escape(calledFunctionName) + ":\\bfunction\\b\\(\\w+\\,\\w\\).\\bvar\\b.\\bc=a\\b")}
-        };
+        // add to set
+        uniqueOperations.insert(calledFunctionName);
+    }
+
+    // iterate through unique operations
+    for (const auto &calledFunctionName : uniqueOperations) {
+        // custom regexes to determine associated decipherer method
+        auto customRegexes = Regexes::Decipherer_DecipheringOps(calledFunctionName);
 
         // find...
         for (auto i = customRegexes.begin(); i != customRegexes.end(); ++i) {
@@ -131,6 +122,7 @@ QHash<SignatureDecipherer::CipherOperation, SignatureDecipherer::YTClientMethod>
             auto regex = i.value();
             if (regex.match(ytPlayerSourceCode).hasMatch()) {
                 functionNamesByOperation.insert(co, calledFunctionName);
+                break;
             }
         }
     }
@@ -143,23 +135,21 @@ QHash<SignatureDecipherer::CipherOperation, SignatureDecipherer::YTClientMethod>
 }
 
 SignatureDecipherer::YTDecipheringOperations SignatureDecipherer::_buildOperations(
-        QHash<CipherOperation, YTClientMethod> &functionNamesByOperation,
-        QList<QString> &javascriptOperations
+        const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation,
+        const QList<QString> &javascriptOperations
     ) {
     YTDecipheringOperations operations;
 
     // determine order and execution of subjacent methods
-    auto regex = R"(\.(\w+)\(\w+,(\d+)\))";
-    QRegularExpression findFuncAndArgument(regex);
 
     // iterate
     for (const auto &call : javascriptOperations) {
         // find which function is called
-        auto match = findFuncAndArgument.match(call);
+        auto match = Regexes::Decipherer_findFuncAndArgument.match(call);
         if (!match.hasMatch()) continue;
 
-        auto calledFunctionName = match.captured(1);
-        auto arg = match.captured(2).toInt();
+        auto calledFunctionName = match.captured("functionName");
+        auto arg = match.captured("arg").toInt();
 
         // by operation type
         switch (auto operationType = functionNamesByOperation.key(calledFunctionName)) {
@@ -202,5 +192,3 @@ SignatureDecipherer::SignatureDecipherer(const QString &ytPlayerSourceCode) {
     // copy operation to object
     this->_operations = operations;
 }
-
-inline uint qHash(const SignatureDecipherer::CipherOperation &key, uint seed = 0) {return uint(key) ^ seed;}

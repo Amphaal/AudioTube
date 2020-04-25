@@ -18,7 +18,6 @@
 #include <QObject>
 #include <QHash>
 #include <QString>
-#include <QRegularExpression>
 
 #include <QDebug>
 
@@ -37,7 +36,6 @@ class VideoMetadata : public QObject {
 
     static VideoMetadata* fromVideoUrl(const QString &url);
     static VideoMetadata* fromVideoId(const QString &videoId);
-    static QRegularExpression getUrlMatcher();
 
     PlayerConfig::VideoId id() const;
     QString url() const;
@@ -67,8 +65,6 @@ class VideoMetadata : public QObject {
 
     PlayerConfig _playerConfig;
     StreamsManifest _audioStreams;
-
-    static inline QRegularExpression _ytRegexIdFinder = QRegularExpression("(?:youtube\\.com|youtu.be).*?(?:v=|embed\\/)(?<videoId>[\\w\\-]+)");
 };
 
 Q_DECLARE_METATYPE(VideoMetadata*)

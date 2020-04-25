@@ -21,7 +21,6 @@
 #include <QVariantHash>
 #include <QUrl>
 #include <QUrlQuery>
-#include <QRegularExpression>
 
 #include <algorithm>
 #include <functional>
@@ -29,20 +28,25 @@
 #include "_DebugHelper.h"
 #include "_NetworkHelper.h"
 #include "SignatureDecipherer.h"
+#include "Regexes.h"
 
 class StreamsManifest : public NetworkHelper {
+    Q_GADGET
+
  public:
-    enum class AudioStreamsSource {
+    enum AudioStreamsSource {
         PlayerResponse,
         PlayerConfig,
         DASH
     };
+    Q_ENUM(AudioStreamsSource)
 
     using RawDASHManifest = QString;
     using RawPlayerConfigStreams = QString;
     using RawPlayerResponseStreams = QJsonArray;
+    using ITag = int;
 
-    using AudioStreamUrlByBitrate = QMap<double, QUrl>;
+    using AudioStreamUrlByBitrate = QMap<double, QPair<ITag, QUrl>>;
     using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByBitrate>;
 
     StreamsManifest();
@@ -55,7 +59,7 @@ class StreamsManifest : public NetworkHelper {
     void setRequestedAt(const QDateTime &requestedAt);
     void setSecondsUntilExpiration(const uint secsUntilExp);
 
-    AudioStreamUrlByBitrate preferedStreamSource() const;
+    QPair<StreamsManifest::AudioStreamsSource, AudioStreamUrlByBitrate> preferedStreamSource() const;
     QUrl preferedUrl() const;
     bool isExpired() const;
 
@@ -68,6 +72,8 @@ class StreamsManifest : public NetworkHelper {
     static bool _isCodecAllowed(const QString &codec);
     static bool _isMimeAllowed(const QString &mime);
     static QJsonArray _urlEncodedToJsonArray(const QString &urlQueryAsRawStr);
+
+    static QString _decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey = QString());
 };
 
 inline uint qHash(const StreamsManifest::AudioStreamsSource &key, uint seed = 0) {return uint(key) ^ seed;}

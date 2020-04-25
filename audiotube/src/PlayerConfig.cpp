@@ -128,9 +128,7 @@ promise::Defer PlayerConfig::_downloadAndfillFrom_PlayerSource(const QString &pl
 
 promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
     return promise::newPromise([=](promise::Defer d) {
-        auto playerConfig = _extractPlayerConfigFromRawSource(dl,
-            QRegularExpression("yt\\.setConfig\\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\\);")
-        );
+        auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromEmbed);
 
         // get title and duration
         auto args = playerConfig[QStringLiteral(u"args")].toObject();
@@ -155,9 +153,7 @@ promise::Defer PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &
 promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
     return promise::newPromise([=](promise::Defer d) {
         // get player config JSON
-        auto playerConfig = _extractPlayerConfigFromRawSource(dl,
-            QRegularExpression(QStringLiteral("ytplayer\\.config = (?<playerConfig>.*?)\\;ytplayer"))
-        );
+        auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromWatchPage);
 
         // Get player response JSON
         auto args = playerConfig[QStringLiteral(u"args")].toObject();
@@ -207,7 +203,6 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, S
         streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
         streamsManifest->feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
 
-
         // DASH manifest handling
         auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
 
@@ -234,11 +229,9 @@ promise::Defer PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, S
 }
 
 QString PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
-    QRegularExpression findSts("invalid namespace.*?;var \\w\\s*=(?<sts>\\d+)");
-
     QString sts;
 
-    auto match = findSts.match(dl);
+    auto match = Regexes::STSFinder.match(dl);
     if (match.hasMatch()) {
         sts = match.captured("sts");  // sts
     } else {

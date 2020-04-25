@@ -92,18 +92,15 @@ promise::Defer NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
 }
 
 QList<QString> NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
-    // build regex
-    QRegularExpression re("watch\\?v=(?<videoId>.*?)&amp;");
-
     // search...
-    auto results = re.globalMatch(requestData);
+    auto results = Regexes::HTTPRequestYTVideoIdExtractor.globalMatch(requestData);
 
     // return list
     QList<QString> idsList;
 
     // iterate
     while (results.hasNext()) {
-        QRegularExpressionMatch match = results.next();  // next
+        auto match = results.next();  // next
 
         // if match
         if (match.hasMatch()) {

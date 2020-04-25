@@ -18,8 +18,7 @@ StreamsManifest::StreamsManifest() {}
 
 void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
     // find streams
-    QRegularExpression regex("<Representation id=\"(?<itag>.*?)\" codecs=\"(?<codec>.*?)\"[\\s\\S]*?<BaseURL>(?<url>.*?)<\\/BaseURL");
-    auto foundStreams = regex.globalMatch(raw);
+    auto foundStreams = Regexes::DASHManifestExtractor.globalMatch(raw);
 
     // container
     AudioStreamUrlByBitrate streams;
@@ -34,8 +33,9 @@ void StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDe
 
         auto itag = match.captured("itag").toInt();
         auto url = match.captured("url");
+        auto bitrate = match.captured("bitrate").toDouble();
 
-        streams.insert(itag, url);
+        streams.insert(bitrate, { itag, url });
     }
 
     // insert in package
@@ -60,31 +60,50 @@ void StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw
         // find itag + url
         auto bitrate = itagGroupObj["bitrate"].toDouble();
         auto url = itagGroupObj["url"].toString();
+        auto tag = itagGroupObj["itag"].toInt();
 
         // decipher if no url
         if (url.isEmpty()) {
             // fetch cipher, url and signature
             auto cipher = QUrlQuery(itagGroupObj["cipher"].toString());
-            url = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
+
+            // find params
+            auto cipheredUrl = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
             auto signature = cipher.queryItemValue("s", QUrl::ComponentFormattingOption::FullyDecoded);
-
-            // find signature param
             auto signatureParameter = cipher.queryItemValue("sp", QUrl::ComponentFormattingOption::FullyDecoded);
-            if (signatureParameter.isEmpty()) signatureParameter = "signature";
 
-            // decipher...
-            signature = decipherer->decipher(signature);
-
-            // append
-            url += QString("&%1=%2").arg(signatureParameter).arg(signature);
+            // decipher
+            url = _decipheredUrl(
+                decipherer,
+                cipheredUrl,
+                signature,
+                signatureParameter
+            );
         }
 
         // add tag / url pair
-        streams.insert(bitrate, url);
+        streams.insert(bitrate, { tag, url });
     }
 
     // insert in package
     this->_package.insert(AudioStreamsSource::PlayerResponse, streams);
+}
+
+QString StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey) {
+    QString out = cipheredUrl;
+
+    // find signature param, set default if empty
+    if (sigKey.isEmpty()) sigKey = "signature";
+
+    // decipher...
+    signature = decipherer->decipher(signature);
+
+    // append
+    out += QString("&%1=%2")
+            .arg(sigKey)
+            .arg(signature);
+    qDebug() << out;
+    return out;
 }
 
 void StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {
@@ -94,7 +113,7 @@ void StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
     this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
 }
 
-StreamsManifest::AudioStreamUrlByBitrate StreamsManifest::preferedStreamSource() const {
+QPair<StreamsManifest::AudioStreamsSource, StreamsManifest::AudioStreamUrlByBitrate> StreamsManifest::preferedStreamSource() const {
     // sort sources
     auto sources = this->_package.keys();
     std::sort(sources.begin(), sources.end());
@@ -102,14 +121,16 @@ StreamsManifest::AudioStreamUrlByBitrate StreamsManifest::preferedStreamSource()
     // try to fetch in order of preference
     for (auto source : sources) {
         auto ASUBIT = this->_package.value(source);
-        if (ASUBIT.count()) return ASUBIT;
+        if (ASUBIT.count()) return { source, ASUBIT };
     }
 
     throw std::logic_error("No audio stream source found !");
 }
 
 QUrl StreamsManifest::preferedUrl() const {
-    return this->preferedStreamSource().last();  // since bitrates are asc-ordered, take latest for fastest
+    auto source = this->preferedStreamSource();
+    qDebug() << "Picking stream URL from source : " << qUtf8Printable(QVariant::fromValue(source.first).toString());
+    return source.second.last().second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
 bool StreamsManifest::isExpired() const {
