@@ -64,8 +64,12 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
 
         // decipher if no url
         if (url.isEmpty()) {
-            // fetch cipher, url and signature
-            auto cipher = QUrlQuery(itagGroupObj["cipher"].toString());
+            // find cipher
+            auto cipherRaw = itagGroupObj["cipher"].toString();
+            if (cipherRaw.isEmpty()) cipherRaw = itagGroupObj["signatureCipher"].toString();
+            if (cipherRaw.isEmpty()) throw std::logic_error("Cipher data cannot be found !");
+
+            auto cipher = QUrlQuery(cipherRaw);
 
             // find params
             auto cipheredUrl = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
@@ -102,7 +106,6 @@ QString AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer* de
     out += QString("&%1=%2")
             .arg(sigKey)
             .arg(signature);
-    qDebug() << out;
     return out;
 }
 
@@ -155,7 +158,7 @@ QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const QString &url
     // for each group
     auto itagsDataGroupsAsStr = urlQueryAsRawStr.split(
         QStringLiteral(u","),
-        QString::SplitBehavior::SkipEmptyParts
+        Qt::SkipEmptyParts
     );
     for (auto &dataGroupAsString : itagsDataGroupsAsStr) {
         QJsonObject group;
@@ -163,14 +166,14 @@ QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const QString &url
         // for each pair
         auto pairs = dataGroupAsString.split(
             QStringLiteral(u"&"),
-            QString::SplitBehavior::SkipEmptyParts
+            Qt::SkipEmptyParts
         );
 
         for (const auto &pair : pairs) {
             // current key/value pair
             auto kvpAsList = pair.split(
                 QStringLiteral(u"="),
-                QString::SplitBehavior::KeepEmptyParts
+                Qt::KeepEmptyParts
             );
             auto kvp = QPair<QString, QString>(kvpAsList.at(0), kvpAsList.at(1));
 

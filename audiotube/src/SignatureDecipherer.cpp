@@ -85,7 +85,7 @@ QList<QString> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(cons
     }
 
     // calls
-    auto javascriptFunctionCalls = functionBody.split(";", QString::SplitBehavior::SkipEmptyParts);
+    auto javascriptFunctionCalls = functionBody.split(";", Qt::SkipEmptyParts);
 
     return std::move(javascriptFunctionCalls);
 }
