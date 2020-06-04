@@ -23,8 +23,8 @@ target_include_directories(audiotube
 )
 
 #add submodule sources
-target_sources(audiotube PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/promise-cpp/promise.hpp
+target_sources(audiotube PRIVATE
+    promise-cpp/promise.hpp
 )
 
 #headers for MOC
