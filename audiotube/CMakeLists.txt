@@ -23,7 +23,7 @@ target_include_directories(audiotube
 )
 
 #add submodule sources
-target_sources(audiotube PRIVATE
+target_sources(audiotube PUBLIC
     promise-cpp/promise.hpp
 )
 
