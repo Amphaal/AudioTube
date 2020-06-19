@@ -83,6 +83,6 @@ AudioTube::StreamsManifest* AudioTube::VideoMetadata::audioStreams() {
     return &this->_audioStreams;
 }
 
-const AudioTube::PlayerConfig& AudioTube::VideoMetadata::playerConfig() const {
-    return this->_playerConfig;
+AudioTube::PlayerConfig* AudioTube::VideoMetadata::playerConfig() {
+    return &this->_playerConfig;
 }

@@ -41,6 +41,8 @@ class PlayerConfig : public NetworkHelper {
     const SignatureDecipherer* decipherer() const;
     ContextSource contextSource() const;
 
+    void fillFromVideoInfosDetails(const QString &title, int duration);
+
  private:
     PlayerConfig(const ContextSource &streamContextSource, const PlayerConfig::VideoId &videoId);
 

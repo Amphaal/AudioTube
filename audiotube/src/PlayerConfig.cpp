@@ -40,6 +40,11 @@ AudioTube::PlayerConfig::ContextSource AudioTube::PlayerConfig::contextSource() 
     return this->_contextSource;
 }
 
+void AudioTube::PlayerConfig::fillFromVideoInfosDetails(const QString &title, int duration) {
+    this->_title = title;
+    this->_duration = duration;
+}
+
 promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
     // pipeline
     return _downloadRaw_VideoEmbedPageHtml(videoId)
@@ -129,14 +134,6 @@ promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const 
 promise::Defer AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
     return promise::newPromise([=](promise::Defer d) {
         auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromEmbed);
-
-        // get title and duration
-        auto args = playerConfig[QStringLiteral(u"args")].toObject();
-        this->_title = args[QStringLiteral(u"title")].toString();
-        this->_duration = args[QStringLiteral(u"length_seconds")].toInt();
-
-        if (this->_title.isEmpty()) throw std::logic_error("Video title cannot be found !");
-        if (!this->_duration) throw std::logic_error("Video length cannot be found !");
 
         // player source
         auto playerSourceUrl = _playerSourceUrl(playerConfig);

@@ -16,13 +16,13 @@
 
 promise::Defer AudioTube::VideoInfos::fillStreamsManifest(
     const PlayerConfig::VideoId &videoId,
-    const PlayerConfig &playerConfig,
+    PlayerConfig* playerConfig,
     StreamsManifest* manifest) {
     // set request date
     manifest->setRequestedAt(QDateTime::currentDateTime());
 
     // pipeline
-    return _downloadRaw_VideoInfos(videoId, playerConfig.sts())
+    return _downloadRaw_VideoInfos(videoId, playerConfig->sts())
             .then([=](const DownloadedUtf8 &dl) {
                 return _fillFrom_VideoInfos(dl, manifest, playerConfig);
             });
@@ -38,7 +38,7 @@ promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig
     return download(requestUrl);
 }
 
-promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, const PlayerConfig &playerConfig) {
+promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig) {
     return promise::newPromise([=](promise::Defer d) {
         // as string then to query
         QUrlQuery videoInfos(dl);
@@ -70,6 +70,16 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
             throw QString(qUtf8Printable(QString("This video is not available though VideoInfo : %1").arg(pReason)));
         }
 
+        // get title and duration
+        auto title = videoDetails[QStringLiteral(u"title")].toString().replace("+", " ");
+        bool durationOk = false;
+        auto duration = videoDetails[QStringLiteral(u"lengthSeconds")].toString().toInt(&durationOk);
+
+        if (title.isEmpty()) throw std::logic_error("Video title cannot be found !");
+        if (!durationOk) throw std::logic_error("Video length cannot be found !");
+
+        playerConfig->fillFromVideoInfosDetails(title, duration);
+
         // get streamingData
         auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
         if (streamingData.isEmpty()) {
@@ -90,8 +100,8 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
 
         // feed
-        manifest->feedRaw_PlayerConfig(raw_playerConfigStreams, playerConfig.decipherer());
-        manifest->feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig.decipherer());
+        manifest->feedRaw_PlayerConfig(raw_playerConfigStreams, playerConfig->decipherer());
+        manifest->feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig->decipherer());
 
         // DASH manifest handling
         auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
@@ -99,7 +109,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
     })
     .then([=](const QString &dashManifestUrl){
         auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
-            manifest->feedRaw_DASH(dl, playerConfig.decipherer());
+            manifest->feedRaw_DASH(dl, playerConfig->decipherer());
         });
         return mayFetchRawDASH;
     });

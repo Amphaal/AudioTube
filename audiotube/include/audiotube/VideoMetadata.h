@@ -50,7 +50,7 @@ class VideoMetadata : public QObject {
     void setPlayerConfig(const PlayerConfig &playerConfig);
 
     StreamsManifest* audioStreams();
-    const PlayerConfig& playerConfig() const;
+    PlayerConfig* playerConfig();
 
  signals:
     void metadataFetching();

@@ -38,9 +38,9 @@ class Regexes {
         R"|(ytplayer\.config = (?<playerConfig>.*?)\;ytplayer)|"
     );
     static inline QRegularExpression STSFinder = QRegularExpression(
-        R"|(invalid namespace.*?;\w=(?<sts>\d+))|"
+        R"|(invalid namespace.*?;.*?=(?<sts>\d+);)|"
     );
-    
+
     static inline QRegularExpression Decipherer_findFuncAndArgument = QRegularExpression(
         R"|(\.(?<functionName>\w+)\(\w+,(?<arg>\d+)\))|"
     );
