@@ -6,3 +6,9 @@
 	path = audiotube/promise-cpp
 	url = https://github.com/xhawk18/promise-cpp
 	branch = master
+[submodule "audiotube/spdlog"]
+	path = audiotube/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "audiotube/asio"]
+	path = audiotube/asio
+	url = https://github.com/chriskohlhoff/asio
