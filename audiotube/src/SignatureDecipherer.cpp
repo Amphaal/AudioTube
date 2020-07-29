@@ -14,7 +14,7 @@
 
 #include "SignatureDecipherer.h"
 
-QString AudioTube::SignatureDecipherer::decipher(const QString &signature) const {
+std::string AudioTube::SignatureDecipherer::decipher(const std::string &signature) const {
     auto modifiedSignature = signature;
     auto copyOfOperations = this->_operations;
 
@@ -35,8 +35,8 @@ QString AudioTube::SignatureDecipherer::decipher(const QString &signature) const
                 auto firstIndex = 0;
                 auto secondIndex = operationPair.second.toInt();
 
-                auto first = QString(modifiedSignature.at(firstIndex));
-                auto second = QString(modifiedSignature.at(secondIndex));
+                auto first = std::string(modifiedSignature.at(firstIndex));
+                auto second = std::string(modifiedSignature.at(secondIndex));
 
                 modifiedSignature.replace(firstIndex, 1, second);
                 modifiedSignature.replace(secondIndex, 1, first);
@@ -51,7 +51,7 @@ QString AudioTube::SignatureDecipherer::decipher(const QString &signature) const
     return modifiedSignature;
 }
 
-AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::create(const QString &clientPlayerUrl, const QString &ytPlayerSourceCode) {
+AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::create(const std::string &clientPlayerUrl, const std::string &ytPlayerSourceCode) {
     auto newDecipher = new SignatureDecipherer(ytPlayerSourceCode);
 
      _cache.insert(clientPlayerUrl, newDecipher);
@@ -59,11 +59,11 @@ AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::create(const QSt
     return newDecipher;
 }
 
-AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::fromCache(const QString &clientPlayerUrl) {
+AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::fromCache(const std::string &clientPlayerUrl) {
     return _cache.value(clientPlayerUrl);
 }
 
-AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_findObfuscatedDecipheringFunctionName(const QString &ytPlayerSourceCode) {
+AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode) {
     auto match = Regexes::Decipherer_findFunctionName.match(ytPlayerSourceCode);
     auto functionName = match.captured("functionName");
 
@@ -74,7 +74,7 @@ AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_
     return functionName;
 }
 
-QList<QString> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(const QString &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName) {
+QList<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName) {
     // get the body of the function
     auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
     auto match = regex.match(ytPlayerSourceCode);
@@ -91,12 +91,12 @@ QList<QString> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(cons
 }
 
 QHash<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::YTClientMethod> AudioTube::SignatureDecipherer::
-    _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, const QList<QString> &javascriptDecipheringOperations) {
+    _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const QList<std::string> &javascriptDecipheringOperations) {
     // define out
     QHash<CipherOperation, YTClientMethod> functionNamesByOperation;
 
     // find subjacent functions names used by decipherer
-    QSet<QString> uniqueOperations;
+    QSet<std::string> uniqueOperations;
     for (const auto &call : javascriptDecipheringOperations) {
         // find function name in method call
         auto match = Regexes::Decipherer_findCalledFunction.match(call);
@@ -136,7 +136,7 @@ QHash<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::YTClientMethod
 
 AudioTube::SignatureDecipherer::YTDecipheringOperations AudioTube::SignatureDecipherer::_buildOperations(
         const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation,
-        const QList<QString> &javascriptOperations
+        const QList<std::string> &javascriptOperations
     ) {
     YTDecipheringOperations operations;
 
@@ -176,7 +176,7 @@ AudioTube::SignatureDecipherer::YTDecipheringOperations AudioTube::SignatureDeci
     return operations;
 }
 
-AudioTube::SignatureDecipherer::SignatureDecipherer(const QString &ytPlayerSourceCode) {
+AudioTube::SignatureDecipherer::SignatureDecipherer(const std::string &ytPlayerSourceCode) {
     // find deciphering function name
     auto functionName = _findObfuscatedDecipheringFunctionName(ytPlayerSourceCode);
 

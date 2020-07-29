@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <QRegularExpression>
+#include <regex>
 
 #include "CipherOperation.h"
 
@@ -22,41 +22,41 @@ namespace AudioTube {
 
 class Regexes {
  public:
-    static inline QRegularExpression DASHManifestExtractor = QRegularExpression(
+    static inline std::regex DASHManifestExtractor = std::regex(
         R"|(<Representation id="(?<itag>.*?)" codecs="(?<codec>.*?)"[\s\S]*?bandwidth="(?<bitrate>.*?)"[\s\S]*?<BaseURL>(?<url>.*?)<\/BaseURL)|"
     );
-    static inline QRegularExpression YoutubeIdFinder = QRegularExpression(
+    static inline std::regex YoutubeIdFinder = std::regex(
         R"|((?:youtube\.com|youtu.be).*?(?:v=|embed\/)(?<videoId>[\w\-]+))|"
     );
-    static inline QRegularExpression HTTPRequestYTVideoIdExtractor = QRegularExpression(
+    static inline std::regex HTTPRequestYTVideoIdExtractor = std::regex(
         R"|(watch\?v=(?<videoId>.*?)&amp;)|"
     );
-    static inline QRegularExpression PlayerConfigExtractorFromEmbed = QRegularExpression(
+    static inline std::regex PlayerConfigExtractorFromEmbed = std::regex(
         R"|(yt\.setConfig\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\);)|"
     );
-    static inline QRegularExpression PlayerConfigExtractorFromWatchPage = QRegularExpression(
+    static inline std::regex PlayerConfigExtractorFromWatchPage = std::regex(
         R"|(ytplayer\.config = (?<playerConfig>.*?)\;ytplayer)|"
     );
-    static inline QRegularExpression STSFinder = QRegularExpression(
+    static inline std::regex STSFinder = std::regex(
         R"|(invalid namespace.*?;.*?=(?<sts>\d+);)|"
     );
 
-    static inline QRegularExpression Decipherer_findFuncAndArgument = QRegularExpression(
+    static inline std::regex Decipherer_findFuncAndArgument = std::regex(
         R"|(\.(?<functionName>\w+)\(\w+,(?<arg>\d+)\))|"
     );
-    static inline QRegularExpression Decipherer_findFunctionName = QRegularExpression(
+    static inline std::regex Decipherer_findFunctionName = std::regex(
         R"|((?<functionName>\w+)=function\(\w+\){(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)})|"
     );
-    static inline QRegularExpression Decipherer_findCalledFunction = QRegularExpression(
+    static inline std::regex Decipherer_findCalledFunction = std::regex(
         R"|(\w+\.(?<functionName>\w+)\()|"
     );
-    static QRegularExpression Decipherer_findJSDecipheringOperations(const QString &obfuscatedDecipheringFunctionName) {
+    static std::regex Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
         return _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName);
     }
 
     // Careful, order is important !
-    static QMap<CipherOperation, QRegularExpression> Decipherer_DecipheringOps(const QString &obfuscatedDecipheringFunctionName) {
-        QMap<CipherOperation, QRegularExpression> out;
+    static QMap<CipherOperation, std::regex> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
+        QMap<CipherOperation, std::regex> out;
         for (auto i = _cipherOperationRegexBase.begin(); i != _cipherOperationRegexBase.end(); ++i) {
             auto regex = _Decipherer_generateRegex(i.value(), obfuscatedDecipheringFunctionName);
             out.insert(i.key(), regex);
@@ -65,18 +65,18 @@ class Regexes {
     }
 
  private:
-    static QRegularExpression _Decipherer_generateRegex(const QString &regex, const QString &obfuscatedDecipheringFunctionName) {
-        auto escaped = QRegularExpression::escape(obfuscatedDecipheringFunctionName);
-        return QRegularExpression(
+    static std::regex _Decipherer_generateRegex(const std::string &regex, const std::string &obfuscatedDecipheringFunctionName) {
+        auto escaped = std::regex::escape(obfuscatedDecipheringFunctionName);
+        return std::regex(
             regex.arg(escaped)
         );
     }
-    static inline QString _Decipherer_JSDecipheringOperations = QString(
+    static inline std::string _Decipherer_JSDecipheringOperations = std::string(
         R"|((?!h\.)%1=function\(\w+\)\{(?<functionBody>.*?)\})|"
     );
 
     // Careful, order is important !
-    static inline QMap<CipherOperation, QString> _cipherOperationRegexBase {
+    static inline QMap<CipherOperation, std::string> _cipherOperationRegexBase {
         { CipherOperation::Slice, R"|(%1:\bfunction\b\([a],b\).(\breturn\b)?.?\w+\.)|" },
         { CipherOperation::Swap, R"|(%1:\bfunction\b\(\w+\,\w\).\bvar\b.\bc=a\b)|" },
         { CipherOperation::Reverse, R"|(%1:\bfunction\b\(\w+\))|" }

@@ -14,7 +14,7 @@
 
 #include "NetworkFetcher.h"
 
-promise::Defer AudioTube::NetworkFetcher::fromPlaylistUrl(const QString &url) {
+promise::Defer AudioTube::NetworkFetcher::fromPlaylistUrl(const std::string &url) {
     return download(url)
             .then(&_extractVideoIdsFromHTTPRequest)
             .then(&_videoIdsToMetadataList);
@@ -45,17 +45,17 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
             d.resolve(toRefresh);
         })
         .fail([=](const std::runtime_error &exception) {
-            qWarning() << "AudioTube :" << exception.what();
+            spdlog::warn("AudioTube : {}", exception.what());
             whenFailed();
         })
         .fail([=](const std::logic_error &exception) {
-            qWarning() << "AudioTube :" << exception.what();
+            spdlog::warn("AudioTube : {}", exception.what());
             whenFailed();
         });
     });
 }
 
-void AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, QString* urlSuccessfullyRequested) {
+void AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, std::string* urlSuccessfullyRequested) {
     auto bestUrl = toCheck->audioStreams()->preferedUrl();
 
     download(bestUrl, true)
@@ -79,8 +79,8 @@ promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metada
     });
 
     // try videoInfoPipeline first, then watchPagePipeline if 1st failed
-    return videoInfoPipeline.fail([=](const QString &softErr){
-        qDebug() << qUtf8Printable(softErr);
+    return videoInfoPipeline.fail([=](const std::string &softErr){
+        spdlog::debug(softErr);
 
         auto watchPagePipeline = PlayerConfig::from_WatchPage(metadata->id(), metadata->audioStreams())
         .then([=](const PlayerConfig &pConfig) {
@@ -91,12 +91,12 @@ promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metada
     });
 }
 
-QList<QString> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
+QList<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
     // search...
     auto results = Regexes::HTTPRequestYTVideoIdExtractor.globalMatch(requestData);
 
     // return list
-    QList<QString> idsList;
+    QList<std::string> idsList;
 
     // iterate
     while (results.hasNext()) {
@@ -119,7 +119,7 @@ QList<QString> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const 
     return idsList;
 }
 
-QList<AudioTube::VideoMetadata*> AudioTube::NetworkFetcher::_videoIdsToMetadataList(const QList<QString> &videoIds) {
+QList<AudioTube::VideoMetadata*> AudioTube::NetworkFetcher::_videoIdsToMetadataList(const QList<std::string> &videoIds) {
     QList<VideoMetadata*> out;
     for (const auto &id : videoIds) {
         out.append(VideoMetadata::fromVideoId(id));

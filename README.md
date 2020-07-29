@@ -21,5 +21,4 @@
 #### Based on <https://github.com/Tyrrrz/YoutubeExplode>
 
 -   Request Youtube API to get specifically viable audio streams URLs
--   Sits on top of Qt5 and OpenSSL
 -   Meant to be statically linked to <https://github.com/Amphaal/rpgrpz>

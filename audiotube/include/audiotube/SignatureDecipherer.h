@@ -14,15 +14,6 @@
 
 #pragma once
 
-#include <QHash>
-#include <QString>
-
-#include <QPair>
-#include <QQueue>
-#include <QVariant>
-
-#include <QDebug>
-
 #include "Regexes.h"
 #include "CipherOperation.h"
 #include "_DebugHelper.h"
@@ -31,26 +22,26 @@ namespace AudioTube {
 
 class SignatureDecipherer {
  public:
-    QString decipher(const QString &signature) const;
-    static SignatureDecipherer* create(const QString &clientPlayerUrl, const QString &rawPlayerSourceData);
-    static SignatureDecipherer* fromCache(const QString &clientPlayerUrl);
+    std::string decipher(const std::string &signature) const;
+    static SignatureDecipherer* create(const std::string &clientPlayerUrl, const std::string &rawPlayerSourceData);
+    static SignatureDecipherer* fromCache(const std::string &clientPlayerUrl);
 
  private:
-    using YTDecipheringOperations = QQueue<QPair<CipherOperation, QVariant>>;
-    using YTClientMethod = QString;
+    using YTDecipheringOperations = std::deque<std::pair<CipherOperation, QVariant>>;
+    using YTClientMethod = std::string;
 
-    explicit SignatureDecipherer(const QString &rawPlayerSourceData);
+    explicit SignatureDecipherer(const std::string &rawPlayerSourceData);
 
-    QQueue<QPair<CipherOperation, QVariant>> _operations;
-    static inline QHash<QString, SignatureDecipherer*> _cache;
+    std::deque<std::pair<CipherOperation, QVariant>> _operations;
+    static inline QHash<std::string, SignatureDecipherer*> _cache;
 
-    static YTClientMethod _findObfuscatedDecipheringFunctionName(const QString &ytPlayerSourceCode);
-    static QList<QString>
-        _findJSDecipheringOperations(const QString &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName);
+    static YTClientMethod _findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode);
+    static QList<std::string>
+        _findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName);
     static QHash<CipherOperation, YTClientMethod>
-        _findObfuscatedDecipheringOperationsFunctionName(const QString &ytPlayerSourceCode, const QList<QString> &javascriptDecipheringOperations);
+        _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const QList<std::string> &javascriptDecipheringOperations);
     static YTDecipheringOperations
-        _buildOperations(const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation, const QList<QString> &javascriptOperations);
+        _buildOperations(const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation, const QList<std::string> &javascriptOperations);
 };
 
 }  // namespace AudioTube

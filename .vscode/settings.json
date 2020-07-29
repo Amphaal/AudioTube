@@ -109,6 +109,10 @@
         "compare": "cpp",
         "concepts": "cpp",
         "ranges": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "any": "cpp",
+        "strstream": "cpp",
+        "coroutine": "cpp",
+        "source_location": "cpp"
     }
 }

@@ -14,19 +14,19 @@
 
 #include "VideoMetadata.h"
 
-AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoId(const QString &videoId) {
+AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoId(const std::string &videoId) {
     return new VideoMetadata(videoId, InstantiationType::InstFromId);
 }
 
-AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoUrl(const QString &url) {
+AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoUrl(const std::string &url) {
     return new VideoMetadata(url, InstantiationType::InstFromUrl);
 }
 
-QString AudioTube::VideoMetadata::_urlFromVideoId(const QString &videoId) {
-    return QStringLiteral(u"https://www.youtube.com/watch?v=") + videoId;
+std::string AudioTube::VideoMetadata::_urlFromVideoId(const std::string &videoId) {
+    return std::string(u"https://www.youtube.com/watch?v=") + videoId;
 }
 
-AudioTube::VideoMetadata::VideoMetadata(const QString &IdOrUrl, const InstantiationType &type) {
+AudioTube::VideoMetadata::VideoMetadata(const std::string &IdOrUrl, const InstantiationType &type) {
     switch (type) {
         case InstantiationType::InstFromUrl: {
             // find id
@@ -54,7 +54,7 @@ AudioTube::PlayerConfig::VideoId AudioTube::VideoMetadata::id() const {
     return this->_videoId;
 }
 
-QString AudioTube::VideoMetadata::url() const {
+std::string AudioTube::VideoMetadata::url() const {
     return this->_url;
 }
 

@@ -8,6 +8,5 @@ build_script:
     - ninja -C _gen
 test_script:
     - cd _gen/tests
-    - C:/Qt/5.14/msvc2017_64/bin/windeployqt.exe audiotube_tests.exe
     - xcopy /s C:\OpenSSL-v111-Win64\bin .
     - audiotube_tests.exe

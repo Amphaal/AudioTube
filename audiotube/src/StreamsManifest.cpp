@@ -93,8 +93,8 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
     this->_package.insert(AudioStreamsSource::PlayerResponse, streams);
 }
 
-QString AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey) {
-    QString out = cipheredUrl;
+std::string AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, const std::string &cipheredUrl, std::string signature, std::string sigKey) {
+    std::string out = cipheredUrl;
 
     // find signature param, set default if empty
     if (sigKey.isEmpty()) sigKey = "signature";
@@ -103,7 +103,7 @@ QString AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer* de
     signature = decipherer->decipher(signature);
 
     // append
-    out += QString("&%1=%2")
+    out += std::string("&%1=%2")
             .arg(sigKey)
             .arg(signature);
     return out;
@@ -116,7 +116,7 @@ void AudioTube::StreamsManifest::setSecondsUntilExpiration(const uint secsUntilE
     this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
 }
 
-QPair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsManifest::AudioStreamUrlByBitrate> AudioTube::StreamsManifest::preferedStreamSource() const {
+std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsManifest::AudioStreamUrlByBitrate> AudioTube::StreamsManifest::preferedStreamSource() const {
     // sort sources
     auto sources = this->_package.keys();
     std::sort(sources.begin(), sources.end());
@@ -132,7 +132,7 @@ QPair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsManifest
 
 QUrl AudioTube::StreamsManifest::preferedUrl() const {
     auto source = this->preferedStreamSource();
-    qDebug() << "Picking stream URL from source : " << qUtf8Printable(QVariant::fromValue(source.first).toString());
+    spdlog::debug("Picking stream URL from source : {}", QVariant::fromValue(source.first).toString());
     return source.second.last().second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
@@ -142,22 +142,22 @@ bool AudioTube::StreamsManifest::isExpired() const {
 }
 
 
-bool AudioTube::StreamsManifest::_isCodecAllowed(const QString &codec) {
-    if (codec.contains(QStringLiteral(u"opus"))) return true;
+bool AudioTube::StreamsManifest::_isCodecAllowed(const std::string &codec) {
+    if (codec.contains(std::string(u"opus"))) return true;
     return false;
 }
 
-bool AudioTube::StreamsManifest::_isMimeAllowed(const QString &mime) {
-    if (!mime.contains(QStringLiteral(u"audio"))) return false;
+bool AudioTube::StreamsManifest::_isMimeAllowed(const std::string &mime) {
+    if (!mime.contains(std::string(u"audio"))) return false;
     return _isCodecAllowed(mime);
 }
 
-QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const QString &urlQueryAsRawStr) {
+QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const std::string &urlQueryAsRawStr) {
     QJsonArray out;
 
     // for each group
     auto itagsDataGroupsAsStr = urlQueryAsRawStr.split(
-        QStringLiteral(u","),
+        std::string(u","),
         Qt::SkipEmptyParts
     );
     for (auto &dataGroupAsString : itagsDataGroupsAsStr) {
@@ -165,17 +165,17 @@ QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const QString &url
 
         // for each pair
         auto pairs = dataGroupAsString.split(
-            QStringLiteral(u"&"),
+            std::string(u"&"),
             Qt::SkipEmptyParts
         );
 
         for (const auto &pair : pairs) {
             // current key/value pair
             auto kvpAsList = pair.split(
-                QStringLiteral(u"="),
+                std::string(u"="),
                 Qt::KeepEmptyParts
             );
-            auto kvp = QPair<QString, QString>(kvpAsList.at(0), kvpAsList.at(1));
+            auto kvp = std::pair<std::string, std::string>(kvpAsList.at(0), kvpAsList.at(1));
 
             // add to temporary group
             group.insert(

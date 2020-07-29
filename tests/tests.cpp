@@ -12,9 +12,6 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-#include <QCoreApplication>
-#include <QTimer>
-
 #include <audiotube/VideoMetadata.h>
 #include <audiotube/NetworkFetcher.h>
 #include <audiotube/_NetworkHelper.h>
@@ -28,7 +25,7 @@
 
 bool stream_are_working(AudioTube::VideoMetadata &metadata) {
     // fetch for a stream HEAD
-    QString urlSuccessfullyRequested;
+    std::string urlSuccessfullyRequested;
     bool ended;
     AudioTube::NetworkFetcher::isStreamAvailable(&metadata, &ended, &urlSuccessfullyRequested);
 
@@ -40,17 +37,17 @@ bool stream_are_working(AudioTube::VideoMetadata &metadata) {
 
     // check url
     if (!urlSuccessfullyRequested.isEmpty()) {
-      // qDebug() << qUtf8Printable(QString("Stream URL found : %1").arg(urlSuccessfullyRequested));
+      // spdlog::debug("Stream URL found : {}", urlSuccessfullyRequested);
       return true;
     } else {
         return false;
     }
 }
 
-bool youtube_metadata_fetching_succeeded(const QString &ytId) {
+bool youtube_metadata_fetching_succeeded(const std::string &ytId) {
     // generating container
     AudioTube::VideoMetadata container(ytId, AudioTube::VideoMetadata::InstantiationType::InstFromId);
-    qDebug() << qUtf8Printable(QString("Testing [%1]...").arg(container.url()));
+    spdlog::debug("Testing [{}]...", container.url());
 
     // refresh...
     AudioTube::NetworkFetcher::refreshMetadata(&container);

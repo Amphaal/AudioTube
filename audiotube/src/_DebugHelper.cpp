@@ -32,13 +32,13 @@ void AudioTube::DebugHelper::_dumpAsJSON(const QJsonArray &arr) {
     return _dumpAsJSON(QJsonDocument(arr));
 }
 
-void AudioTube::DebugHelper::_dumpAsFile(const QString &str) {
+void AudioTube::DebugHelper::_dumpAsFile(const std::string &str) {
     QFile fh("yt.txt");
     fh.open(QFile::WriteOnly);
         fh.write(str.toUtf8());
     fh.close();
 
-    qDebug() << fh.fileName() << " created !";
+    spdlog::debug("{} created !", fh.fileName());
 }
 
 void AudioTube::DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
@@ -49,5 +49,5 @@ void AudioTube::DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
         fh.write(bytes);
     fh.close();
 
-    qDebug() << fh.fileName() << " created !";
+    spdlog::debug("{} created !", fh.fileName());
 }

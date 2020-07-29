@@ -13,14 +13,6 @@
 // GNU General Public License for more details.
 #pragma once
 
-#include <QDateTime>
-
-#include <QObject>
-#include <QHash>
-#include <QString>
-
-#include <QDebug>
-
 #include "PlayerConfig.h"
 #include "StreamsManifest.h"
 
@@ -34,13 +26,13 @@ class VideoMetadata : public QObject {
         InstFromId,
         InstFromUrl
     };
-    VideoMetadata(const QString &IdOrUrl, const InstantiationType &type);
+    VideoMetadata(const std::string &IdOrUrl, const InstantiationType &type);
 
-    static VideoMetadata* fromVideoUrl(const QString &url);
-    static VideoMetadata* fromVideoId(const QString &videoId);
+    static VideoMetadata* fromVideoUrl(const std::string &url);
+    static VideoMetadata* fromVideoId(const std::string &videoId);
 
     PlayerConfig::VideoId id() const;
-    QString url() const;
+    std::string url() const;
     bool hasFailed() const;
     bool ranOnce() const;
 
@@ -58,10 +50,10 @@ class VideoMetadata : public QObject {
     void streamFailed();
 
  private:
-    static QString _urlFromVideoId(const QString &videoId);
+    static std::string _urlFromVideoId(const std::string &videoId);
 
     PlayerConfig::VideoId _videoId;
-    QString _url;
+    std::string _url;
     bool _failed = false;
     bool _ranOnce = false;
 

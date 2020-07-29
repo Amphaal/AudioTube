@@ -14,12 +14,9 @@
 
 #pragma once
 
-#include <QUrlQuery>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QDebug>
-#include <QFile>
+#include <spdlog/spdlog.h>
+
+#include <string>
 
 namespace AudioTube {
 
@@ -29,7 +26,7 @@ class DebugHelper {
     static void _dumpAsJSON(const QJsonObject &obj);
     static void _dumpAsJSON(const QJsonArray &arr);
     static void _dumpAsJSON(const QJsonDocument &doc);
-    static void _dumpAsFile(const QString &str);
+    static void _dumpAsFile(const std::string &str);
 };
 
 }  // namespace AudioTube

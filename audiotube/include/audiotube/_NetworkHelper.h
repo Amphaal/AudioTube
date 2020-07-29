@@ -14,17 +14,15 @@
 
 #pragma once
 
-#include <QNetworkReply>
-#include <QNetworkAccessManager>
-#include <QEventLoop>
+#include <string>
 
-#include <promise-cpp/promise.hpp>
+#include <promise.hpp>
 
 namespace AudioTube {
 
 class NetworkHelper {
  public:
-    using DownloadedUtf8 = QString;
+    using DownloadedUtf8 = std::string;
 
  protected:
     static promise::Defer download(const QUrl& url, bool head = false);

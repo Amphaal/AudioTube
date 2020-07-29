@@ -1,30 +1,10 @@
-#Qt moc 
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_INCLUDE_CURRENT_DIR ON) 
-
-#find Qt5
-find_package(Qt5 REQUIRED COMPONENTS
-    Core 
-    Network
-)
-
 #create as static lib
 add_library(audiotube STATIC)
-
-target_link_libraries(audiotube 
-    Qt5::Network 
-    Qt5::Core
-)
 
 target_include_directories(audiotube
     PRIVATE include/audiotube
     INTERFACE .
     INTERFACE include
-)
-
-#add submodule sources
-target_sources(audiotube PRIVATE
-    promise-cpp/promise.hpp
 )
 
 #headers for MOC
@@ -48,3 +28,32 @@ target_sources(audiotube PRIVATE
     src/\_NetworkHelper.cpp
     src/\_DebugHelper.cpp
 )
+
+########################
+## Deps : promise-cpp ##
+########################
+
+add_library(promise-cpp INTERFACE IMPORTED)
+target_include_directories(promise-cpp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/promise-cpp")
+
+#link
+target_link_libraries(audiotube PUBLIC promise-cpp)
+
+###################
+## Deps : spdlog ##
+###################
+
+add_library(spdlog INTERFACE)
+target_include_directories(spdlog INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/spdlog/include")
+
+#link
+target_link_libraries(audiotube PUBLIC spdlog)
+
+#################
+## Deps : asio ##
+#################
+
+add_library(asio INTERFACE)
+target_include_directories(asio INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/asio/asio/include")
+
+target_link_libraries(audiotube PUBLIC asio)

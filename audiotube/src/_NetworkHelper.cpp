@@ -33,14 +33,12 @@ promise::Defer AudioTube::NetworkHelper::download(const QUrl& url, bool head) {
 
         // if no error...
         if (auto error = reply->error(); !error) {
-            auto result = static_cast<DownloadedUtf8>(QString::fromUtf8(reply->readAll()));
+            auto result = static_cast<DownloadedUtf8>(std::string::fromUtf8(reply->readAll()));
 
             delete reply;
             d.resolve(result);
         } else {  // if error
-            qWarning() << qUtf8Printable(QString("AudioTube : Error downloading [%1] : %2!")
-                .arg(url.toString())
-                .arg(error));
+            spdlog::warn("AudioTube : Error downloading [{}] : {}!", url.toString(), error);
 
             delete reply;
             d.reject(error);

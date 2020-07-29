@@ -28,11 +28,11 @@ promise::Defer AudioTube::VideoInfos::fillStreamsManifest(
             });
 }
 
-promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const QString &sts) {
-    auto apiUrl = QStringLiteral(u"https://youtube.googleapis.com/v/") + videoId;
-    auto encodedApiUrl = QString::fromUtf8(QUrl::toPercentEncoding(apiUrl));
+promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts) {
+    auto apiUrl = std::string(u"https://youtube.googleapis.com/v/") + videoId;
+    auto encodedApiUrl = std::string::fromUtf8(QUrl::toPercentEncoding(apiUrl));
 
-    auto requestUrl = QStringLiteral(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en&sts=%2")
+    auto requestUrl = std::string(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en&sts=%2")
         .arg(videoId).arg(sts).arg(encodedApiUrl);
 
     return download(requestUrl);
@@ -51,29 +51,29 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         }
 
         // check if is live
-        auto videoDetails = playerResponse[QStringLiteral(u"videoDetails")].toObject();
-        auto isLiveStream = videoDetails.value(QStringLiteral(u"isLive")).toBool();
+        auto videoDetails = playerResponse[std::string(u"videoDetails")].toObject();
+        auto isLiveStream = videoDetails.value(std::string(u"isLive")).toBool();
         if (isLiveStream) {
             throw std::logic_error("Live streams are not handled for now!");
         }
 
         // check playability status
-        auto playabilityStatus = playerResponse[QStringLiteral(u"playabilityStatus")].toObject();
-        auto pStatus = playabilityStatus.value(QStringLiteral(u"status")).toString();
+        auto playabilityStatus = playerResponse[std::string(u"playabilityStatus")].toObject();
+        auto pStatus = playabilityStatus.value(std::string(u"status")).toString();
         if (pStatus.toLower() == "error") {
             throw std::logic_error("This video is not available !");
         }
 
         // check reason, throw soft error
-        auto pReason = playabilityStatus.value(QStringLiteral(u"reason")).toString();
+        auto pReason = playabilityStatus.value(std::string(u"reason")).toString();
         if (!pReason.isNull()) {
-            throw QString(qUtf8Printable(QString("This video is not available though VideoInfo : %1").arg(pReason)));
+            throw std::string("This video is not available though VideoInfo : %1").arg(pReason)));
         }
 
         // get title and duration
-        auto title = videoDetails[QStringLiteral(u"title")].toString().replace("+", " ");
+        auto title = videoDetails[std::string(u"title")].toString().replace("+", " ");
         bool durationOk = false;
-        auto duration = videoDetails[QStringLiteral(u"lengthSeconds")].toString().toInt(&durationOk);
+        auto duration = videoDetails[std::string(u"lengthSeconds")].toString().toInt(&durationOk);
 
         if (title.isEmpty()) throw std::logic_error("Video title cannot be found !");
         if (!durationOk) throw std::logic_error("Video length cannot be found !");
@@ -81,13 +81,13 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         playerConfig->fillFromVideoInfosDetails(title, duration);
 
         // get streamingData
-        auto streamingData = playerResponse[QStringLiteral(u"streamingData")].toObject();
+        auto streamingData = playerResponse[std::string(u"streamingData")].toObject();
         if (streamingData.isEmpty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
         // find expiration
-        auto expiresIn = streamingData.value(QStringLiteral(u"expiresInSeconds")).toString();
+        auto expiresIn = streamingData.value(std::string(u"expiresInSeconds")).toString();
         if (expiresIn.isEmpty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
@@ -96,18 +96,18 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         manifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble());
 
         // raw stream infos
-        auto raw_playerConfigStreams = videoInfos.queryItemValue(QStringLiteral(u"adaptive_fmts"), QUrl::ComponentFormattingOption::FullyDecoded);
-        auto raw_playerResponseStreams = streamingData[QStringLiteral(u"adaptiveFormats")].toArray();
+        auto raw_playerConfigStreams = videoInfos.queryItemValue(std::string(u"adaptive_fmts"), QUrl::ComponentFormattingOption::FullyDecoded);
+        auto raw_playerResponseStreams = streamingData[std::string(u"adaptiveFormats")].toArray();
 
         // feed
         manifest->feedRaw_PlayerConfig(raw_playerConfigStreams, playerConfig->decipherer());
         manifest->feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig->decipherer());
 
         // DASH manifest handling
-        auto dashManifestUrl = streamingData.value(QStringLiteral(u"dashManifestUrl")).toString();
+        auto dashManifestUrl = streamingData.value(std::string(u"dashManifestUrl")).toString();
         d.resolve(dashManifestUrl);
     })
-    .then([=](const QString &dashManifestUrl){
+    .then([=](const std::string &dashManifestUrl){
         auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
             manifest->feedRaw_DASH(dl, playerConfig->decipherer());
         });

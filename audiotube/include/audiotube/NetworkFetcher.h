@@ -14,19 +14,6 @@
 
 #pragma once
 
-#include <QList>
-
-#include <QDebug>
-
-
-#include <QUrlQuery>
-#include <QString>
-#include <QFile>
-
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-
 #include "_NetworkHelper.h"
 #include "_DebugHelper.h"
 
@@ -37,15 +24,15 @@ namespace AudioTube {
 
 class NetworkFetcher : public NetworkHelper {
  public:
-    static promise::Defer fromPlaylistUrl(const QString &url);
+    static promise::Defer fromPlaylistUrl(const std::string &url);
     static promise::Defer refreshMetadata(VideoMetadata* toRefresh, bool force = false);
-    static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, QString* urlSuccessfullyRequested = nullptr);
+    static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, std::string* urlSuccessfullyRequested = nullptr);
 
  private:
     static promise::Defer _refreshMetadata(VideoMetadata* metadata);
 
-    static QList<QString> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
-    static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<QString> &videoIds);
+    static QList<std::string> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
+    static QList<VideoMetadata*> _videoIdsToMetadataList(const QList<std::string> &videoIds);
 };
 
 }  // namespace AudioTube

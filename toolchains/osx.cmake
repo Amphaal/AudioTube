@@ -6,7 +6,6 @@ SET(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
 
 list(APPEND CMAKE_PREFIX_PATH 
     "/usr/local/opt"
-    "/usr/local/opt/qt"
 )
 
 set(OPENSSL_ROOT_DIR "/usr/local/Cellar/openssl@1.1/1.1.1f")

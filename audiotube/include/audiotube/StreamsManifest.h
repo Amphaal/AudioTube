@@ -14,14 +14,6 @@
 
 #pragma once
 
-#include <QString>
-#include <QJsonArray>
-#include <QDateTime>
-#include <QJsonObject>
-#include <QVariantHash>
-#include <QUrl>
-#include <QUrlQuery>
-
 #include <algorithm>
 #include <functional>
 
@@ -43,12 +35,12 @@ class StreamsManifest : public NetworkHelper {
     };
     Q_ENUM(AudioStreamsSource)
 
-    using RawDASHManifest = QString;
-    using RawPlayerConfigStreams = QString;
+    using RawDASHManifest = std::string;
+    using RawPlayerConfigStreams = std::string;
     using RawPlayerResponseStreams = QJsonArray;
     using ITag = int;
 
-    using AudioStreamUrlByBitrate = QMap<double, QPair<ITag, QUrl>>;
+    using AudioStreamUrlByBitrate = QMap<double, std::pair<ITag, QUrl>>;
     using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByBitrate>;
 
     StreamsManifest();
@@ -61,7 +53,7 @@ class StreamsManifest : public NetworkHelper {
     void setRequestedAt(const QDateTime &requestedAt);
     void setSecondsUntilExpiration(const uint secsUntilExp);
 
-    QPair<StreamsManifest::AudioStreamsSource, AudioStreamUrlByBitrate> preferedStreamSource() const;
+    std::pair<StreamsManifest::AudioStreamsSource, AudioStreamUrlByBitrate> preferedStreamSource() const;
     QUrl preferedUrl() const;
     bool isExpired() const;
 
@@ -71,11 +63,11 @@ class StreamsManifest : public NetworkHelper {
 
     AudioStreamsPackage _package;
 
-    static bool _isCodecAllowed(const QString &codec);
-    static bool _isMimeAllowed(const QString &mime);
-    static QJsonArray _urlEncodedToJsonArray(const QString &urlQueryAsRawStr);
+    static bool _isCodecAllowed(const std::string &codec);
+    static bool _isMimeAllowed(const std::string &mime);
+    static QJsonArray _urlEncodedToJsonArray(const std::string &urlQueryAsRawStr);
 
-    static QString _decipheredUrl(const SignatureDecipherer* decipherer, const QString &cipheredUrl, QString signature, QString sigKey = QString());
+    static std::string _decipheredUrl(const SignatureDecipherer* decipherer, const std::string &cipheredUrl, std::string signature, std::string sigKey = std::string());
 };
 
 inline uint qHash(const AudioTube::StreamsManifest::AudioStreamsSource &key, uint seed = 0) {return uint(key) ^ seed;}
