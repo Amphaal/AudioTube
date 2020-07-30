@@ -16,7 +16,8 @@
                 "${workspaceFolder}/audiotube/include",
                 "${workspaceFolder}/audiotube/include/audiotube",
                 "${workspaceFolder}/tests/Catch2/single_include",
-                "${workspaceFolder}/audiotube/spdlog/include"
+                "${workspaceFolder}/audiotube/spdlog/include",
+                "${workspaceFolder}/audiotube/promise-cpp"
             ],
             "defines": [
                 "_DEBUG",

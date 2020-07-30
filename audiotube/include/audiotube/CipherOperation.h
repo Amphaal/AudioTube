@@ -24,6 +24,6 @@ enum class CipherOperation {
     Reverse
 };
 
-inline uint qHash(const AudioTube::CipherOperation &key, uint seed = 0) {return uint(key) ^ seed;}
+inline unsigned int qHash(const AudioTube::CipherOperation &key, unsigned int seed = 0) {return unsigned int(key) ^ seed;}
 
 }  // namespace AudioTube

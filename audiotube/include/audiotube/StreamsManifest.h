@@ -16,6 +16,8 @@
 
 #include <algorithm>
 #include <functional>
+#include <utility>
+#include <string>
 
 #include "_DebugHelper.h"
 #include "_NetworkHelper.h"
@@ -37,10 +39,11 @@ class StreamsManifest : public NetworkHelper {
 
     using RawDASHManifest = std::string;
     using RawPlayerConfigStreams = std::string;
+    using AudioStreamUrl = std::string;
     using RawPlayerResponseStreams = QJsonArray;
     using ITag = int;
 
-    using AudioStreamUrlByBitrate = QMap<double, std::pair<ITag, QUrl>>;
+    using AudioStreamUrlByBitrate = QMap<double, std::pair<ITag, AudioStreamUrl>>;
     using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByBitrate>;
 
     StreamsManifest();
@@ -51,7 +54,7 @@ class StreamsManifest : public NetworkHelper {
     void feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer);
 
     void setRequestedAt(const QDateTime &requestedAt);
-    void setSecondsUntilExpiration(const uint secsUntilExp);
+    void setSecondsUntilExpiration(const unsigned int secsUntilExp);
 
     std::pair<StreamsManifest::AudioStreamsSource, AudioStreamUrlByBitrate> preferedStreamSource() const;
     QUrl preferedUrl() const;
@@ -70,6 +73,6 @@ class StreamsManifest : public NetworkHelper {
     static std::string _decipheredUrl(const SignatureDecipherer* decipherer, const std::string &cipheredUrl, std::string signature, std::string sigKey = std::string());
 };
 
-inline uint qHash(const AudioTube::StreamsManifest::AudioStreamsSource &key, uint seed = 0) {return uint(key) ^ seed;}
+inline unsigned int qHash(const AudioTube::StreamsManifest::AudioStreamsSource &key, unsigned int seed = 0) {return unsigned int(key) ^ seed;}
 
 }  // namespace AudioTube

@@ -112,7 +112,7 @@ std::string AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer
 void AudioTube::StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {
     this->_requestedAt = requestedAt;
 }
-void AudioTube::StreamsManifest::setSecondsUntilExpiration(const uint secsUntilExp) {
+void AudioTube::StreamsManifest::setSecondsUntilExpiration(const unsigned int secsUntilExp) {
     this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
 }
 

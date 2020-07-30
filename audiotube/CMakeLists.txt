@@ -57,3 +57,19 @@ add_library(asio INTERFACE)
 target_include_directories(asio INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/asio/asio/include")
 
 target_link_libraries(audiotube PUBLIC asio)
+
+##########################
+## Deps : nlohmann_json ##
+##########################
+
+add_subdirectory(nlohmann_json)
+
+target_link_libraries(audiotube PUBLIC nlohmann_json::nlohmann_json)
+
+###################
+## Deps : cxxurl ##
+###################
+
+add_subdirectory(cxxurl)
+
+target_link_libraries(audiotube PUBLIC CxxUrl)

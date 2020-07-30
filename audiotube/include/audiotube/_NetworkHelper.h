@@ -25,7 +25,7 @@ class NetworkHelper {
     using DownloadedUtf8 = std::string;
 
  protected:
-    static promise::Defer download(const QUrl& url, bool head = false);
+    static promise::Defer download(const std::string &url, bool head = false);
 
  private:
     static inline QNetworkAccessManager* _manager = nullptr;
