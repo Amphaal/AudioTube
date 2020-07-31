@@ -104,6 +104,10 @@
         "any": "cpp",
         "strstream": "cpp",
         "coroutine": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "forward_list": "cpp",
+        "span": "cpp",
+        "valarray": "cpp",
+        "*.ipp": "cpp"
     }
 }

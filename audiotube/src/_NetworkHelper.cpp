@@ -14,34 +14,105 @@
 
 #include "_NetworkHelper.h"
 
-promise::Defer AudioTube::NetworkHelper::download(const std::string &url, bool head) {
-    if (!_manager) {
-        _manager = new QNetworkAccessManager;
+std::string AudioTube::NetworkHelper::queryAsStr(const Url::Query &query) {
+    std::string out;
+    for (auto i = query.begin(); i != query.end(); i++) {
+        out += i->key() + "=" + i->val();
     }
+    return out;
+}
 
+promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &url, bool head = false) {
     return promise::newPromise([=](promise::Defer d) {
-        QNetworkRequest request(url);
-        auto reply = head ? _manager->head(request) : _manager->get(request);
+        // decompose url
+        Url url_decomposer(url);
+        auto serverName = url_decomposer.host();
+        auto scheme = url_decomposer.scheme();
+        auto getCommand = url_decomposer.path() + "?" + queryAsStr(url_decomposer.query());
 
-        // use local event loop to mimic signal/slots same-thread async behavior
-        QEventLoop loop;
-        QObject::connect(
-            reply, &QNetworkReply::finished,
-            &loop, &QEventLoop::quit
-        );
-        loop.exec();
+        // setup service
+        asio::io_service io_service;
 
-        // if no error...
-        if (auto error = reply->error(); !error) {
-            auto result = static_cast<DownloadedUtf8>(std::string::fromUtf8(reply->readAll()));
+        // setup SSL
+        ssl::context ssl_ctx(ssl::context::sslv23);
+        ssl_ctx.set_default_verify_paths();
+        asio::ssl::stream<tcp::socket> ssl_sock(io_service, ssl_ctx);
 
-            delete reply;
-            d.resolve(result);
-        } else {  // if error
-            spdlog::warn("AudioTube : Error downloading [{}] : {}!", url.toString(), error);
+        // setup Resolver
+        tcp::resolver resolver(io_service);
+        tcp::resolver::query query(serverName, scheme);
+        tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+        tcp::resolver::iterator end;
 
-            delete reply;
-            d.reject(error);
+        // Connect to host
+        asio::connect(ssl_sock.lowest_layer(), resolver.resolve(query));
+        ssl_sock.lowest_layer().set_option(tcp::no_delay(true));
+
+        // Perform SSL handshake and verify the remote host's certificate.
+        ssl_sock.set_verify_mode(ssl::verify_peer);
+        ssl_sock.set_verify_callback(ssl::rfc2818_verification(serverName));
+        ssl_sock.handshake(ssl::stream<tcp::socket>::client);
+
+        // start writing
+        asio::streambuf request;
+        std::ostream request_stream(&request);
+
+        request_stream << "GET " << getCommand << " HTTP/1.0\r\n";
+        request_stream << "Host: " << serverName << "\r\n";
+        request_stream << "Accept: */*\r\n";
+        request_stream << "Connection: close\r\n\r\n";
+
+        spdlog::debug("HTTPSDownloader : Downloading from [{}]...", url);
+
+        // Send the request.
+        asio::write(socket, request);
+
+        // Read the response status line.
+        asio::streambuf response;
+        asio::read_until(socket, response, "\r\n");
+
+        // Check that response is OK.
+        std::istream response_stream(&response);
+        std::string http_version;
+        response_stream >> http_version;
+        unsigned int status_code;
+        response_stream >> status_code;
+        std::string status_message;
+        std::getline(response_stream, status_message);
+
+        // Read the response headers, which are terminated by a blank line.
+        asio::read_until(socket, response, "\r\n\r\n");
+
+        // Process the response headers.
+        std::string headerTmp;
+        std::vector<std::string> headers;
+        bool hasContentLengthHeader = false;
+
+        // iterate
+        while (std::getline(response_stream, headerTmp) && headerTmp != "\r") {
+            headers.push_back(headerTmp);
+            if (!hasContentLengthHeader) {
+                hasContentLengthHeader = headerTmp.find("Content-Length") != std::string::npos;
+            }
         }
+
+        if (!hasContentLengthHeader) {
+            throw std::logic_error("HTTPSDownloader : Targeted URL is not a file");
+        }
+
+        // Write whatever content we already have to output.
+        std::ostringstream output_stream;
+        if (response.size() > 0) {
+            output_stream << &response;
+        }
+        // Read until EOF, writing data to output as we go.
+        asio::error_code error;
+        while (asio::read(socket, response, asio::transfer_at_least(1), error)) {
+            output_stream << &response;
+        }
+
+        spdlog::debug("HTTPSDownloader : Finished downloading [{}]", url);
+
+        return output_stream.str();
     });
 }
