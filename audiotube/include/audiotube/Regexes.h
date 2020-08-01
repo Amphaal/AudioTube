@@ -15,6 +15,8 @@
 #pragma once
 
 #include <regex>
+#include <string>
+#include <map>
 
 #include "CipherOperation.h"
 
@@ -22,61 +24,76 @@ namespace AudioTube {
 
 class Regexes {
  public:
-    static inline std::regex DASHManifestExtractor = std::regex(
+    static inline std::regex DASHManifestExtractor {
         R"|(<Representation id="(?<itag>.*?)" codecs="(?<codec>.*?)"[\s\S]*?bandwidth="(?<bitrate>.*?)"[\s\S]*?<BaseURL>(?<url>.*?)<\/BaseURL)|"
-    );
-    static inline std::regex YoutubeIdFinder = std::regex(
+    };
+    static inline std::regex YoutubeIdFinder {
         R"|((?:youtube\.com|youtu.be).*?(?:v=|embed\/)(?<videoId>[\w\-]+))|"
-    );
-    static inline std::regex HTTPRequestYTVideoIdExtractor = std::regex(
+    };
+    static inline std::regex HTTPRequestYTVideoIdExtractor {
         R"|(watch\?v=(?<videoId>.*?)&amp;)|"
-    );
-    static inline std::regex PlayerConfigExtractorFromEmbed = std::regex(
+    };
+    static inline std::regex PlayerConfigExtractorFromEmbed {
         R"|(yt\.setConfig\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\);)|"
-    );
-    static inline std::regex PlayerConfigExtractorFromWatchPage = std::regex(
+    };
+    static inline std::regex PlayerConfigExtractorFromWatchPage {
         R"|(ytplayer\.config = (?<playerConfig>.*?)\;ytplayer)|"
-    );
-    static inline std::regex STSFinder = std::regex(
+    };
+    static inline std::regex STSFinder {
         R"|(invalid namespace.*?;.*?=(?<sts>\d+);)|"
-    );
+    };
 
-    static inline std::regex Decipherer_findFuncAndArgument = std::regex(
+    static inline std::regex Decipherer_findFuncAndArgument {
         R"|(\.(?<functionName>\w+)\(\w+,(?<arg>\d+)\))|"
-    );
-    static inline std::regex Decipherer_findFunctionName = std::regex(
+    };
+    static inline std::regex Decipherer_findFunctionName {
         R"|((?<functionName>\w+)=function\(\w+\){(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)})|"
-    );
-    static inline std::regex Decipherer_findCalledFunction = std::regex(
+    };
+    static inline std::regex Decipherer_findCalledFunction {
         R"|(\w+\.(?<functionName>\w+)\()|"
-    );
+    };
     static std::regex Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
         return _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName);
     }
 
     // Careful, order is important !
-    static QMap<CipherOperation, std::regex> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
-        QMap<CipherOperation, std::regex> out;
+    static std::map<CipherOperation, std::regex> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
+        std::map<CipherOperation, std::regex> out;
         for (auto i = _cipherOperationRegexBase.begin(); i != _cipherOperationRegexBase.end(); ++i) {
-            auto regex = _Decipherer_generateRegex(i.value(), obfuscatedDecipheringFunctionName);
-            out.insert(i.key(), regex);
+            auto regex = _Decipherer_generateRegex(i->second, obfuscatedDecipheringFunctionName);
+            out.emplace(i->first, regex);
         }
         return out;
     }
 
  private:
-    static std::regex _Decipherer_generateRegex(const std::string &regex, const std::string &obfuscatedDecipheringFunctionName) {
-        auto escaped = std::regex::escape(obfuscatedDecipheringFunctionName);
-        return std::regex(
-            regex.arg(escaped)
+    static std::regex _Decipherer_generateRegex(std::string rawRegexAsString, const std::string &obfuscatedDecipheringFunctionName) {
+        std::string toReplace = "%1";
+        auto escaped = escapeForRegex(obfuscatedDecipheringFunctionName);
+
+        // replace
+        rawRegexAsString.replace(
+            rawRegexAsString.find(toReplace),
+            toReplace.length(),
+            escaped
         );
+
+        // as std::regex
+        return std::regex { rawRegexAsString };
     }
-    static inline std::string _Decipherer_JSDecipheringOperations = std::string(
+
+    static std::string escapeForRegex(const std::string &input) {
+        // matches any characters that need to be escaped in RegEx
+        std::regex specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
+        return std::regex_replace(input, specialChars, R"(\$&)");
+    }
+
+    static inline std::string _Decipherer_JSDecipheringOperations {
         R"|((?!h\.)%1=function\(\w+\)\{(?<functionBody>.*?)\})|"
-    );
+    };
 
     // Careful, order is important !
-    static inline QMap<CipherOperation, std::string> _cipherOperationRegexBase {
+    static inline std::map<CipherOperation, std::string> _cipherOperationRegexBase {
         { CipherOperation::Slice, R"|(%1:\bfunction\b\([a],b\).(\breturn\b)?.?\w+\.)|" },
         { CipherOperation::Swap, R"|(%1:\bfunction\b\(\w+\,\w\).\bvar\b.\bc=a\b)|" },
         { CipherOperation::Reverse, R"|(%1:\bfunction\b\(\w+\))|" }

@@ -19,7 +19,7 @@ promise::Defer AudioTube::VideoInfos::fillStreamsManifest(
     PlayerConfig* playerConfig,
     StreamsManifest* manifest) {
     // set request date
-    manifest->setRequestedAt(QDateTime::currentDateTime());
+    manifest->setRequestedAt(std::time_t::currentDateTime());
 
     // pipeline
     return _downloadRaw_VideoInfos(videoId, playerConfig->sts())
@@ -30,7 +30,7 @@ promise::Defer AudioTube::VideoInfos::fillStreamsManifest(
 
 promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts) {
     auto apiUrl = std::string(u"https://youtube.googleapis.com/v/") + videoId;
-    auto encodedApiUrl = std::string::fromUtf8(QUrl::toPercentEncoding(apiUrl));
+    auto encodedApiUrl = std::string::fromUtf8(Url::toPercentEncoding(apiUrl));
 
     auto requestUrl = std::string(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en&sts=%2")
         .arg(videoId).arg(sts).arg(encodedApiUrl);
@@ -44,7 +44,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         QUrlQuery videoInfos(dl);
 
         // get player response
-        auto playerResponseAsStr = videoInfos.queryItemValue("player_response", QUrl::ComponentFormattingOption::FullyDecoded);
+        auto playerResponseAsStr = videoInfos.queryItemValue("player_response", Url::ComponentFormattingOption::FullyDecoded);
         auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
         if (playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
             throw std::logic_error("Player response is missing !");
@@ -96,7 +96,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         manifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble());
 
         // raw stream infos
-        auto raw_playerConfigStreams = videoInfos.queryItemValue(std::string(u"adaptive_fmts"), QUrl::ComponentFormattingOption::FullyDecoded);
+        auto raw_playerConfigStreams = videoInfos.queryItemValue(std::string(u"adaptive_fmts"), Url::ComponentFormattingOption::FullyDecoded);
         auto raw_playerResponseStreams = streamingData[std::string(u"adaptiveFormats")].toArray();
 
         // feed

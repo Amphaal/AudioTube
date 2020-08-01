@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "_NetworkHelper.h"
 #include "SignatureDecipherer.h"
 #include "StreamsManifest.h"

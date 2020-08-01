@@ -26,7 +26,7 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
 
     // if not, reset failure flag and emit event
     toRefresh->setFailure(false);
-    emit toRefresh->metadataFetching();
+    toRefresh->_omf_callback();
 
     // workflow...
     return promise::newPromise([=](promise::Defer d){
@@ -41,7 +41,7 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
         .then([=]() {
             // success !
             toRefresh->setRanOnce();
-            emit toRefresh->metadataRefreshed();
+            toRefresh->_omr_callback();
             d.resolve(toRefresh);
         })
         .fail([=](const std::runtime_error &exception) {
@@ -91,12 +91,12 @@ promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metada
     });
 }
 
-QList<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
+std::list<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
     // search...
     auto results = Regexes::HTTPRequestYTVideoIdExtractor.globalMatch(requestData);
 
     // return list
-    QList<std::string> idsList;
+    std::list<std::string> idsList;
 
     // iterate
     while (results.hasNext()) {
@@ -119,8 +119,8 @@ QList<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(co
     return idsList;
 }
 
-QList<AudioTube::VideoMetadata*> AudioTube::NetworkFetcher::_videoIdsToMetadataList(const QList<std::string> &videoIds) {
-    QList<VideoMetadata*> out;
+std::list<AudioTube::VideoMetadata*> AudioTube::NetworkFetcher::_videoIdsToMetadataList(const std::list<std::string> &videoIds) {
+    std::list<VideoMetadata*> out;
     for (const auto &id : videoIds) {
         out.append(VideoMetadata::fromVideoId(id));
     }

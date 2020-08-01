@@ -22,8 +22,20 @@ AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoUrl(const std::stri
     return new VideoMetadata(url, InstantiationType::InstFromUrl);
 }
 
+void AudioTube::VideoMetadata::setOnMetadataFetching(const std::function<void()> &cb) {
+    _omf_callback = cb;
+}
+
+void AudioTube::VideoMetadata::setOnMetadataRefreshed(const std::function<void()> &cb) {
+    _omr_callback = cb;
+}
+
+void AudioTube::VideoMetadata::setOnStreamFailed(const std::function<void()> &cb) {
+    _osf_callback = cb;
+}
+
 std::string AudioTube::VideoMetadata::_urlFromVideoId(const std::string &videoId) {
-    return std::string(u"https://www.youtube.com/watch?v=") + videoId;
+    return std::string("https://www.youtube.com/watch?v=") + videoId;
 }
 
 AudioTube::VideoMetadata::VideoMetadata(const std::string &IdOrUrl, const InstantiationType &type) {
@@ -71,7 +83,7 @@ bool AudioTube::VideoMetadata::ranOnce() const {
 }
 
 void AudioTube::VideoMetadata::setFailure(bool failed) {
-    if (failed == true && this->_failed != failed) emit streamFailed();
+    if (failed == true && this->_failed != failed) _osf_callback();
     this->_failed = failed;
 }
 

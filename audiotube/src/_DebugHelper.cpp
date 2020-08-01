@@ -17,7 +17,7 @@
 void AudioTube::DebugHelper::_dumpAsJSON(const QUrlQuery &query) {
     QJsonObject dump;
 
-    for (const auto &item : query.queryItems(QUrl::ComponentFormattingOption::FullyDecoded)) {
+    for (const auto &item : query.queryItems(Url::ComponentFormattingOption::FullyDecoded)) {
         dump.insert(item.first, item.second);
     }
 

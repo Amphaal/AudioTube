@@ -18,6 +18,13 @@
 #include "CipherOperation.h"
 #include "_DebugHelper.h"
 
+#include <queue>
+#include <utility>
+#include <list>
+#include <set>
+#include <unordered_map>
+#include <string>
+
 namespace AudioTube {
 
 class SignatureDecipherer {
@@ -27,21 +34,22 @@ class SignatureDecipherer {
     static SignatureDecipherer* fromCache(const std::string &clientPlayerUrl);
 
  private:
-    using YTDecipheringOperations = std::deque<std::pair<CipherOperation, QVariant>>;
+    using Argument = int;
+    using YTDecipheringOperations = std::queue<std::pair<CipherOperation, Argument>>;
     using YTClientMethod = std::string;
 
     explicit SignatureDecipherer(const std::string &rawPlayerSourceData);
 
-    std::deque<std::pair<CipherOperation, QVariant>> _operations;
-    static inline QHash<std::string, SignatureDecipherer*> _cache;
+    std::queue<std::pair<CipherOperation, Argument>> _operations;
+    static inline std::unordered_map<std::string, SignatureDecipherer*> _cache;
 
     static YTClientMethod _findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode);
-    static QList<std::string>
+    static std::list<std::string>
         _findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName);
-    static QHash<CipherOperation, YTClientMethod>
-        _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const QList<std::string> &javascriptDecipheringOperations);
+    static std::unordered_map<CipherOperation, YTClientMethod>
+        _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const std::list<std::string> &javascriptDecipheringOperations);
     static YTDecipheringOperations
-        _buildOperations(const QHash<CipherOperation, YTClientMethod> &functionNamesByOperation, const QList<std::string> &javascriptOperations);
+        _buildOperations(const std::unordered_map<CipherOperation, YTClientMethod> &functionNamesByOperation, const std::list<std::string> &javascriptOperations);
 };
 
 }  // namespace AudioTube

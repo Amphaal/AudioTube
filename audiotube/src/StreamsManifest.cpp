@@ -72,9 +72,9 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
             auto cipher = QUrlQuery(cipherRaw);
 
             // find params
-            auto cipheredUrl = cipher.queryItemValue("url", QUrl::ComponentFormattingOption::FullyDecoded);
-            auto signature = cipher.queryItemValue("s", QUrl::ComponentFormattingOption::FullyDecoded);
-            auto signatureParameter = cipher.queryItemValue("sp", QUrl::ComponentFormattingOption::FullyDecoded);
+            auto cipheredUrl = cipher.queryItemValue("url", Url::ComponentFormattingOption::FullyDecoded);
+            auto signature = cipher.queryItemValue("s", Url::ComponentFormattingOption::FullyDecoded);
+            auto signatureParameter = cipher.queryItemValue("sp", Url::ComponentFormattingOption::FullyDecoded);
 
             // decipher
             url = _decipheredUrl(
@@ -109,7 +109,7 @@ std::string AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer
     return out;
 }
 
-void AudioTube::StreamsManifest::setRequestedAt(const QDateTime &requestedAt) {
+void AudioTube::StreamsManifest::setRequestedAt(const std::time_t &requestedAt) {
     this->_requestedAt = requestedAt;
 }
 void AudioTube::StreamsManifest::setSecondsUntilExpiration(const unsigned int secsUntilExp) {
@@ -130,15 +130,15 @@ std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsMani
     throw std::logic_error("No audio stream source found !");
 }
 
-QUrl AudioTube::StreamsManifest::preferedUrl() const {
+std::string AudioTube::StreamsManifest::preferedUrl() const {
     auto source = this->preferedStreamSource();
-    spdlog::debug("Picking stream URL from source : {}", QVariant::fromValue(source.first).toString());
+    spdlog::debug("Picking stream URL from source : {}", std::variant::fromValue(source.first).toString());
     return source.second.last().second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
 bool AudioTube::StreamsManifest::isExpired() const {
     if (this->_validUntil.isNull()) return true;
-    return QDateTime::currentDateTime() > this->_validUntil;
+    return std::time_t::currentDateTime() > this->_validUntil;
 }
 
 
@@ -180,7 +180,7 @@ QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const std::string 
             // add to temporary group
             group.insert(
                 kvp.first,
-                QUrlQuery(kvp.second).toString(QUrl::ComponentFormattingOption::FullyDecoded)
+                QUrlQuery(kvp.second).toString(Url::ComponentFormattingOption::FullyDecoded)
             );
         }
 

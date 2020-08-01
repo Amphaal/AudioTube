@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "_NetworkHelper.h"
 #include "VideoMetadata.h"
 #include "PlayerConfig.h"

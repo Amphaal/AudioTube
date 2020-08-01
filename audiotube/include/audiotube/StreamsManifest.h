@@ -18,6 +18,8 @@
 #include <functional>
 #include <utility>
 #include <string>
+#include <map>
+#include <unordered_map>
 
 #include "_DebugHelper.h"
 #include "_NetworkHelper.h"
@@ -27,15 +29,12 @@
 namespace AudioTube {
 
 class StreamsManifest : public NetworkHelper {
-    Q_GADGET
-
  public:
     enum AudioStreamsSource {
         PlayerResponse,
         PlayerConfig,
         DASH
     };
-    Q_ENUM(AudioStreamsSource)
 
     using RawDASHManifest = std::string;
     using RawPlayerConfigStreams = std::string;
@@ -43,8 +42,8 @@ class StreamsManifest : public NetworkHelper {
     using RawPlayerResponseStreams = QJsonArray;
     using ITag = int;
 
-    using AudioStreamUrlByBitrate = QMap<double, std::pair<ITag, AudioStreamUrl>>;
-    using AudioStreamsPackage = QHash<AudioStreamsSource, AudioStreamUrlByBitrate>;
+    using AudioStreamUrlByBitrate = std::map<double, std::pair<ITag, AudioStreamUrl>>;
+    using AudioStreamsPackage = std::unordered_map<AudioStreamsSource, AudioStreamUrlByBitrate>;
 
     StreamsManifest();
 
@@ -53,16 +52,16 @@ class StreamsManifest : public NetworkHelper {
     void feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer);
     void feedRaw_PlayerResponse(const RawPlayerResponseStreams &raw, const SignatureDecipherer* decipherer);
 
-    void setRequestedAt(const QDateTime &requestedAt);
+    void setRequestedAt(const std::time_t &requestedAt);
     void setSecondsUntilExpiration(const unsigned int secsUntilExp);
 
     std::pair<StreamsManifest::AudioStreamsSource, AudioStreamUrlByBitrate> preferedStreamSource() const;
-    QUrl preferedUrl() const;
+    std::string preferedUrl() const;
     bool isExpired() const;
 
  private:
-    QDateTime _requestedAt;
-    QDateTime _validUntil;
+    std::time_t _requestedAt;
+    std::time_t _validUntil;
 
     AudioStreamsPackage _package;
 
@@ -72,7 +71,5 @@ class StreamsManifest : public NetworkHelper {
 
     static std::string _decipheredUrl(const SignatureDecipherer* decipherer, const std::string &cipheredUrl, std::string signature, std::string sigKey = std::string());
 };
-
-inline unsigned int qHash(const AudioTube::StreamsManifest::AudioStreamsSource &key, unsigned int seed = 0) {return unsigned int(key) ^ seed;}
 
 }  // namespace AudioTube

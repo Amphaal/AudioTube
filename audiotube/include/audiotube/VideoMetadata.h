@@ -13,14 +13,14 @@
 // GNU General Public License for more details.
 #pragma once
 
+#include <string>
+
 #include "PlayerConfig.h"
 #include "StreamsManifest.h"
 
 namespace AudioTube {
 
-class VideoMetadata : public QObject {
-    Q_OBJECT
-
+class VideoMetadata {
  public:
     enum InstantiationType {
         InstFromId,
@@ -44,10 +44,14 @@ class VideoMetadata : public QObject {
     StreamsManifest* audioStreams();
     PlayerConfig* playerConfig();
 
- signals:
-    void metadataFetching();
-    void metadataRefreshed();
-    void streamFailed();
+    // callbacks
+    void setOnMetadataFetching(const std::function<void()> &cb);
+    void setOnMetadataRefreshed(const std::function<void()> &cb);
+    void setOnStreamFailed(const std::function<void()> &cb);
+
+    void OnMetadataFetching();
+    void OnMetadataRefreshed();
+    void OnStreamFailed();
 
  private:
     static std::string _urlFromVideoId(const std::string &videoId);
@@ -59,8 +63,10 @@ class VideoMetadata : public QObject {
 
     PlayerConfig _playerConfig;
     StreamsManifest _audioStreams;
+
+    std::function<void()> _omf_callback;
+    std::function<void()> _omr_callback;
+    std::function<void()> _osf_callback;
 };
 
 }  // namespace AudioTube
-
-Q_DECLARE_METATYPE(AudioTube::VideoMetadata*)

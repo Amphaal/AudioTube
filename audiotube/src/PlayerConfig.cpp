@@ -56,7 +56,7 @@ promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::Video
 
 promise::Defer AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
     // define requested at timestamp
-    streamsManifest->setRequestedAt(QDateTime::currentDateTime());
+    streamsManifest->setRequestedAt(std::time_t::currentDateTime());
 
     // pipeline
     return _downloadRaw_WatchPageHtml(videoId)
