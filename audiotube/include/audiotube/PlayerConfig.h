@@ -20,6 +20,8 @@
 #include "SignatureDecipherer.h"
 #include "StreamsManifest.h"
 
+#include <nlohmann/json.hpp>
+
 namespace AudioTube {
 
 class PlayerConfig : public NetworkHelper {
@@ -63,10 +65,10 @@ class PlayerConfig : public NetworkHelper {
     promise::Defer _fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl);
     promise::Defer _fillFrom_PlayerSource(const DownloadedUtf8 &dl, const std::string &playerSourceUrl);
 
-    static QJsonObject _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const std::regex &regex);
+    static nlohmann::json _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const std::regex &regex);
 
     // extraction helpers
-    static std::string _playerSourceUrl(const QJsonObject &playerConfig);
+    static std::string _playerSourceUrl(const nlohmann::json &playerConfig);
     static std::string _getSts(const DownloadedUtf8 &dl);
 };
 

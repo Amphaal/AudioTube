@@ -29,13 +29,12 @@ promise::Defer AudioTube::VideoInfos::fillStreamsManifest(
 }
 
 promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts) {
-    auto apiUrl = std::string(u"https://youtube.googleapis.com/v/") + videoId;
+    auto apiUrl = std::string("https://youtube.googleapis.com/v/") + videoId;
     auto encodedApiUrl = std::string::fromUtf8(Url::toPercentEncoding(apiUrl));
 
-    auto requestUrl = std::string(u"https://www.youtube.com/get_video_info?video_id=%1&el=embedded&eurl=%3&hl=en&sts=%2")
-        .arg(videoId).arg(sts).arg(encodedApiUrl);
+    auto requestUrl = std::string("https://www.youtube.com/get_video_info?video_id=" + videoId + "&el=embedded&eurl=" + encodedApiUrl + "&hl=en&sts=" + sts);
 
-    return download(requestUrl);
+    return downloadHTTPS(requestUrl);
 }
 
 promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig) {
@@ -108,7 +107,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         d.resolve(dashManifestUrl);
     })
     .then([=](const std::string &dashManifestUrl){
-        auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : download(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
+        auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : downloadHTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
             manifest->feedRaw_DASH(dl, playerConfig->decipherer());
         });
         return mayFetchRawDASH;

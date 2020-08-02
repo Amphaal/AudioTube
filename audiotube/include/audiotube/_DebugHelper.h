@@ -17,15 +17,18 @@
 #include <spdlog/spdlog.h>
 
 #include <string>
+#include <fstream>
+#include <filesystem>
+
+#include <cxxurl/url.hpp>
+#include <nlohmann/json.hpp>
 
 namespace AudioTube {
 
 class DebugHelper {
  public:
-    static void _dumpAsJSON(const QUrlQuery &query);
-    static void _dumpAsJSON(const QJsonObject &obj);
-    static void _dumpAsJSON(const QJsonArray &arr);
-    static void _dumpAsJSON(const QJsonDocument &doc);
+    static void _dumpAsJSON(const Url::Query &query);
+    static void _dumpAsJSON(const nlohmann::json &doc);
     static void _dumpAsFile(const std::string &str);
 };
 

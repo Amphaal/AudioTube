@@ -83,7 +83,7 @@ bool AudioTube::VideoMetadata::ranOnce() const {
 }
 
 void AudioTube::VideoMetadata::setFailure(bool failed) {
-    if (failed == true && this->_failed != failed) _osf_callback();
+    if (failed == true && this->_failed != failed) OnStreamFailed();
     this->_failed = failed;
 }
 

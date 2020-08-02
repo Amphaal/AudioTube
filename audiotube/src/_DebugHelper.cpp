@@ -14,40 +14,34 @@
 
 #include "_DebugHelper.h"
 
-void AudioTube::DebugHelper::_dumpAsJSON(const QUrlQuery &query) {
-    QJsonObject dump;
+void AudioTube::DebugHelper::_dumpAsJSON(const Url::Query &query) {
+    nlohmann::json dump = nlohmann::json::object();
 
-    for (const auto &item : query.queryItems(Url::ComponentFormattingOption::FullyDecoded)) {
-        dump.insert(item.first, item.second);
+    for (const auto &item : query) {
+        dump[item.key()] = item.val();
     }
 
     _dumpAsJSON(dump);
 }
 
-void AudioTube::DebugHelper::_dumpAsJSON(const QJsonObject &obj) {
-    return _dumpAsJSON(QJsonDocument(obj));
-}
-
-void AudioTube::DebugHelper::_dumpAsJSON(const QJsonArray &arr) {
-    return _dumpAsJSON(QJsonDocument(arr));
-}
-
 void AudioTube::DebugHelper::_dumpAsFile(const std::string &str) {
-    QFile fh("yt.txt");
-    fh.open(QFile::WriteOnly);
-        fh.write(str.toUtf8());
+    std::ofstream fh;
+
+    auto fullpath = std::filesystem::canonical("yt.txt");
+    fh.open(fullpath);
+    fh << str;
     fh.close();
 
-    spdlog::debug("{} created !", fh.fileName());
+    spdlog::debug("{} created !", fullpath);
 }
 
-void AudioTube::DebugHelper::_dumpAsJSON(const QJsonDocument &doc) {
-    auto bytes = doc.toJson(QJsonDocument::JsonFormat::Indented);
+void AudioTube::DebugHelper::_dumpAsJSON(const nlohmann::json &doc) {
+    std::ofstream fh;
 
-    QFile fh("yt.json");
-    fh.open(QFile::WriteOnly);
-        fh.write(bytes);
+    auto fullpath = std::filesystem::canonical("yt.json");
+    fh.open(fullpath);
+    fh << doc.dump(4);
     fh.close();
 
-    spdlog::debug("{} created !", fh.fileName());
+    spdlog::debug("{} created !", fullpath);
 }

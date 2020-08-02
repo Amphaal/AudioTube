@@ -20,6 +20,9 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <regex>
+
+#include <nlohmann/json.hpp>
 
 #include "_DebugHelper.h"
 #include "_NetworkHelper.h"
@@ -39,7 +42,7 @@ class StreamsManifest : public NetworkHelper {
     using RawDASHManifest = std::string;
     using RawPlayerConfigStreams = std::string;
     using AudioStreamUrl = std::string;
-    using RawPlayerResponseStreams = QJsonArray;
+    using RawPlayerResponseStreams = nlohmann::json;
     using ITag = int;
 
     using AudioStreamUrlByBitrate = std::map<double, std::pair<ITag, AudioStreamUrl>>;
@@ -67,7 +70,7 @@ class StreamsManifest : public NetworkHelper {
 
     static bool _isCodecAllowed(const std::string &codec);
     static bool _isMimeAllowed(const std::string &mime);
-    static QJsonArray _urlEncodedToJsonArray(const std::string &urlQueryAsRawStr);
+    static nlohmann::json _urlEncodedToJsonArray(const std::string &urlQueryAsRawStr);
 
     static std::string _decipheredUrl(const SignatureDecipherer* decipherer, const std::string &cipheredUrl, std::string signature, std::string sigKey = std::string());
 };

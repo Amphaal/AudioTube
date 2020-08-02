@@ -73,3 +73,4 @@ target_link_libraries(audiotube PUBLIC nlohmann_json::nlohmann_json)
 add_subdirectory(cxxurl)
 
 target_link_libraries(audiotube PUBLIC CxxUrl)
+target_include_directories(CxxUrl INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")

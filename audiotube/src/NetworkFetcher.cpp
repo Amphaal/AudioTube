@@ -15,7 +15,7 @@
 #include "NetworkFetcher.h"
 
 promise::Defer AudioTube::NetworkFetcher::fromPlaylistUrl(const std::string &url) {
-    return download(url)
+    return downloadHTTPS(url)
             .then(&_extractVideoIdsFromHTTPRequest)
             .then(&_videoIdsToMetadataList);
 }
@@ -26,7 +26,7 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
 
     // if not, reset failure flag and emit event
     toRefresh->setFailure(false);
-    toRefresh->_omf_callback();
+    toRefresh->OnMetadataFetching();
 
     // workflow...
     return promise::newPromise([=](promise::Defer d){
@@ -41,7 +41,7 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
         .then([=]() {
             // success !
             toRefresh->setRanOnce();
-            toRefresh->_omr_callback();
+            toRefresh->OnMetadataRefreshed();
             d.resolve(toRefresh);
         })
         .fail([=](const std::runtime_error &exception) {
@@ -58,7 +58,7 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
 void AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, std::string* urlSuccessfullyRequested) {
     auto bestUrl = toCheck->audioStreams()->preferedUrl();
 
-    download(bestUrl, true)
+    downloadHTTPS(bestUrl, true)
         .then([=](){
             *urlSuccessfullyRequested = bestUrl.toString();
         })

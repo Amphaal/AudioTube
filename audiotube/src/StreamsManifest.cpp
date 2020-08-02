@@ -18,28 +18,40 @@ AudioTube::StreamsManifest::StreamsManifest() {}
 
 void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
     // find streams
-    auto foundStreams = Regexes::DASHManifestExtractor.globalMatch(raw);
+    std::smatch foundStreams;
+    std::regex_match(raw, foundStreams, Regexes::DASHManifestExtractor);
+
+    // check
+    if (!foundStreams.ready()) throw std::logic_error("[DASH] No stream found on manifest");
 
     // container
     AudioStreamUrlByBitrate streams;
 
-    // iterate
-    while (foundStreams.hasNext()) {
-        auto match = foundStreams.next();
+    // iterate through streams
+    for (auto &streamMatch : foundStreams) {
+        // search data parts
+        auto streamRawStr = streamMatch.str();
+        std::smatch streamDataMatch;
+        std::regex_search(streamRawStr, streamDataMatch, Regexes::DASHManifestExtractor);
+
+        // check
+        if (!streamDataMatch.ready() || streamDataMatch.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
+
+        // get parts
+        auto itag = std::stoi(streamDataMatch.str(0));
+        auto codec = streamDataMatch.str(1);
+        auto bitrate = std::stod(streamDataMatch.str(2));
+        auto url = streamDataMatch.str(3);
 
         // check codec
-        auto codec = match.captured("codec");
         if (!_isCodecAllowed(codec)) continue;
 
-        auto itag = match.captured("itag").toInt();
-        auto url = match.captured("url");
-        auto bitrate = match.captured("bitrate").toDouble();
-
-        streams.insert(bitrate, { itag, url });
+        // fill
+        streams.emplace(bitrate, std::make_pair(itag, url));
     }
 
     // insert in package
-    this->_package.insert(AudioStreamsSource::DASH, streams);
+    this->_package.emplace(AudioStreamsSource::DASH, streams);
 }
 
 void AudioTube::StreamsManifest::feedRaw_PlayerConfig(const RawPlayerConfigStreams &raw, const SignatureDecipherer* decipherer) {
@@ -51,23 +63,21 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
 
     // iterate
     for (auto itagGroup : raw) {
-        auto itagGroupObj = itagGroup.toObject();
-
         // check mime
-        auto mimeType = itagGroupObj["mimeType"].toString();
+        auto mimeType = itagGroup["mimeType"].get<std::string>();
         if (!_isMimeAllowed(mimeType)) continue;
 
         // find itag + url
-        auto bitrate = itagGroupObj["bitrate"].toDouble();
-        auto url = itagGroupObj["url"].toString();
-        auto tag = itagGroupObj["itag"].toInt();
+        auto bitrate = itagGroup["bitrate"].get<double>();
+        auto url = itagGroup["url"].get<std::string>();
+        auto tag = itagGroup["itag"].get<int>();
 
         // decipher if no url
-        if (url.isEmpty()) {
+        if (url.empty()) {
             // find cipher
-            auto cipherRaw = itagGroupObj["cipher"].toString();
-            if (cipherRaw.isEmpty()) cipherRaw = itagGroupObj["signatureCipher"].toString();
-            if (cipherRaw.isEmpty()) throw std::logic_error("Cipher data cannot be found !");
+            auto cipherRaw = itagGroup["cipher"].get<std::string>();
+            if (cipherRaw.empty()) cipherRaw = itagGroup["signatureCipher"].get<std::string>();
+            if (cipherRaw.empty()) throw std::logic_error("Cipher data cannot be found !");
 
             auto cipher = QUrlQuery(cipherRaw);
 
@@ -86,18 +96,18 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
         }
 
         // add tag / url pair
-        streams.insert(bitrate, { tag, url });
+        streams.emplace(bitrate, { tag, url });
     }
 
     // insert in package
-    this->_package.insert(AudioStreamsSource::PlayerResponse, streams);
+    this->_package.emplace(AudioStreamsSource::PlayerResponse, streams);
 }
 
 std::string AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer* decipherer, const std::string &cipheredUrl, std::string signature, std::string sigKey) {
     std::string out = cipheredUrl;
 
     // find signature param, set default if empty
-    if (sigKey.isEmpty()) sigKey = "signature";
+    if (sigKey.empty()) sigKey = "signature";
 
     // decipher...
     signature = decipherer->decipher(signature);
@@ -152,8 +162,8 @@ bool AudioTube::StreamsManifest::_isMimeAllowed(const std::string &mime) {
     return _isCodecAllowed(mime);
 }
 
-QJsonArray AudioTube::StreamsManifest::_urlEncodedToJsonArray(const std::string &urlQueryAsRawStr) {
-    QJsonArray out;
+nlohmann::json AudioTube::StreamsManifest::_urlEncodedToJsonArray(const std::string &urlQueryAsRawStr) {
+    nlohmann::json out;
 
     // for each group
     auto itagsDataGroupsAsStr = urlQueryAsRawStr.split(
