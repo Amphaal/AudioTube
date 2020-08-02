@@ -21,6 +21,8 @@
 #include <map>
 #include <unordered_map>
 #include <regex>
+#include <chrono>
+#include <ctime>
 
 #include <nlohmann/json.hpp>
 
@@ -63,8 +65,8 @@ class StreamsManifest : public NetworkHelper {
     bool isExpired() const;
 
  private:
-    std::time_t _requestedAt;
-    std::time_t _validUntil;
+    std::time_t _requestedAt = -1;
+    std::time_t _validUntil = -1;
 
     AudioStreamsPackage _package;
 

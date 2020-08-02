@@ -56,7 +56,10 @@ promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::Video
 
 promise::Defer AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
     // define requested at timestamp
-    streamsManifest->setRequestedAt(std::time_t::currentDateTime());
+    auto now = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now()
+    );
+    streamsManifest->setRequestedAt(now);
 
     // pipeline
     return _downloadRaw_WatchPageHtml(videoId)
@@ -77,7 +80,7 @@ promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerC
 }
 
 
-QJsonObject AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const std::regex &regex) {
+nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const std::regex &regex) {
     auto playerConfigAsStr = regex.match(rawSource).captured("playerConfig");
     auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
 
@@ -89,9 +92,9 @@ QJsonObject AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const Dow
     return playerConfig;
 }
 
-std::string AudioTube::PlayerConfig::_playerSourceUrl(const QJsonObject &playerConfig) {
-    auto playerSourceUrlPath = playerConfig[std::string(u"assets")].toObject()[std::string(u"js")].toString();
-    if (playerSourceUrlPath.isEmpty()) throw std::logic_error("Player source URL is cannot be found !");
+std::string AudioTube::PlayerConfig::_playerSourceUrl(const nlohmann::json &playerConfig) {
+    auto playerSourceUrlPath = playerConfig["assets"]["js"].get<std::string>();
+    if (playerSourceUrlPath.empty()) throw std::logic_error("Player source URL is cannot be found !");
     return std::string("https://www.youtube.com") + playerSourceUrlPath;
 }
 
@@ -153,55 +156,55 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromWatchPage);
 
         // Get player response JSON
-        auto args = playerConfig[std::string(u"args")].toObject();
-        auto playerResponseAsStr = args[std::string(u"player_response")].toString();
-        auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
-        if (playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
+        auto args = playerConfig["args"];
+        auto playerResponseAsStr = args["player_response"].get<std::string>();
+        auto playerResponse = nlohmann::json::parse(playerResponseAsStr);
+        if (playerResponseAsStr.empty() || playerResponse.is_null()) {
             throw std::logic_error("Player response is missing !");
         }
 
         // fetch and check video infos
-        auto videoDetails = playerResponse[std::string(u"videoDetails")].toObject();
-        this->_title = videoDetails[std::string(u"title")].toString();
-        this->_duration = videoDetails[std::string(u"lengthSeconds")].toString().toInt();
-        auto isLive = videoDetails[std::string(u"isLive")].toBool();
+        auto videoDetails = playerResponse["videoDetails"];
+        this->_title = videoDetails["title"].get<std::string>();
+        this->_duration = stoi(videoDetails["lengthSeconds"].get<std::string>());
+        auto isLive = videoDetails["isLive"].get<bool>();
 
         if (isLive) throw std::logic_error("Live streams are not handled for now!");
-        if (this->_title.isEmpty()) throw std::logic_error("Video title cannot be found !");
+        if (this->_title.empty()) throw std::logic_error("Video title cannot be found !");
         if (!this->_duration) throw std::logic_error("Video length cannot be found !");
 
         // check playability status, throw err
-        auto playabilityStatus = playerResponse[std::string(u"playabilityStatus")].toObject();
-        auto pReason = playabilityStatus.value(std::string(u"reason")).toString();
-        if (!pReason.isNull()) {
+        auto playabilityStatus = playerResponse["playabilityStatus"];
+        auto pReason = playabilityStatus["reason"].get<std::string>();
+        if (!pReason.empty()) {
             throw std::logic_error("This video is not available though WatchPage : %1");
         }
 
         // get streamingData
-        auto streamingData = playerResponse[std::string(u"streamingData")].toObject();
-        if (streamingData.isEmpty()) {
+        auto streamingData = playerResponse["streamingData"];
+        if (streamingData.is_null()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
         // find expiration
-        auto expiresIn = streamingData.value(std::string(u"expiresInSeconds")).toString();
-        if (expiresIn.isEmpty()) {
+        auto expiresIn = streamingData["expiresInSeconds"].get<std::string>();
+        if (expiresIn.empty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
         // set expiration date
-        streamsManifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble());
+        streamsManifest->setSecondsUntilExpiration(stoi(expiresIn));
 
         // raw stream infos
-        auto raw_playerConfigStreams = args.value(std::string(u"adaptive_fmts")).toString();
-        auto raw_playerResponseStreams = streamingData[std::string(u"adaptiveFormats")].toArray();
+        auto raw_playerConfigStreams = args["adaptive_fmts"].get<std::string>();
+        auto raw_playerResponseStreams = streamingData["adaptiveFormats"];
 
         // feed
         streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
         streamsManifest->feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
 
         // DASH manifest handling
-        auto dashManifestUrl = streamingData.value(std::string(u"dashManifestUrl")).toString();
+        auto dashManifestUrl = streamingData["dashManifestUrl"].get<std::string>();
 
         // Extract player source URL
         auto playerSourceUrl = _playerSourceUrl(playerConfig);
@@ -215,7 +218,7 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         });
     })
     .then([=](const std::string &dashManifestUrl){
-       auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : downloadHTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
+       auto mayFetchRawDASH = dashManifestUrl.empty() ? promise::resolve() : downloadHTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
             streamsManifest->feedRaw_DASH(dl, this->_decipherer);
         });
         return mayFetchRawDASH;

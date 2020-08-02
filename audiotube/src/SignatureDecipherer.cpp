@@ -80,7 +80,7 @@ AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_
     return functionName;
 }
 
-std::list<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName) {
+std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName) {
     // get the body of the function
     auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
     auto match = regex.match(ytPlayerSourceCode);
@@ -97,7 +97,7 @@ std::list<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOperati
 }
 
 std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::YTClientMethod> AudioTube::SignatureDecipherer::
-    _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const std::list<std::string> &javascriptDecipheringOperations) {
+    _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const std::vector<std::string> &javascriptDecipheringOperations) {
     // define out
     std::unordered_map<CipherOperation, YTClientMethod> functionNamesByOperation;
 
@@ -142,7 +142,7 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
 
 AudioTube::SignatureDecipherer::YTDecipheringOperations AudioTube::SignatureDecipherer::_buildOperations(
         const std::unordered_map<CipherOperation, YTClientMethod> &functionNamesByOperation,
-        const std::list<std::string> &javascriptOperations
+        const std::vector<std::string> &javascriptOperations
     ) {
     YTDecipheringOperations operations;
 

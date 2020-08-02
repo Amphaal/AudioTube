@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <list>
+#include <vector>
 #include <string>
 
 #include "_NetworkHelper.h"
@@ -34,8 +34,8 @@ class NetworkFetcher : public NetworkHelper {
  private:
     static promise::Defer _refreshMetadata(VideoMetadata* metadata);
 
-    static std::list<std::string> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
-    static std::list<VideoMetadata*> _videoIdsToMetadataList(const std::list<std::string> &videoIds);
+    static std::vector<std::string> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
+    static std::vector<VideoMetadata*> _videoIdsToMetadataList(const std::vector<std::string> &videoIds);
 };
 
 }  // namespace AudioTube

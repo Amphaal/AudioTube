@@ -96,7 +96,7 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
         }
 
         // add tag / url pair
-        streams.emplace(bitrate, { tag, url });
+        streams.emplace(bitrate, std::make_pair(tag, url));
     }
 
     // insert in package
@@ -113,9 +113,8 @@ std::string AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer
     signature = decipherer->decipher(signature);
 
     // append
-    out += std::string("&%1=%2")
-            .arg(sigKey)
-            .arg(signature);
+    out += std::string("&") + sigKey + "=" + signature;
+
     return out;
 }
 
@@ -123,7 +122,7 @@ void AudioTube::StreamsManifest::setRequestedAt(const std::time_t &requestedAt) 
     this->_requestedAt = requestedAt;
 }
 void AudioTube::StreamsManifest::setSecondsUntilExpiration(const unsigned int secsUntilExp) {
-    this->_validUntil = this->_requestedAt.addSecs(secsUntilExp);
+    this->_validUntil = this->_requestedAt + secsUntilExp;
 }
 
 std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsManifest::AudioStreamUrlByBitrate> AudioTube::StreamsManifest::preferedStreamSource() const {
@@ -147,18 +146,22 @@ std::string AudioTube::StreamsManifest::preferedUrl() const {
 }
 
 bool AudioTube::StreamsManifest::isExpired() const {
-    if (this->_validUntil.isNull()) return true;
-    return std::time_t::currentDateTime() > this->_validUntil;
+    if (this->_validUntil == -1) return true;
+
+    auto now = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now()
+    );
+
+    return now > this->_validUntil;
 }
 
 
 bool AudioTube::StreamsManifest::_isCodecAllowed(const std::string &codec) {
-    if (codec.contains(std::string(u"opus"))) return true;
-    return false;
+    return codec.find("opus") > -1;
 }
 
 bool AudioTube::StreamsManifest::_isMimeAllowed(const std::string &mime) {
-    if (!mime.contains(std::string(u"audio"))) return false;
+    if (mime.find("audio") == -1) return false;
     return _isCodecAllowed(mime);
 }
 
@@ -194,7 +197,7 @@ nlohmann::json AudioTube::StreamsManifest::_urlEncodedToJsonArray(const std::str
             );
         }
 
-        out.append(group);
+        out.emplace(group);
     }
 
     return out;

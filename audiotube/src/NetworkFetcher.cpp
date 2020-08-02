@@ -60,7 +60,7 @@ void AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* 
 
     downloadHTTPS(bestUrl, true)
         .then([=](){
-            *urlSuccessfullyRequested = bestUrl.toString();
+            *urlSuccessfullyRequested = bestUrl;
         })
         .finally([=](){
             *checkEnded = true;
@@ -91,12 +91,12 @@ promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metada
     });
 }
 
-std::list<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
+std::vector<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
     // search...
     auto results = Regexes::HTTPRequestYTVideoIdExtractor.globalMatch(requestData);
 
     // return list
-    std::list<std::string> idsList;
+    std::vector<std::string> idsList;
 
     // iterate
     while (results.hasNext()) {
@@ -113,16 +113,16 @@ std::list<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPReques
     }
 
     // if no ids
-    if (!idsList.count()) throw std::logic_error("no playlist metadata container found !");
+    if (!idsList.size()) throw std::logic_error("no playlist metadata container found !");
 
     // return
     return idsList;
 }
 
-std::list<AudioTube::VideoMetadata*> AudioTube::NetworkFetcher::_videoIdsToMetadataList(const std::list<std::string> &videoIds) {
-    std::list<VideoMetadata*> out;
+std::vector<AudioTube::VideoMetadata*> AudioTube::NetworkFetcher::_videoIdsToMetadataList(const std::vector<std::string> &videoIds) {
+    std::vector<VideoMetadata*> out;
     for (const auto &id : videoIds) {
-        out.append(VideoMetadata::fromVideoId(id));
+        out.push_back(VideoMetadata::fromVideoId(id));
     }
     return out;
 }

@@ -14,12 +14,12 @@
 
 #include "VideoInfos.h"
 
-promise::Defer AudioTube::VideoInfos::fillStreamsManifest(
-    const PlayerConfig::VideoId &videoId,
-    PlayerConfig* playerConfig,
-    StreamsManifest* manifest) {
+promise::Defer AudioTube::VideoInfos::fillStreamsManifest(const PlayerConfig::VideoId &videoId, PlayerConfig* playerConfig, StreamsManifest* manifest) {
     // set request date
-    manifest->setRequestedAt(std::time_t::currentDateTime());
+    auto now = std::chrono::system_clock::to_time_t(
+        std::chrono::system_clock::now()
+    );
+    manifest->setRequestedAt(now);
 
     // pipeline
     return _downloadRaw_VideoInfos(videoId, playerConfig->sts())
@@ -107,7 +107,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         d.resolve(dashManifestUrl);
     })
     .then([=](const std::string &dashManifestUrl){
-        auto mayFetchRawDASH = dashManifestUrl.isEmpty() ? promise::resolve() : downloadHTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
+        auto mayFetchRawDASH = dashManifestUrl.empty() ? promise::resolve() : downloadHTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
             manifest->feedRaw_DASH(dl, playerConfig->decipherer());
         });
         return mayFetchRawDASH;

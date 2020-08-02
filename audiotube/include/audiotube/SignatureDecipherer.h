@@ -20,7 +20,7 @@
 
 #include <queue>
 #include <utility>
-#include <list>
+#include <vector>
 #include <set>
 #include <unordered_map>
 #include <string>
@@ -44,12 +44,12 @@ class SignatureDecipherer {
     static inline std::unordered_map<std::string, SignatureDecipherer*> _cache;
 
     static YTClientMethod _findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode);
-    static std::list<std::string>
+    static std::vector<std::string>
         _findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName);
     static std::unordered_map<CipherOperation, YTClientMethod>
-        _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const std::list<std::string> &javascriptDecipheringOperations);
+        _findObfuscatedDecipheringOperationsFunctionName(const std::string &ytPlayerSourceCode, const std::vector<std::string> &javascriptDecipheringOperations);
     static YTDecipheringOperations
-        _buildOperations(const std::unordered_map<CipherOperation, YTClientMethod> &functionNamesByOperation, const std::list<std::string> &javascriptOperations);
+        _buildOperations(const std::unordered_map<CipherOperation, YTClientMethod> &functionNamesByOperation, const std::vector<std::string> &javascriptOperations);
 };
 
 }  // namespace AudioTube
