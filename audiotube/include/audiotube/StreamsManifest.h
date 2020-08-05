@@ -48,7 +48,7 @@ class StreamsManifest : public NetworkHelper {
     using ITag = int;
 
     using AudioStreamUrlByBitrate = std::map<double, std::pair<ITag, AudioStreamUrl>>;
-    using AudioStreamsPackage = std::unordered_map<AudioStreamsSource, AudioStreamUrlByBitrate>;
+    using AudioStreamsPackage = std::map<AudioStreamsSource, AudioStreamUrlByBitrate>;
 
     StreamsManifest();
 
@@ -72,7 +72,6 @@ class StreamsManifest : public NetworkHelper {
 
     static bool _isCodecAllowed(const std::string &codec);
     static bool _isMimeAllowed(const std::string &mime);
-    static nlohmann::json _urlEncodedToJsonArray(const std::string &urlQueryAsRawStr);
 
     static std::string _decipheredUrl(const SignatureDecipherer* decipherer, const std::string &cipheredUrl, std::string signature, std::string sigKey = std::string());
 };

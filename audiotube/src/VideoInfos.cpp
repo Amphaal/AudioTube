@@ -30,7 +30,7 @@ promise::Defer AudioTube::VideoInfos::fillStreamsManifest(const PlayerConfig::Vi
 
 promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts) {
     auto apiUrl = std::string("https://youtube.googleapis.com/v/") + videoId;
-    auto encodedApiUrl = std::string::fromUtf8(Url::toPercentEncoding(apiUrl));
+    auto encodedApiUrl = UrlParser::percentEncode(apiUrl);
 
     auto requestUrl = std::string("https://www.youtube.com/get_video_info?video_id=" + videoId + "&el=embedded&eurl=" + encodedApiUrl + "&hl=en&sts=" + sts);
 
@@ -40,70 +40,71 @@ promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig
 promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig) {
     return promise::newPromise([=](promise::Defer d) {
         // as string then to query
-        QUrlQuery videoInfos(dl);
+        UrlQuery videoInfos(dl);
 
         // get player response
-        auto playerResponseAsStr = videoInfos.queryItemValue("player_response", Url::ComponentFormattingOption::FullyDecoded);
-        auto playerResponse = QJsonDocument::fromJson(playerResponseAsStr.toUtf8());
-        if (playerResponseAsStr.isEmpty() || playerResponse.isNull()) {
+        auto playerResponseAsStr = videoInfos["player_response"].decode();
+        auto playerResponse = nlohmann::json::parse(playerResponseAsStr);
+        if (playerResponseAsStr.empty() || playerResponse.is_null()) {
             throw std::logic_error("Player response is missing !");
         }
 
         // check if is live
-        auto videoDetails = playerResponse[std::string(u"videoDetails")].toObject();
-        auto isLiveStream = videoDetails.value(std::string(u"isLive")).toBool();
+        auto videoDetails = playerResponse["videoDetails"];
+        auto isLiveStream = videoDetails["isLive"].get<bool>();
         if (isLiveStream) {
             throw std::logic_error("Live streams are not handled for now!");
         }
 
         // check playability status
-        auto playabilityStatus = playerResponse[std::string(u"playabilityStatus")].toObject();
-        auto pStatus = playabilityStatus.value(std::string(u"status")).toString();
-        if (pStatus.toLower() == "error") {
+        auto playabilityStatus = playerResponse["playabilityStatus"];
+        auto pStatus = playabilityStatus["status"].get<std::string>();
+        std::transform(pStatus.begin(), pStatus.end(), pStatus.begin(), [](unsigned char c){ return std::tolower(c); });
+        if (pStatus == "error") {
             throw std::logic_error("This video is not available !");
         }
 
         // check reason, throw soft error
-        auto pReason = playabilityStatus.value(std::string(u"reason")).toString();
-        if (!pReason.isNull()) {
-            throw std::string("This video is not available though VideoInfo : %1").arg(pReason)));
+        auto pReason = playabilityStatus["reason"].get<std::string>();
+        if (!pReason.empty()) {
+            throw std::string("This video is not available though VideoInfo : ") + pReason;
         }
 
         // get title and duration
-        auto title = videoDetails[std::string(u"title")].toString().replace("+", " ");
-        bool durationOk = false;
-        auto duration = videoDetails[std::string(u"lengthSeconds")].toString().toInt(&durationOk);
+        auto title = videoDetails["title"].get<std::string>();
+        std::replace(title.begin(), title.end(), '+', ' ');
+        auto duration = std::stoi(videoDetails["lengthSeconds"].get<std::string>());
 
-        if (title.isEmpty()) throw std::logic_error("Video title cannot be found !");
-        if (!durationOk) throw std::logic_error("Video length cannot be found !");
+        if (title.empty()) throw std::logic_error("Video title cannot be found !");
+        if (!duration > 0) throw std::logic_error("Video length cannot be found !");
 
         playerConfig->fillFromVideoInfosDetails(title, duration);
 
         // get streamingData
-        auto streamingData = playerResponse[std::string(u"streamingData")].toObject();
-        if (streamingData.isEmpty()) {
+        auto streamingData = playerResponse["streamingData"];
+        if (streamingData.is_null()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
         // find expiration
-        auto expiresIn = streamingData.value(std::string(u"expiresInSeconds")).toString();
-        if (expiresIn.isEmpty()) {
+        auto expiresIn = streamingData["expiresInSeconds"].get<std::string>();
+        if (expiresIn.empty()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
 
         // set expiration date
-        manifest->setSecondsUntilExpiration((qint64)expiresIn.toDouble());
+        manifest->setSecondsUntilExpiration(stod(expiresIn));
 
         // raw stream infos
-        auto raw_playerConfigStreams = videoInfos.queryItemValue(std::string(u"adaptive_fmts"), Url::ComponentFormattingOption::FullyDecoded);
-        auto raw_playerResponseStreams = streamingData[std::string(u"adaptiveFormats")].toArray();
+        auto raw_playerConfigStreams = videoInfos["adaptive_fmts"].decode();
+        auto raw_playerResponseStreams = streamingData["adaptiveFormats"];
 
         // feed
         manifest->feedRaw_PlayerConfig(raw_playerConfigStreams, playerConfig->decipherer());
         manifest->feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig->decipherer());
 
         // DASH manifest handling
-        auto dashManifestUrl = streamingData.value(std::string(u"dashManifestUrl")).toString();
+        auto dashManifestUrl = streamingData["dashManifestUrl"].get<std::string>();
         d.resolve(dashManifestUrl);
     })
     .then([=](const std::string &dashManifestUrl){

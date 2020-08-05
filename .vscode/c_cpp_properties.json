@@ -18,7 +18,8 @@
                 "${workspaceFolder}/tests/Catch2/single_include",
                 "${workspaceFolder}/audiotube/spdlog/include",
                 "${workspaceFolder}/audiotube/promise-cpp",
-                "${workspaceFolder}/audiotube/nlohmann_json/single_include"
+                "${workspaceFolder}/audiotube/nlohmann_json/single_include",
+                "C:/msys64/mingw64/include"
             ],
             "defines": [
                 "_DEBUG",

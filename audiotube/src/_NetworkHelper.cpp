@@ -14,21 +14,14 @@
 
 #include "_NetworkHelper.h"
 
-std::string AudioTube::NetworkHelper::queryAsStr(const Url::Query &query) {
-    std::string out;
-    for (auto i = query.begin(); i != query.end(); i++) {
-        out += i->key() + "=" + i->val();
-    }
-    return out;
-}
-
-promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &url, bool head = false) {
+promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &downloadUrl, bool head = false) {
     return promise::newPromise([=](promise::Defer d) {
         // decompose url
-        Url url_decomposer(url);
+        UrlParser url_decomposer(downloadUrl);
         auto serverName = url_decomposer.host();
         auto scheme = url_decomposer.scheme();
-        auto getCommand = url_decomposer.path() + "?" + queryAsStr(url_decomposer.query());
+
+        auto getCommand = url_decomposer.pathAndQuery();
 
         // setup service
         asio::io_service io_service;
@@ -57,12 +50,14 @@ promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &url, b
         asio::streambuf request;
         std::ostream request_stream(&request);
 
-        request_stream << "GET " << getCommand << " HTTP/1.0\r\n";
+        auto method = head ? "HEAD" : "GET";
+
+        request_stream << method << " " << getCommand << " HTTP/1.0\r\n";
         request_stream << "Host: " << serverName << "\r\n";
         request_stream << "Accept: */*\r\n";
         request_stream << "Connection: close\r\n\r\n";
 
-        spdlog::debug("HTTPSDownloader : Downloading from [{}]...", url);
+        spdlog::debug("HTTPSDownloader : Downloading from [{}]...", downloadUrl);
 
         // Send the request.
         asio::write(socket, request);
@@ -111,7 +106,7 @@ promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &url, b
             output_stream << &response;
         }
 
-        spdlog::debug("HTTPSDownloader : Finished downloading [{}]", url);
+        spdlog::debug("HTTPSDownloader : Finished downloading [{}]", downloadUrl);
 
         return output_stream.str();
     });

@@ -14,7 +14,7 @@
 
 #include "_DebugHelper.h"
 
-void AudioTube::DebugHelper::_dumpAsJSON(const Url::Query &query) {
+void AudioTube::DebugHelper::_dumpAsJSON(const UrlQuery &query) {
     nlohmann::json dump = nlohmann::json::object();
 
     for (const auto &item : query) {

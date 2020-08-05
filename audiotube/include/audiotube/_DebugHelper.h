@@ -20,7 +20,7 @@
 #include <fstream>
 #include <filesystem>
 
-#include <cxxurl/url.hpp>
+#include <UrlParser.h>
 #include <nlohmann/json.hpp>
 
 namespace AudioTube {

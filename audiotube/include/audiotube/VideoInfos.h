@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 #include "_NetworkHelper.h"
 #include "VideoMetadata.h"
@@ -31,6 +32,9 @@ class VideoInfos : public NetworkHelper {
  private:
     static promise::Defer _downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts);
     static promise::Defer _fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig);
+
+    static std::string _percentEncodeUrl(const std::string &rawUrl);
+    static std::string _percentDecodeUrl(const std::string &encodedUrl);
 };
 
 }  // namespace AudioTube

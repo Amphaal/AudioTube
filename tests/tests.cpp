@@ -20,7 +20,7 @@
 #include <thread>
 #include <future>
 
-#define CATCH_CONFIG_RUNNER
+#define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
 bool stream_are_working(AudioTube::VideoMetadata &metadata) {
@@ -31,12 +31,11 @@ bool stream_are_working(AudioTube::VideoMetadata &metadata) {
 
     // wait processing
     while (!ended) {
-      QCoreApplication::processEvents();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     // check url
-    if (!urlSuccessfullyRequested.isEmpty()) {
+    if (!urlSuccessfullyRequested.empty()) {
       // spdlog::debug("Stream URL found : {}", urlSuccessfullyRequested);
       return true;
     } else {
@@ -54,7 +53,6 @@ bool youtube_metadata_fetching_succeeded(const std::string &ytId) {
 
     // wait for a response
     while (!container.ranOnce()) {
-      QCoreApplication::processEvents();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
@@ -65,17 +63,17 @@ bool youtube_metadata_fetching_succeeded(const std::string &ytId) {
     return stream_are_working(container);
 }
 
-int main(int argc, char *argv[]) {
-  QCoreApplication app(argc, argv);
-  QTimer::singleShot(0, [&]{
-    app.exit(Catch::Session().run(argc, argv));
-  });
-  return app.exec();
-}
-
 //
 // Test cases
 //
+
+TEST_CASE("Fetch HTTP HEAD", "[network]") {
+  //TODO
+}
+
+TEST_CASE("URL Parsing", "[URL]") {
+  //TODO
+}
 
 TEST_CASE("Unavailable video", "[metadata]") {
   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));

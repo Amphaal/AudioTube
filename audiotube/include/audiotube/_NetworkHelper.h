@@ -18,14 +18,14 @@
 
 #include <promise.hpp>
 
+#include <spdlog/spdlog.h>
+
 #include <asio.hpp>
 #include <asio/ssl/context.hpp>
 #include <asio/ssl/stream.hpp>
 #include <asio/ssl/rfc2818_verification.hpp>
 
-#include <cxxurl/url.hpp>
-
-#include <spdlog/spdlog.h>
+#include <UrlParser.h>
 
 using asio::ip::tcp;
 namespace ssl = asio::ssl;
@@ -35,10 +35,7 @@ namespace AudioTube {
 class NetworkHelper {
  public:
     using DownloadedUtf8 = std::string;
-    static promise::Defer downloadHTTPS(const std::string &url, bool head = false);
-
- private:
-    static std::string queryAsStr(const Url::Query &query);
+    static promise::Defer downloadHTTPS(const std::string &downloadUrl, bool head = false);
 };
 
 }  // namespace AudioTube

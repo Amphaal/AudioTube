@@ -79,12 +79,12 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
             if (cipherRaw.empty()) cipherRaw = itagGroup["signatureCipher"].get<std::string>();
             if (cipherRaw.empty()) throw std::logic_error("Cipher data cannot be found !");
 
-            auto cipher = QUrlQuery(cipherRaw);
+            UrlQuery cipher(cipherRaw);
 
             // find params
-            auto cipheredUrl = cipher.queryItemValue("url", Url::ComponentFormattingOption::FullyDecoded);
-            auto signature = cipher.queryItemValue("s", Url::ComponentFormattingOption::FullyDecoded);
-            auto signatureParameter = cipher.queryItemValue("sp", Url::ComponentFormattingOption::FullyDecoded);
+            auto cipheredUrl = cipher["url"].decode();
+            auto signature = cipher["s"].decode();
+            auto signatureParameter = cipher["sp"].decode();
 
             // decipher
             url = _decipheredUrl(
@@ -126,14 +126,11 @@ void AudioTube::StreamsManifest::setSecondsUntilExpiration(const unsigned int se
 }
 
 std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsManifest::AudioStreamUrlByBitrate> AudioTube::StreamsManifest::preferedStreamSource() const {
-    // sort sources
-    auto sources = this->_package.keys();
-    std::sort(sources.begin(), sources.end());
-
-    // try to fetch in order of preference
-    for (auto source : sources) {
-        auto ASUBIT = this->_package.value(source);
-        if (ASUBIT.count()) return { source, ASUBIT };
+    // try to fetch in order of preference (sorted by enum)
+    for (auto i = this->_package.begin(); i != this->_package.end(); i++) {
+        auto source = i->first;
+        auto ASUBIT = i->second;
+        if (ASUBIT.size()) return { source, ASUBIT };
     }
 
     throw std::logic_error("No audio stream source found !");
@@ -141,7 +138,7 @@ std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsMani
 
 std::string AudioTube::StreamsManifest::preferedUrl() const {
     auto source = this->preferedStreamSource();
-    spdlog::debug("Picking stream URL from source : {}", std::variant::fromValue(source.first).toString());
+    spdlog::debug("Picking stream URL from source : {}", source.first);
     return source.second.last().second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
@@ -157,48 +154,10 @@ bool AudioTube::StreamsManifest::isExpired() const {
 
 
 bool AudioTube::StreamsManifest::_isCodecAllowed(const std::string &codec) {
-    return codec.find("opus") > -1;
+    return codec.find("opus") > std::string::npos;
 }
 
 bool AudioTube::StreamsManifest::_isMimeAllowed(const std::string &mime) {
-    if (mime.find("audio") == -1) return false;
+    if (mime.find("audio") == std::string::npos) return false;
     return _isCodecAllowed(mime);
-}
-
-nlohmann::json AudioTube::StreamsManifest::_urlEncodedToJsonArray(const std::string &urlQueryAsRawStr) {
-    nlohmann::json out;
-
-    // for each group
-    auto itagsDataGroupsAsStr = urlQueryAsRawStr.split(
-        std::string(u","),
-        Qt::SkipEmptyParts
-    );
-    for (auto &dataGroupAsString : itagsDataGroupsAsStr) {
-        QJsonObject group;
-
-        // for each pair
-        auto pairs = dataGroupAsString.split(
-            std::string(u"&"),
-            Qt::SkipEmptyParts
-        );
-
-        for (const auto &pair : pairs) {
-            // current key/value pair
-            auto kvpAsList = pair.split(
-                std::string(u"="),
-                Qt::KeepEmptyParts
-            );
-            auto kvp = std::pair<std::string, std::string>(kvpAsList.at(0), kvpAsList.at(1));
-
-            // add to temporary group
-            group.insert(
-                kvp.first,
-                QUrlQuery(kvp.second).toString(Url::ComponentFormattingOption::FullyDecoded)
-            );
-        }
-
-        out.emplace(group);
-    }
-
-    return out;
 }
