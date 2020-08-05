@@ -63,6 +63,7 @@ target_link_libraries(audiotube PUBLIC asio)
 ## Deps : nlohmann_json ##
 ##########################
 
-add_subdirectory(nlohmann_json)
+add_library(nlohmann_json INTERFACE)
+target_include_directories(nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/nlohmann_json/single_include")
 
-target_link_libraries(audiotube PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(audiotube PUBLIC nlohmann_json)

@@ -20,16 +20,20 @@
 #include <fstream>
 #include <filesystem>
 
-#include <UrlParser.h>
+#include "UrlParser.h"
+
 #include <nlohmann/json.hpp>
 
 namespace AudioTube {
 
 class DebugHelper {
  public:
-    static void _dumpAsJSON(const Url::Query &query);
+    static void _dumpAsJSON(const UrlQuery &query);
     static void _dumpAsJSON(const nlohmann::json &doc);
     static void _dumpAsFile(const std::string &str);
+
+ private:
+    static void _fillJSON(const UrlQuery &query, nlohmann::json * recRef);
 };
 
 }  // namespace AudioTube

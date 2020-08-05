@@ -15,13 +15,23 @@
 #include "_DebugHelper.h"
 
 void AudioTube::DebugHelper::_dumpAsJSON(const UrlQuery &query) {
-    nlohmann::json dump = nlohmann::json::object();
+    auto dump = nlohmann::json::object();
+    _fillJSON(query, &dump);
+    _dumpAsJSON(dump);
+}
 
-    for (const auto &item : query) {
-        dump[item.key()] = item.val();
+void AudioTube::DebugHelper::_fillJSON(const UrlQuery &query, nlohmann::json * recRef) {
+    // fill data
+    if (!query.hasSubqueries()) {
+        auto key = query.key();
+        auto val = query.percentDecoded();
+        (*recRef)[key] = val;
+        return;
     }
 
-    _dumpAsJSON(dump);
+    for (const auto &subq : query.subqueries()) {
+        _fillJSON(subq, recRef);
+    }
 }
 
 void AudioTube::DebugHelper::_dumpAsFile(const std::string &str) {
@@ -32,7 +42,7 @@ void AudioTube::DebugHelper::_dumpAsFile(const std::string &str) {
     fh << str;
     fh.close();
 
-    spdlog::debug("{} created !", fullpath);
+    spdlog::debug("{} created !", fullpath.string());
 }
 
 void AudioTube::DebugHelper::_dumpAsJSON(const nlohmann::json &doc) {
@@ -43,5 +53,5 @@ void AudioTube::DebugHelper::_dumpAsJSON(const nlohmann::json &doc) {
     fh << doc.dump(4);
     fh.close();
 
-    spdlog::debug("{} created !", fullpath);
+    spdlog::debug("{} created !", fullpath.string());
 }

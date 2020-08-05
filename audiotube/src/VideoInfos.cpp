@@ -30,9 +30,9 @@ promise::Defer AudioTube::VideoInfos::fillStreamsManifest(const PlayerConfig::Vi
 
 promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts) {
     auto apiUrl = std::string("https://youtube.googleapis.com/v/") + videoId;
-    auto encodedApiUrl = UrlParser::percentEncode(apiUrl);
+    auto encodedApiUrl = Url::encode(apiUrl);
 
-    auto requestUrl = std::string("https://www.youtube.com/get_video_info?video_id=" + videoId + "&el=embedded&eurl=" + encodedApiUrl + "&hl=en&sts=" + sts);
+    auto requestUrl = std::string("https://www.youtube.com/get_video_info?video_id=") + videoId + "&el=embedded&eurl=" + encodedApiUrl + "&hl=en&sts=" + sts;
 
     return downloadHTTPS(requestUrl);
 }
@@ -43,7 +43,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         UrlQuery videoInfos(dl);
 
         // get player response
-        auto playerResponseAsStr = videoInfos["player_response"].decode();
+        auto playerResponseAsStr = videoInfos["player_response"].percentDecoded();
         auto playerResponse = nlohmann::json::parse(playerResponseAsStr);
         if (playerResponseAsStr.empty() || playerResponse.is_null()) {
             throw std::logic_error("Player response is missing !");
@@ -96,7 +96,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         manifest->setSecondsUntilExpiration(stod(expiresIn));
 
         // raw stream infos
-        auto raw_playerConfigStreams = videoInfos["adaptive_fmts"].decode();
+        auto raw_playerConfigStreams = videoInfos["adaptive_fmts"].percentDecoded();
         auto raw_playerResponseStreams = streamingData["adaptiveFormats"];
 
         // feed

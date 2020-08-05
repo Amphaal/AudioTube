@@ -42,9 +42,10 @@ class UrlQuery {
     using SubQuery = std::string_view;
 
     explicit UrlQuery(const std::string_view &query);
+    UrlQuery(const UrlQuery::Key &key, const UrlQuery::SubQuery &subQuery);
     UrlQuery();
 
-    bool hasData() const;
+    bool hasSubqueries() const;
     std::string key() const;
     UrlQuery operator[](const UrlQuery::Key &key) const;
 
@@ -52,9 +53,7 @@ class UrlQuery {
     std::string percentDecoded() const;
 
  private:
-    UrlQuery(const UrlQuery::Key &key, const UrlQuery::SubQuery &subQuery);
-
-    std::map<UrlQuery::Key, SubQuery> _subqueries;
+    std::map<UrlQuery::Key, UrlQuery::SubQuery> _subqueries;
     std::string _selfKey;
     std::string_view _wholeQuery;
 };

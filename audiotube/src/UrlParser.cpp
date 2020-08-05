@@ -63,14 +63,54 @@ AudioTube::UrlQuery::UrlQuery(const UrlQuery::Key &key, const UrlQuery::SubQuery
 AudioTube::UrlQuery::UrlQuery(const std::string_view &query) {
     this->_wholeQuery = query;
 
-    // TODO
+    // setup for search
+    auto keyFindStart = this->_wholeQuery.begin();
+    auto valFindStart = keyFindStart;
+    UrlQuery::Key currentKey;
+    enum {
+        FIND_KEY,
+        FIND_VALUE
+    };
+    auto finderFunc = FIND_KEY;
+
+    // search
+    for (auto currentChar = keyFindStart; currentChar != this->_wholeQuery.end(); currentChar++) {
+        switch (finderFunc) {
+            case FIND_KEY: {
+                if (*currentChar != *"=") continue;
+
+                currentKey = std::string(keyFindStart, currentChar - 1);
+
+                valFindStart = currentChar + 1;
+                finderFunc = FIND_VALUE;
+            }
+            break;
+
+            case FIND_VALUE: {
+                if (*currentChar != *"&") continue;
+
+                UrlQuery::SubQuery subq(valFindStart, currentChar - valFindStart - 1);
+                this->_subqueries.emplace(currentKey, subq);
+
+                keyFindStart = currentChar + 1;
+                finderFunc = FIND_KEY;
+            }
+            break;
+        }
+    }
+
+    // end FIND_VALUE
+    if (finderFunc == FIND_VALUE) {
+        UrlQuery::SubQuery subq(valFindStart, this->_wholeQuery.end() - valFindStart);
+        this->_subqueries.emplace(currentKey, subq);
+    }
 }
 
 std::string AudioTube::UrlQuery::key() const {
     return this->_selfKey;
 }
 
-bool AudioTube::UrlQuery::hasData() const {
+bool AudioTube::UrlQuery::hasSubqueries() const {
     return this->_subqueries.size();
 }
 

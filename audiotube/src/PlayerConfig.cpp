@@ -82,10 +82,10 @@ promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerC
 
 nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const std::regex &regex) {
     auto playerConfigAsStr = regex.match(rawSource).captured("playerConfig");
-    auto playerConfig = QJsonDocument::fromJson(playerConfigAsStr.toUtf8()).object();
+    auto playerConfig = nlohmann::json::parse(playerConfigAsStr);
 
     // check config exists
-    if (playerConfigAsStr.isEmpty() || playerConfig.isEmpty()) {
+    if (playerConfigAsStr.empty() || playerConfig.is_null()) {
         throw std::logic_error("Player response is missing !");
     }
 

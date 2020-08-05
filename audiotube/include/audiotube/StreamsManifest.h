@@ -26,8 +26,8 @@
 
 #include <nlohmann/json.hpp>
 
-#include "_DebugHelper.h"
 #include "_NetworkHelper.h"
+#include "_DebugHelper.h"
 #include "SignatureDecipherer.h"
 #include "Regexes.h"
 

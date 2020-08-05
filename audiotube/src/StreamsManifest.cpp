@@ -82,9 +82,9 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
             UrlQuery cipher(cipherRaw);
 
             // find params
-            auto cipheredUrl = cipher["url"].decode();
-            auto signature = cipher["s"].decode();
-            auto signatureParameter = cipher["sp"].decode();
+            auto cipheredUrl = cipher["url"].percentDecoded();
+            auto signature = cipher["s"].percentDecoded();
+            auto signatureParameter = cipher["sp"].percentDecoded();
 
             // decipher
             url = _decipheredUrl(
@@ -139,7 +139,7 @@ std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsMani
 std::string AudioTube::StreamsManifest::preferedUrl() const {
     auto source = this->preferedStreamSource();
     spdlog::debug("Picking stream URL from source : {}", source.first);
-    return source.second.last().second;  // since bitrates are asc-ordered, take latest for fastest
+    return source.second.end()->second.second;  // since bitrates are asc-ordered, take latest for fastest
 }
 
 bool AudioTube::StreamsManifest::isExpired() const {
