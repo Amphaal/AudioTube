@@ -14,7 +14,7 @@
 
 #include "_NetworkHelper.h"
 
-promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &downloadUrl, bool head = false) {
+promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &downloadUrl, bool head) {
     return promise::newPromise([=](promise::Defer d) {
         // decompose url
         UrlParser url_decomposer(downloadUrl);

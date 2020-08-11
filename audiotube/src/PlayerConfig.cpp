@@ -166,7 +166,7 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         // fetch and check video infos
         auto videoDetails = playerResponse["videoDetails"];
         this->_title = videoDetails["title"].get<std::string>();
-        this->_duration = stoi(videoDetails["lengthSeconds"].get<std::string>());
+        this->_duration = safe_stoi(videoDetails["lengthSeconds"].get<std::string>());
         auto isLive = videoDetails["isLive"].get<bool>();
 
         if (isLive) throw std::logic_error("Live streams are not handled for now!");
@@ -193,7 +193,11 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         }
 
         // set expiration date
-        streamsManifest->setSecondsUntilExpiration(stoi(expiresIn));
+        auto ei_cast = safe_stoi(expiresIn);
+        if (ei_cast < 0) {
+            throw std::logic_error("An error occured while fetching video infos");
+        }
+        streamsManifest->setSecondsUntilExpiration((unsigned int)ei_cast);
 
         // raw stream infos
         auto raw_playerConfigStreams = args["adaptive_fmts"].get<std::string>();

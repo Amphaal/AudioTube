@@ -108,6 +108,7 @@
         "forward_list": "cpp",
         "span": "cpp",
         "valarray": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "charconv": "cpp"
     }
 }

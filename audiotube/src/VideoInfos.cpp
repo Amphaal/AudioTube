@@ -73,10 +73,10 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         // get title and duration
         auto title = videoDetails["title"].get<std::string>();
         std::replace(title.begin(), title.end(), '+', ' ');
-        auto duration = std::stoi(videoDetails["lengthSeconds"].get<std::string>());
+        auto duration = safe_stoi(videoDetails["lengthSeconds"].get<std::string>());
 
         if (title.empty()) throw std::logic_error("Video title cannot be found !");
-        if (!duration > 0) throw std::logic_error("Video length cannot be found !");
+        if (!duration < 0) throw std::logic_error("Video length cannot be found !");
 
         playerConfig->fillFromVideoInfosDetails(title, duration);
 
@@ -93,7 +93,11 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         }
 
         // set expiration date
-        manifest->setSecondsUntilExpiration(stod(expiresIn));
+        auto ei_cast = safe_stoi(expiresIn);
+        if (ei_cast < 0) {
+            throw std::logic_error("An error occured while fetching video infos");
+        }
+        manifest->setSecondsUntilExpiration((unsigned int)ei_cast);
 
         // raw stream infos
         auto raw_playerConfigStreams = videoInfos["adaptive_fmts"].percentDecoded();

@@ -17,6 +17,7 @@
 #include <string>
 #include <sstream>
 
+#include "ATHelper.h"
 #include "_NetworkHelper.h"
 #include "VideoMetadata.h"
 #include "PlayerConfig.h"

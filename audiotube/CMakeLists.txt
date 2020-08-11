@@ -28,6 +28,7 @@ target_sources(audiotube PRIVATE
     src/\_NetworkHelper.cpp
     src/\_DebugHelper.cpp
     src/UrlParser.cpp
+    src/ATHelper.cpp
 )
 
 ########################

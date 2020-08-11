@@ -38,9 +38,9 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
         if (!streamDataMatch.ready() || streamDataMatch.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
 
         // get parts
-        auto itag = std::stoi(streamDataMatch.str(0));
+        auto itag = safe_stoi(streamDataMatch.str(0));
         auto codec = streamDataMatch.str(1);
-        auto bitrate = std::stod(streamDataMatch.str(2));
+        auto bitrate = safe_stoi(streamDataMatch.str(2));
         auto url = streamDataMatch.str(3);
 
         // check codec

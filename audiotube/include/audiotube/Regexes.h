@@ -18,6 +18,8 @@
 #include <string>
 #include <map>
 
+#include <pcre2.h>
+
 #include "CipherOperation.h"
 
 namespace AudioTube {

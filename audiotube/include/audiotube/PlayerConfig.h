@@ -16,6 +16,7 @@
 
 #include <string>
 
+#include "ATHelper.h"
 #include "_NetworkHelper.h"
 #include "SignatureDecipherer.h"
 #include "StreamsManifest.h"
