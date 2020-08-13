@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include <regex>
 #include <string>
 #include <map>
+#include <regex>
 
-#include <pcre2.h>
+#include <ctre.hpp>
 
 #include "CipherOperation.h"
 
@@ -26,73 +26,62 @@ namespace AudioTube {
 
 class Regexes {
  public:
+    // 1# <itag>, 2# <codec>, 3# <bitrate>, 4# <url>
     static inline std::regex DASHManifestExtractor {
-        R"|(<Representation id="(?<itag>.*?)" codecs="(?<codec>.*?)"[\s\S]*?bandwidth="(?<bitrate>.*?)"[\s\S]*?<BaseURL>(?<url>.*?)<\/BaseURL)|"
-    };
-    static inline std::regex YoutubeIdFinder {
-        R"|((?:youtube\.com|youtu.be).*?(?:v=|embed\/)(?<videoId>[\w\-]+))|"
-    };
-    static inline std::regex HTTPRequestYTVideoIdExtractor {
-        R"|(watch\?v=(?<videoId>.*?)&amp;)|"
-    };
-    static inline std::regex PlayerConfigExtractorFromEmbed {
-        R"|(yt\.setConfig\({'PLAYER_CONFIG': (?<playerConfig>.*?)}\);)|"
-    };
-    static inline std::regex PlayerConfigExtractorFromWatchPage {
-        R"|(ytplayer\.config = (?<playerConfig>.*?)\;ytplayer)|"
-    };
-    static inline std::regex STSFinder {
-        R"|(invalid namespace.*?;.*?=(?<sts>\d+);)|"
+        R"|(<Representation id="(.*?)" codecs="(.*?)"[\s\S]*?bandwidth="(.*?)"[\s\S]*?<BaseURL>(.*?)<\/BaseURL)|"
     };
 
+    // #1 <videoId>
+    static inline std::regex YoutubeIdFinder {
+        R"|((?:youtube\.com|youtu.be).*?(?:v=|embed\/)([\w\-]+))|"
+    };
+
+    // #1 <videoId>
+    static inline std::regex HTTPRequestYTVideoIdExtractor {
+        R"|(watch\?v=(.*?)&amp;)|"
+    };
+
+    // #1 <playerConfig>
+    static inline std::regex PlayerConfigExtractorFromEmbed {
+        R"|(yt\.setConfig\({'PLAYER_CONFIG': (.*?)}\);)|"
+    };
+
+    // #1 <playerConfig>
+    static inline std::regex PlayerConfigExtractorFromWatchPage {
+        R"|(ytplayer\.config = (.*?)\;ytplayer)|"
+    };
+
+    // #1 <sts>
+    static inline std::regex STSFinder {
+        R"|(invalid namespace.*?;.*?=(\d+);)|"
+    };
+
+    // #1 <functionName>, #2 <arg>
     static inline std::regex Decipherer_findFuncAndArgument {
-        R"|(\.(?<functionName>\w+)\(\w+,(?<arg>\d+)\))|"
+        R"|(\.(\w+)\(\w+,(\d+)\))|"
     };
+
+    // #1 <functionName>
     static inline std::regex Decipherer_findFunctionName {
-        R"|((?<functionName>\w+)=function\(\w+\){(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)})|"
+        R"|((\w+)=function\(\w+\){(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)})|"
     };
+
+    // #1 <functionName>
     static inline std::regex Decipherer_findCalledFunction {
-        R"|(\w+\.(?<functionName>\w+)\()|"
+        R"|(\w+\.(\w+)\()|"
     };
-    static std::regex Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
-        return _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName);
-    }
 
     // Careful, order is important !
-    static std::map<CipherOperation, std::regex> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
-        std::map<CipherOperation, std::regex> out;
-        for (auto i = _cipherOperationRegexBase.begin(); i != _cipherOperationRegexBase.end(); ++i) {
-            auto regex = _Decipherer_generateRegex(i->second, obfuscatedDecipheringFunctionName);
-            out.emplace(i->first, regex);
-        }
-        return out;
-    }
+    static std::map<CipherOperation, std::string> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName);
+    static std::string Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
 
  private:
-    static std::regex _Decipherer_generateRegex(std::string rawRegexAsString, const std::string &obfuscatedDecipheringFunctionName) {
-        std::string toReplace = "%1";
-        auto escaped = escapeForRegex(obfuscatedDecipheringFunctionName);
-
-        // replace
-        rawRegexAsString.replace(
-            rawRegexAsString.find(toReplace),
-            toReplace.length(),
-            escaped
-        );
-
-        // as std::regex
-        return std::regex { rawRegexAsString };
-    }
-
-    static std::string escapeForRegex(const std::string &input) {
-        // matches any characters that need to be escaped in RegEx
-        std::regex specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
-        return std::regex_replace(input, specialChars, R"(\$&)");
-    }
-
-    static inline std::string _Decipherer_JSDecipheringOperations {
-        R"|((?!h\.)%1=function\(\w+\)\{(?<functionBody>.*?)\})|"
+    // #1 <functionBody>
+    static constexpr auto _Decipherer_JSDecipheringOperations {
+        R"|((?!h\.)%1=function\(\w+\)\{(.*?)\})|"
     };
+
+    static inline std::regex _specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
 
     // Careful, order is important !
     static inline std::map<CipherOperation, std::string> _cipherOperationRegexBase {
@@ -100,6 +89,9 @@ class Regexes {
         { CipherOperation::Swap, R"|(%1:\bfunction\b\(\w+\,\w\).\bvar\b.\bc=a\b)|" },
         { CipherOperation::Reverse, R"|(%1:\bfunction\b\(\w+\))|" }
     };
+
+    static std::string _Decipherer_generateRegex(std::string rawRegexAsString, const std::string &obfuscatedDecipheringFunctionName);
+    static std::string escapeForRegex(const std::string &input);
 };
 
 }  // namespace AudioTube

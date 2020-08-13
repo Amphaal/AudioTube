@@ -19,7 +19,8 @@
                 "${workspaceFolder}/audiotube/spdlog/include",
                 "${workspaceFolder}/audiotube/promise-cpp",
                 "${workspaceFolder}/audiotube/nlohmann_json/single_include",
-                "C:/msys64/mingw64/include"
+                "${workspaceFolder}/audiotube/ct_regex/single-header",
+                "${workspaceFolder}/audiotube/asio/asio/include"
             ],
             "defines": [
                 "_DEBUG",

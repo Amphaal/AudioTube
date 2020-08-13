@@ -68,3 +68,12 @@ add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/nlohmann_json/single_include")
 
 target_link_libraries(audiotube PUBLIC nlohmann_json)
+
+###############################
+## Deps : compile time regex ##
+###############################
+
+add_library(ct_regex INTERFACE)
+target_include_directories(ct_regex INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/ct_regex/single-header")
+
+target_link_libraries(audiotube PUBLIC ct_regex)

@@ -76,7 +76,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         auto duration = safe_stoi(videoDetails["lengthSeconds"].get<std::string>());
 
         if (title.empty()) throw std::logic_error("Video title cannot be found !");
-        if (!duration < 0) throw std::logic_error("Video length cannot be found !");
+        if (duration < 0) throw std::logic_error("Video length cannot be found !");
 
         playerConfig->fillFromVideoInfosDetails(title, duration);
 
