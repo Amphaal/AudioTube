@@ -91,7 +91,7 @@ std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOpera
     }
 
     // calls
-    auto javascriptFunctionCalls = functionBody.split(";", Qt::SkipEmptyParts);
+    auto javascriptFunctionCalls = AudioTube::splitString(functionBody, ';');
 
     return std::move(javascriptFunctionCalls);
 }

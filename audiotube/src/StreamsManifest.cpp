@@ -22,7 +22,7 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
     std::regex_match(raw, foundStreams, Regexes::DASHManifestExtractor);
 
     // check
-    if (!foundStreams.ready()) throw std::logic_error("[DASH] No stream found on manifest");
+    if (!foundStreams.size()) throw std::logic_error("[DASH] No stream found on manifest");
 
     // container
     AudioStreamUrlByBitrate streams;
@@ -35,7 +35,7 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
         std::regex_search(streamRawStr, streamDataMatch, Regexes::DASHManifestExtractor);
 
         // check
-        if (!streamDataMatch.ready() || streamDataMatch.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
+        if (streamDataMatch.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
 
         // get parts
         auto itag = safe_stoi(streamDataMatch.str(0));

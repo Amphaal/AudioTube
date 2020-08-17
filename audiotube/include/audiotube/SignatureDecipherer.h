@@ -17,6 +17,7 @@
 #include "Regexes.h"
 #include "CipherOperation.h"
 #include "_DebugHelper.h"
+#include "ATHelper.h"
 
 #include <queue>
 #include <utility>

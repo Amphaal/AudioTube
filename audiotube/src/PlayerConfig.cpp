@@ -81,7 +81,13 @@ promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerC
 
 
 nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const std::regex &regex) {
-    auto playerConfigAsStr = regex.match(rawSource).captured("playerConfig");
+    // search
+    std::smatch dataPartsMatch;
+    std::regex_search(rawSource, dataPartsMatch, regex);
+    if (!dataPartsMatch.size()) throw std::logic_error("Failed to extract Player Configuration from raw source");
+
+    // get player config
+    auto playerConfigAsStr = dataPartsMatch.str(0);
     auto playerConfig = nlohmann::json::parse(playerConfigAsStr);
 
     // check config exists
@@ -233,14 +239,10 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
 }
 
 std::string AudioTube::PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
-    std::string sts;
+    std::smatch regexResult;
+    std::regex_search(dl, regexResult, Regexes::STSFinder);
 
-    auto match = Regexes::STSFinder.match(dl);
-    if (match.hasMatch()) {
-        sts = match.captured("sts");  // sts
-    } else {
-        throw std::logic_error("STS value cannot be found !");
-    }
+    if (!regexResult.length()) throw std::logic_error("STS value cannot be found !");
 
-    return sts;
+    return regexResult.str(0);
 }

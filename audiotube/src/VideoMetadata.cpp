@@ -42,14 +42,15 @@ AudioTube::VideoMetadata::VideoMetadata(const std::string &IdOrUrl, const Instan
     switch (type) {
         case InstantiationType::InstFromUrl: {
             // find id
-            auto match = Regexes::YoutubeIdFinder.match(IdOrUrl);
+            std::smatch idMatches;
+            std::regex_search(IdOrUrl, idMatches, Regexes::YoutubeIdFinder);
 
             // returns
-            if (!match.hasMatch()) {
+            if (idMatches.size() != 1) {
                 throw std::invalid_argument("URL is not a valid  URL !");
             }
 
-            this->_videoId = match.captured("videoId");
+            this->_videoId = idMatches.str(0);
             this->_url = IdOrUrl;
         }
         break;

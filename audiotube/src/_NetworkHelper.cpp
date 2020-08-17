@@ -60,11 +60,11 @@ promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &downlo
         spdlog::debug("HTTPSDownloader : Downloading from [{}]...", downloadUrl);
 
         // Send the request.
-        asio::write(socket, request);
+        asio::write(ssl_sock, request);
 
         // Read the response status line.
         asio::streambuf response;
-        asio::read_until(socket, response, "\r\n");
+        asio::read_until(ssl_sock, response, "\r\n");
 
         // Check that response is OK.
         std::istream response_stream(&response);
@@ -76,7 +76,7 @@ promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &downlo
         std::getline(response_stream, status_message);
 
         // Read the response headers, which are terminated by a blank line.
-        asio::read_until(socket, response, "\r\n\r\n");
+        asio::read_until(ssl_sock, response, "\r\n\r\n");
 
         // Process the response headers.
         std::string headerTmp;
@@ -102,7 +102,7 @@ promise::Defer AudioTube::NetworkHelper::downloadHTTPS(const std::string &downlo
         }
         // Read until EOF, writing data to output as we go.
         asio::error_code error;
-        while (asio::read(socket, response, asio::transfer_at_least(1), error)) {
+        while (asio::read(ssl_sock, response, asio::transfer_at_least(1), error)) {
             output_stream << &response;
         }
 

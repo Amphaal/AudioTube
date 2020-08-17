@@ -16,8 +16,10 @@
 
 #include <string>
 #include <charconv>
+#include <vector>
+#include <sstream>
 
 namespace AudioTube {
-    int safe_stoi(const std::string &str);
-    double safe_stod(const std::string &str);
+    static int safe_stoi(const std::string &str);
+    static std::vector<std::string> splitString(const std::string &s, char delim);
 }  // namespace AudioTube

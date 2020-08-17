@@ -19,3 +19,15 @@ int AudioTube::safe_stoi(const std::string &str) {
     auto result = std::from_chars(str.data(), str.data() + str.size(), toInt);
     return result.ec == std::errc() ? toInt : -1;
 }
+
+std::vector<std::string> AudioTube::splitString(const std::string &s, char delim) {
+    std::vector<std::string> result;
+    std::stringstream ss(s);
+    std::string item;
+
+    while (getline(ss, item, delim)) {
+        result.push_back(item);
+    }
+
+    return result;
+}
