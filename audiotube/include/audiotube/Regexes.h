@@ -18,8 +18,6 @@
 #include <map>
 #include <regex>
 
-#include <ctre.hpp>
-
 #include "CipherOperation.h"
 
 namespace AudioTube {
@@ -72,8 +70,8 @@ class Regexes {
     };
 
     // Careful, order is important !
-    static std::map<CipherOperation, std::string> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName);
-    static std::string Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
+    static std::map<CipherOperation, std::regex> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName);
+    static std::regex Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
 
  private:
     // #1 <functionBody>

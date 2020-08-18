@@ -127,9 +127,7 @@ void AudioTube::StreamsManifest::setSecondsUntilExpiration(const unsigned int se
 
 std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsManifest::AudioStreamUrlByBitrate> AudioTube::StreamsManifest::preferedStreamSource() const {
     // try to fetch in order of preference (sorted by enum)
-    for (auto i = this->_package.begin(); i != this->_package.end(); i++) {
-        auto source = i->first;
-        auto ASUBIT = i->second;
+    for (auto [source, ASUBIT] : this->_package) {
         if (ASUBIT.size()) return { source, ASUBIT };
     }
 

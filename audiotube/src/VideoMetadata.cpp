@@ -14,6 +14,14 @@
 
 #include "VideoMetadata.h"
 
+void AudioTube::VideoMetadata::OnMetadataFetching() {
+    this->_omf_callback();
+}
+
+void AudioTube::VideoMetadata::OnMetadataRefreshed() {
+    this->_omr_callback();
+}
+
 AudioTube::VideoMetadata* AudioTube::VideoMetadata::fromVideoId(const std::string &videoId) {
     return new VideoMetadata(videoId, InstantiationType::InstFromId);
 }
@@ -84,7 +92,7 @@ bool AudioTube::VideoMetadata::ranOnce() const {
 }
 
 void AudioTube::VideoMetadata::setFailure(bool failed) {
-    if (failed == true && this->_failed != failed) OnStreamFailed();
+    if (failed == true && this->_failed != failed) _osf_callback();  // OnStreamFailed callback
     this->_failed = failed;
 }
 

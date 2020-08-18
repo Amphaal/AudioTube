@@ -51,7 +51,6 @@ class VideoMetadata {
 
     void OnMetadataFetching();
     void OnMetadataRefreshed();
-    void OnStreamFailed();
 
  private:
     static std::string _urlFromVideoId(const std::string &videoId);

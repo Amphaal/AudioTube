@@ -70,30 +70,29 @@ AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::fromCache(const 
 }
 
 AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode) {
-    auto match = Regexes::Decipherer_findFunctionName.match(ytPlayerSourceCode);
-    auto functionName = match.captured("functionName");
+    std::smatch matches;
+    std::regex_search(ytPlayerSourceCode, matches, Regexes::Decipherer_findFunctionName);
 
-    if (functionName.isEmpty()) {
-        throw std::runtime_error("[Decipherer] No function name found !");
-    }
+    if (!matches.size()) throw std::runtime_error("[Decipherer] No function name found !");
+
+    auto functionName = matches.str(0);
 
     return functionName;
 }
 
 std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName) {
     // get the body of the function
+    std::smatch matches;
     auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
-    auto match = regex.match(ytPlayerSourceCode);
+    std::regex_search(ytPlayerSourceCode, matches, regex);
 
-    auto functionBody = match.captured("functionBody");
-    if (functionBody.isEmpty()) {
-        throw std::runtime_error("[Decipherer] No function body found !");
-    }
+    if (!matches.size()) throw std::runtime_error("[Decipherer] No function body found !");
 
     // calls
+    auto functionBody = matches.str(0);
     auto javascriptFunctionCalls = AudioTube::splitString(functionBody, ';');
 
-    return std::move(javascriptFunctionCalls);
+    return javascriptFunctionCalls;
 }
 
 std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::YTClientMethod> AudioTube::SignatureDecipherer::
@@ -105,9 +104,12 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
     std::set<std::string> uniqueOperations;
     for (const auto &call : javascriptDecipheringOperations) {
         // find function name in method call
-        auto match = Regexes::Decipherer_findCalledFunction.match(call);
-        if (!match.hasMatch()) continue;
-        auto calledFunctionName = match.captured("functionName");
+        std::smatch matches;
+        std::regex_search(call, matches, Regexes::Decipherer_findCalledFunction);
+
+        if (!matches.size()) continue;
+
+        auto calledFunctionName = matches.str(0);
 
         // add to set
         uniqueOperations.insert(calledFunctionName);
@@ -119,16 +121,16 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
         auto customRegexes = Regexes::Decipherer_DecipheringOps(calledFunctionName);
 
         // find...
-        for (auto i = customRegexes.begin(); i != customRegexes.end(); ++i) {
+        for (auto [co, regex] : customRegexes) {
             // if already found, skip
-            auto co = i->first;
-            if (functionNamesByOperation.contains(co)) continue;
+            if (functionNamesByOperation.find(co) != functionNamesByOperation.end()) continue;
 
             // check with regex
-            auto regex = i->second;
-            if (regex.match(ytPlayerSourceCode).hasMatch()) {
+            std::smatch matches;
+            std::regex_search(ytPlayerSourceCode, matches, regex);
+            if (matches.size()) {
                 functionNamesByOperation.emplace(co, calledFunctionName);
-                break;
+                break;  // found, break
             }
         }
     }
@@ -151,14 +153,29 @@ AudioTube::SignatureDecipherer::YTDecipheringOperations AudioTube::SignatureDeci
     // iterate
     for (const auto &call : javascriptOperations) {
         // find which function is called
-        auto match = Regexes::Decipherer_findFuncAndArgument.match(call);
-        if (!match.hasMatch()) continue;
+        std::smatch matches;
+        std::regex_search(call, matches, Regexes::Decipherer_findFuncAndArgument);
+        if (!matches.size()) continue;
 
-        auto calledFunctionName = match.captured("functionName");
-        auto arg = match.captured("arg").toInt();
+        auto calledFunctionName = matches.str(0);
+        auto arg = safe_stoi(matches.str(1));
+
+        // find associated operation type
+        auto operationTypeFound = std::find_if(
+            functionNamesByOperation.begin(),
+            functionNamesByOperation.end(),
+            [calledFunctionName](const auto& mo) {
+                return mo.second == calledFunctionName;
+            }
+        );
+
+        if(operationTypeFound == functionNamesByOperation.end())
+            throw std::logic_error("Cannot find associated operation type from serialized JS operation");
+
+        auto operationType = operationTypeFound->first;
 
         // by operation type
-        switch (auto operationType = functionNamesByOperation.key(calledFunctionName)) {
+        switch (operationType) {
             case CipherOperation::Reverse: {
                 operations.push({operationType, -1});  // Argument is meaningless
             }

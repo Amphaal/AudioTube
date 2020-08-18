@@ -29,6 +29,7 @@ target_sources(audiotube PRIVATE
     src/\_DebugHelper.cpp
     src/UrlParser.cpp
     src/ATHelper.cpp
+    src/Regexes.cpp
 )
 
 ########################
@@ -51,12 +52,16 @@ target_include_directories(spdlog INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/spdlog/
 #link
 target_link_libraries(audiotube PUBLIC spdlog)
 
-#################
-## Deps : asio ##
-#################
+###########################
+## Deps : asio + OpenSSL ##
+###########################
+
+find_package(OpenSSL REQUIRED)
 
 add_library(asio INTERFACE)
 target_include_directories(asio INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/asio/asio/include")
+target_link_libraries(asio INTERFACE OpenSSL::Crypto OpenSSL::SSL)
+target_link_libraries(asio INTERFACE ws2_32 mswsock)
 
 target_link_libraries(audiotube PUBLIC asio)
 
@@ -68,12 +73,3 @@ add_library(nlohmann_json INTERFACE)
 target_include_directories(nlohmann_json INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/nlohmann_json/single_include")
 
 target_link_libraries(audiotube PUBLIC nlohmann_json)
-
-###############################
-## Deps : compile time regex ##
-###############################
-
-add_library(ct_regex INTERFACE)
-target_include_directories(ct_regex INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/ct_regex/single-header")
-
-target_link_libraries(audiotube PUBLIC ct_regex)

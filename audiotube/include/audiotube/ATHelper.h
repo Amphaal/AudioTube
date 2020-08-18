@@ -20,6 +20,6 @@
 #include <sstream>
 
 namespace AudioTube {
-    static int safe_stoi(const std::string &str);
-    static std::vector<std::string> splitString(const std::string &s, char delim);
+    int safe_stoi(const std::string &str);
+    std::vector<std::string> splitString(const std::string &s, char delim);
 }  // namespace AudioTube

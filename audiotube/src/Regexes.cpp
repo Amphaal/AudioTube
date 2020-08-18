@@ -14,16 +14,20 @@
 
 #include "Regexes.h"
 
-std::string AudioTube::Regexes::Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
-    return _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName);
+std::regex AudioTube::Regexes::Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
+    return std::regex { _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName) };
 }
 
 // Careful, order is important !
-std::map<AudioTube::CipherOperation, std::string> AudioTube::Regexes::Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
-    std::map<CipherOperation, std::string> out;
-    for (auto i = _cipherOperationRegexBase.begin(); i != _cipherOperationRegexBase.end(); ++i) {
-        auto regex = _Decipherer_generateRegex(i->second, obfuscatedDecipheringFunctionName);
-        out.emplace(i->first, regex);
+std::map<AudioTube::CipherOperation, std::regex> AudioTube::Regexes::Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
+    std::map<CipherOperation, std::regex> out;
+    for (auto [co, regStrBase] : _cipherOperationRegexBase) {
+        auto regexAsStr = _Decipherer_generateRegex(regStrBase, obfuscatedDecipheringFunctionName);
+
+        out.emplace(
+            co,
+            std::regex { regexAsStr }
+        );
     }
     return out;
 }

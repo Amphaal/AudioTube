@@ -15,6 +15,3 @@
 [submodule "audiotube/nlohmann_json"]
 	path = audiotube/nlohmann_json
 	url = https://github.com/nlohmann/json
-[submodule "audiotube/ct_regex"]
-	path = audiotube/ct_regex
-	url = https://github.com/hanickadot/compile-time-regular-expressions
