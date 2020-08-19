@@ -41,7 +41,7 @@ class Regexes {
 
     // #1 <playerConfig>
     static inline std::regex PlayerConfigExtractorFromEmbed {
-        R"|(yt\.setConfig\({'PLAYER_CONFIG': (.*?)}\);)|"
+        R"|(yt\.setConfig\(\{'PLAYER_CONFIG': (.*?)\}\);)|"
     };
 
     // #1 <playerConfig>
@@ -61,7 +61,7 @@ class Regexes {
 
     // #1 <functionName>
     static inline std::regex Decipherer_findFunctionName {
-        R"|((\w+)=function\(\w+\){(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)})|"
+        R"|((\w+)=function\(\w+\)\{(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)\})|"
     };
 
     // #1 <functionName>
@@ -74,12 +74,12 @@ class Regexes {
     static std::regex Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
 
  private:
+    static inline std::regex _specialChars { R"|([-[\]{}()*+?.,\^$|#\s])|" };
+
     // #1 <functionBody>
     static constexpr auto _Decipherer_JSDecipheringOperations {
         R"|((?!h\.)%1=function\(\w+\)\{(.*?)\})|"
     };
-
-    static inline std::regex _specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
 
     // Careful, order is important !
     static inline std::map<CipherOperation, std::string> _cipherOperationRegexBase {

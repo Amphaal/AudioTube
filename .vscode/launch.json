@@ -5,19 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(lldb) Lancer",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/_genDebug/tests/audiotube_tests",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb",
-            "preLaunchTask": "2+. Build"
-        },
-        {
             "name": "(gdb) Lancer",
             "type": "cppdbg",
             "request": "launch",
