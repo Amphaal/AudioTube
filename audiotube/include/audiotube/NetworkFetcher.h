@@ -29,7 +29,7 @@ class NetworkFetcher : public NetworkHelper {
  public:
     static promise::Defer fromPlaylistUrl(const std::string &url);
     static promise::Defer refreshMetadata(VideoMetadata* toRefresh, bool force = false);
-    static void isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded = nullptr, std::string* urlSuccessfullyRequested = nullptr);
+    static bool isStreamAvailable(VideoMetadata* toCheck);
 
  private:
     static promise::Defer _refreshMetadata(VideoMetadata* metadata);

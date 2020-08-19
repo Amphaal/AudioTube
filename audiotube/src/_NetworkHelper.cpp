@@ -14,7 +14,7 @@
 
 #include "_NetworkHelper.h"
 
-std::string AudioTube::NetworkHelper::downloadHTTPS(const std::string &downloadUrl, bool head) {
+AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const std::string &downloadUrl, bool head) {
     // decompose url
     UrlParser url_decomposer(downloadUrl);
     auto serverName = url_decomposer.host();
@@ -92,9 +92,7 @@ std::string AudioTube::NetworkHelper::downloadHTTPS(const std::string &downloadU
         }
     }
 
-    if (!hasContentLengthHeader) {
-        throw std::logic_error("HTTPSDownloader : Targeted URL is not a file");
-    }
+    if(!headers.size()) throw std::logic_error("HTTPSDownloader : Response have no headers !");
 
     // Write whatever content we already have to output.
     std::ostringstream output_stream;
@@ -109,11 +107,20 @@ std::string AudioTube::NetworkHelper::downloadHTTPS(const std::string &downloadU
 
     spdlog::debug("HTTPSDownloader : Finished downloading [{}]", downloadUrl);
 
-    return output_stream.str();
+    AudioTube::NetworkHelper::Response outResponse {
+        output_stream.str(),
+        headers,
+        hasContentLengthHeader
+    };
+
+    spdlog::debug("HTTPSDownloader : Response length {}, headers {}", outResponse.messageBody.size(), outResponse.headers.size());
+
+    return outResponse;
 }
 
 promise::Defer AudioTube::NetworkHelper::promise_dl_HTTPS(const std::string &downloadUrl, bool head) {
     return promise::newPromise([=](promise::Defer d) {
-      return downloadHTTPS(downloadUrl, head);
+        auto response = downloadHTTPS(downloadUrl, head);
+        return d.resolve(response.messageBody);
     });
 }

@@ -55,16 +55,10 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
     });
 }
 
-void AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, std::string* urlSuccessfullyRequested) {
+bool AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck) {
     auto bestUrl = toCheck->audioStreams()->preferedUrl();
-
-    promise_dl_HTTPS(bestUrl, true)
-        .then([=](){
-            *urlSuccessfullyRequested = bestUrl;
-        })
-        .finally([=](){
-            *checkEnded = true;
-        });
+    auto response = AudioTube::NetworkHelper::downloadHTTPS(bestUrl, true);  // download HEAD
+    return response.hasContentLengthHeader;
 }
 
 promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {

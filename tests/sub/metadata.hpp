@@ -23,28 +23,9 @@
 
 #include <catch2/catch.hpp>
 
-bool stream_are_working(AudioTube::VideoMetadata &metadata) {
-    // fetch for a stream HEAD
-    std::string urlSuccessfullyRequested;
-    bool ended;
-    AudioTube::NetworkFetcher::isStreamAvailable(&metadata, &ended, &urlSuccessfullyRequested);
-
-    // wait processing
-    while (!ended) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    // check url
-    if (!urlSuccessfullyRequested.empty()) {
-      // spdlog::debug("Stream URL found : {}", urlSuccessfullyRequested);
-      return true;
-    } else {
-        return false;
-    }
-}
-
 bool youtube_metadata_fetching_succeeded(const std::string &ytId) {
     // generating container
+    spdlog::set_level(spdlog::level::debug);
     AudioTube::VideoMetadata container(ytId, AudioTube::VideoMetadata::InstantiationType::InstFromId);
     spdlog::debug("Testing [{}]...", container.url());
 
@@ -60,16 +41,16 @@ bool youtube_metadata_fetching_succeeded(const std::string &ytId) {
     if (container.hasFailed()) return false;
 
     // check if a stream is working
-    return stream_are_working(container);
+    return AudioTube::NetworkFetcher::isStreamAvailable(&container);
 }
 
 //
 // Test cases
 //
 
-// TEST_CASE("Unavailable video", "[metadata]") {
-//   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
-// }
+TEST_CASE("Unavailable video", "[metadata]") {
+  REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
+}
 
 // TEST_CASE("OK from JSON Adaptative Stream - no deciphering", "[metadata]") {
 //   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));

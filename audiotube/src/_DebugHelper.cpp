@@ -37,21 +37,21 @@ void AudioTube::DebugHelper::_fillJSON(const UrlQuery &query, nlohmann::json * r
 void AudioTube::DebugHelper::_dumpAsFile(const std::string &str) {
     std::ofstream fh;
 
-    auto fullpath = std::filesystem::canonical("yt.txt");
+    auto fullpath = std::filesystem::absolute("./yt.txt");
     fh.open(fullpath);
     fh << str;
     fh.close();
 
-    spdlog::debug("{} created !", fullpath.string());
+    spdlog::debug("[{}] created !", fullpath.string());
 }
 
 void AudioTube::DebugHelper::_dumpAsJSON(const nlohmann::json &doc) {
     std::ofstream fh;
 
-    auto fullpath = std::filesystem::canonical("yt.json");
+    auto fullpath = std::filesystem::absolute("./yt.json");
     fh.open(fullpath);
     fh << doc.dump(4);
     fh.close();
 
-    spdlog::debug("{} created !", fullpath.string());
+    spdlog::debug("[{}] created !", fullpath.string());
 }

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <promise.hpp>
 
@@ -34,9 +35,14 @@ namespace AudioTube {
 
 class NetworkHelper {
  public:
+    struct Response {
+        std::string messageBody;
+        std::vector<std::string> headers;
+        bool hasContentLengthHeader = false;
+    };
     using DownloadedUtf8 = std::string;
     static promise::Defer promise_dl_HTTPS(const std::string &downloadUrl, bool head = false);
-    static std::string downloadHTTPS(const std::string &downloadUrl, bool head = false);
+    static NetworkHelper::Response downloadHTTPS(const std::string &downloadUrl, bool head = false);
 };
 
 }  // namespace AudioTube

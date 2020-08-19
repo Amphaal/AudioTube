@@ -14,12 +14,13 @@
 
 #pragma once
 
+#include <string>
+
 #include <audiotube/_NetworkHelper.h>
 
 #include <catch2/catch.hpp>
 
 TEST_CASE("Fetch HTTP HEAD", "[network]") {
-  spdlog::set_level(spdlog::level::debug);
-  auto response = AudioTube::NetworkHelper::downloadHTTPS("https://www.google.com", false);
-  spdlog::debug("Response : [{}]...", response);
+  std::string sourceUrl = "https://ccadb-public.secure.force.com/mozilla/IncludedCACertificateReportCSVFormat";
+  auto response = AudioTube::NetworkHelper::downloadHTTPS(sourceUrl, true);
 }
