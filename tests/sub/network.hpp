@@ -12,8 +12,14 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
-#define CATCH_CONFIG_MAIN
+#pragma once
 
-#include "sub/metadata.hpp"
-#include "sub/url.hpp"
-#include "sub/network.hpp"
+#include <audiotube/_NetworkHelper.h>
+
+#include <catch2/catch.hpp>
+
+TEST_CASE("Fetch HTTP HEAD", "[network]") {
+  spdlog::set_level(spdlog::level::debug);
+  auto response = AudioTube::NetworkHelper::downloadHTTPS("https://www.google.com", false);
+  spdlog::debug("Response : [{}]...", response);
+}

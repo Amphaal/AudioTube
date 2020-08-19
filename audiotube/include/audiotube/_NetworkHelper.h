@@ -35,7 +35,8 @@ namespace AudioTube {
 class NetworkHelper {
  public:
     using DownloadedUtf8 = std::string;
-    static promise::Defer downloadHTTPS(const std::string &downloadUrl, bool head = false);
+    static promise::Defer promise_dl_HTTPS(const std::string &downloadUrl, bool head = false);
+    static std::string downloadHTTPS(const std::string &downloadUrl, bool head = false);
 };
 
 }  // namespace AudioTube

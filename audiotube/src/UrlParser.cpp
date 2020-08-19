@@ -30,14 +30,15 @@ AudioTube::UrlParser::UrlParser(std::string_view rawUrlView) {
     if (findFirstSlash == 0) return;
     if (findFirstSlash == std::string::npos) {
         this->_host = rawUrlView.substr(afterSchemeSeparatorPos);
+        this->_pathAndQuery = "/";
         return;
     }
 
     auto pathStartIndex = findFirstSlash - afterSchemeSeparatorPos;
-    this->_host = rawUrlView.substr(afterSchemeSeparatorPos, pathStartIndex - 1);
+    this->_host = rawUrlView.substr(afterSchemeSeparatorPos, pathStartIndex);
 
     // else is path + query
-    this->_pathAndQuery = rawUrlView.substr(pathStartIndex);
+    this->_pathAndQuery = rawUrlView.substr(findFirstSlash);
 }
 
 bool AudioTube::UrlParser::isValid() const {

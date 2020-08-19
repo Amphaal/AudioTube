@@ -15,7 +15,7 @@
 #include "NetworkFetcher.h"
 
 promise::Defer AudioTube::NetworkFetcher::fromPlaylistUrl(const std::string &url) {
-    return downloadHTTPS(url)
+    return promise_dl_HTTPS(url)
             .then(&_extractVideoIdsFromHTTPRequest)
             .then(&_videoIdsToMetadataList);
 }
@@ -58,7 +58,7 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
 void AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck, bool* checkEnded, std::string* urlSuccessfullyRequested) {
     auto bestUrl = toCheck->audioStreams()->preferedUrl();
 
-    downloadHTTPS(bestUrl, true)
+    promise_dl_HTTPS(bestUrl, true)
         .then([=](){
             *urlSuccessfullyRequested = bestUrl;
         })

@@ -71,12 +71,12 @@ promise::Defer AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::Video
 
 promise::Defer AudioTube::PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = std::string("https://www.youtube.com/embed/" + videoId + "?hl=en");
-    return downloadHTTPS(url);
+    return promise_dl_HTTPS(url);
 }
 
 promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = std::string("https://www.youtube.com/watch?v=" + videoId + "&bpctr=9999999999&hl=en");
-    return downloadHTTPS(url);
+    return promise_dl_HTTPS(url);
 }
 
 
@@ -119,7 +119,7 @@ promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const 
     .then([=](bool cachedDecipherer, bool stsNeeded) {
         // if no cached decipherer or if STS is needed
         if (!cachedDecipherer || stsNeeded) {
-            return downloadHTTPS(playerSourceUrl)
+            return promise_dl_HTTPS(playerSourceUrl)
             .then([=](const DownloadedUtf8 &dl) {
                 // generate decipherer
                 if (!cachedDecipherer) {
@@ -228,7 +228,7 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         });
     })
     .then([=](const std::string &dashManifestUrl){
-       auto mayFetchRawDASH = dashManifestUrl.empty() ? promise::resolve() : downloadHTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
+       auto mayFetchRawDASH = dashManifestUrl.empty() ? promise::resolve() : promise_dl_HTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
             streamsManifest->feedRaw_DASH(dl, this->_decipherer);
         });
         return mayFetchRawDASH;

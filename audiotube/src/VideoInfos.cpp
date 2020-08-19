@@ -34,7 +34,7 @@ promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig
 
     auto requestUrl = std::string("https://www.youtube.com/get_video_info?video_id=") + videoId + "&el=embedded&eurl=" + encodedApiUrl + "&hl=en&sts=" + sts;
 
-    return downloadHTTPS(requestUrl);
+    return promise_dl_HTTPS(requestUrl);
 }
 
 promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig) {
@@ -112,7 +112,7 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         d.resolve(dashManifestUrl);
     })
     .then([=](const std::string &dashManifestUrl){
-        auto mayFetchRawDASH = dashManifestUrl.empty() ? promise::resolve() : downloadHTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
+        auto mayFetchRawDASH = dashManifestUrl.empty() ? promise::resolve() : promise_dl_HTTPS(dashManifestUrl).then([=](const DownloadedUtf8 &dl) {
             manifest->feedRaw_DASH(dl, playerConfig->decipherer());
         });
         return mayFetchRawDASH;
