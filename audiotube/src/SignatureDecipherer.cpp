@@ -74,12 +74,13 @@ AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_
     jp::RegexMatch rm;
     rm.setRegexObject(&Regexes::Decipherer_findFunctionName)
         .setSubject(&ytPlayerSourceCode)
+        .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
     if (matches.size() != 1) throw std::runtime_error("[Decipherer] No function name found !");
 
-    auto functionName = matches[0][0];
+    auto functionName = matches[0][1];
 
     return functionName;
 }
@@ -91,13 +92,14 @@ std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOpera
     auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
     rm.setRegexObject(&regex)
         .setSubject(&ytPlayerSourceCode)
+        .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
     if (matches.size() != 1) throw std::runtime_error("[Decipherer] No function body found !");
 
     // calls
-    auto functionBody = matches[0][0];
+    auto functionBody = matches[0][1];
     auto javascriptFunctionCalls = AudioTube::splitString(functionBody, ';');
 
     return javascriptFunctionCalls;
@@ -116,12 +118,13 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
         jp::RegexMatch rm;
         rm.setRegexObject(&Regexes::Decipherer_findCalledFunction)
             .setSubject(&call)
+            .addModifier("gm")
             .setNumberedSubstringVector(&matches)
             .match();
 
         if (matches.size() != 1) continue;
 
-        auto calledFunctionName = matches[0][0];
+        auto calledFunctionName = matches[0][1];
 
         // add to set
         uniqueOperations.insert(calledFunctionName);
@@ -142,6 +145,7 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
             jp::RegexMatch rm;
             rm.setRegexObject(&regex)
                 .setSubject(&ytPlayerSourceCode)
+                .addModifier("gm")
                 .setNumberedSubstringVector(&matches)
                 .match();
 
@@ -172,12 +176,14 @@ AudioTube::SignatureDecipherer::YTDecipheringOperations AudioTube::SignatureDeci
         jp::RegexMatch rm;
         rm.setRegexObject(&Regexes::Decipherer_findFuncAndArgument)
                 .setSubject(&call)
+                .addModifier("gm")
                 .setNumberedSubstringVector(&matches)
                 .match();
+
         if (matches.size() != 1) continue;
 
-        auto calledFunctionName = matches[0][0];
-        auto arg = safe_stoi(matches[0][1]);
+        auto calledFunctionName = matches[0][1];
+        auto arg = safe_stoi(matches[0][2]);
 
         // find associated operation type
         auto operationTypeFound = std::find_if(

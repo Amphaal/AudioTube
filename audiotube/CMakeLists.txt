@@ -78,11 +78,10 @@ target_link_libraries(audiotube PUBLIC nlohmann_json)
 ## Deps : PCRE2 + wrapper ##
 ############################
 
-SET(PCRE2_BUILD_TESTS OFF)
 add_subdirectory(pcre2)
 target_include_directories(pcre2-8 INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/pcre2")
-target_link_libraries(audiotube PUBLIC pcre2-8)
 
 add_library(jpcre2 INTERFACE)
 target_include_directories(jpcre2 INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/jpcre2/src")
+target_link_libraries(jpcre2 INTERFACE pcre2-8)
 target_link_libraries(audiotube PUBLIC jpcre2)

@@ -18,6 +18,7 @@
 #include <map>
 #include <regex>
 
+#define PCRE2_STATIC
 #include "jpcre2.hpp"
 
 #include "CipherOperation.h"
@@ -45,7 +46,7 @@ class Regexes {
 
     // #1 <playerConfig>
     static inline jp::Regex PlayerConfigExtractorFromEmbed {
-        R"|(yt\.setConfig\(\{'PLAYER_CONFIG': (.*?)\}\);)|"
+        R"|(yt\.setConfig\({.*'PLAYER_CONFIG': (.*?)}\);)|"
     };
 
     // #1 <playerConfig>
@@ -55,7 +56,7 @@ class Regexes {
 
     // #1 <sts>
     static inline jp::Regex STSFinder {
-        R"|(invalid namespace.*?;.*?=(\d+);)|"
+        R"|(\("STS",void 0\):(\d*?);)|"
     };
 
     // #1 <functionName>, #2 <arg>

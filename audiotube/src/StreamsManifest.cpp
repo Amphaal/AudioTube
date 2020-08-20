@@ -22,6 +22,7 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
     jp::RegexMatch rm;
     rm.setRegexObject(&Regexes::DASHManifestExtractor)
         .setSubject(&raw)
+        .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
@@ -37,10 +38,10 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
         if (submatches.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
 
         // get parts
-        auto itag = safe_stoi(submatches[0]);
-        auto codec = submatches[1];
-        auto bitrate = safe_stoi(submatches[2]);
-        auto url = submatches[3];
+        auto itag = safe_stoi(submatches[1]);
+        auto codec = submatches[2];
+        auto bitrate = safe_stoi(submatches[3]);
+        auto url = submatches[4];
 
         // check codec
         if (!_isCodecAllowed(codec)) continue;

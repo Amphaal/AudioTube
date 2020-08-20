@@ -86,13 +86,14 @@ nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const 
     jp::RegexMatch rm;
     rm.setRegexObject(&regex)
         .setSubject(&rawSource)
+        .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
     if (matches.size() != 1) throw std::logic_error("Failed to extract Player Configuration from raw source");
 
     // get player config
-    auto playerConfigAsStr = matches[0][0];
+    auto playerConfigAsStr = matches[0][1];
     auto playerConfig = nlohmann::json::parse(playerConfigAsStr);
 
     // check config exists
@@ -248,10 +249,11 @@ std::string AudioTube::PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
     jp::RegexMatch rm;
     rm.setRegexObject(&Regexes::STSFinder)
         .setSubject(&dl)
+        .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
-    if (matches.size() != 1) throw std::logic_error("STS value cannot be found !");
+    if (!matches.size()) throw std::logic_error("STS value cannot be found !");
 
-    return matches[0][0];
+    return matches[0][1];
 }

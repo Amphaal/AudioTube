@@ -54,6 +54,7 @@ AudioTube::VideoMetadata::VideoMetadata(const std::string &IdOrUrl, const Instan
             jp::RegexMatch rm;
             rm.setRegexObject(&Regexes::YoutubeIdFinder)
                 .setSubject(&IdOrUrl)
+                .addModifier("gm")
                 .setNumberedSubstringVector(&matches)
                 .match();
 
@@ -62,7 +63,7 @@ AudioTube::VideoMetadata::VideoMetadata(const std::string &IdOrUrl, const Instan
                 throw std::invalid_argument("URL is not a valid  URL !");
             }
 
-            this->_videoId = matches[0][0];
+            this->_videoId = matches[0][1];
             this->_url = IdOrUrl;
         }
         break;

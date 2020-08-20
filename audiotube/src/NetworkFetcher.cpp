@@ -91,6 +91,7 @@ std::vector<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequ
     jp::RegexMatch rm;
     rm.setRegexObject(&Regexes::HTTPRequestYTVideoIdExtractor)
         .setSubject(&requestData)
+        .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
@@ -100,8 +101,7 @@ std::vector<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequ
     // iterate
     std::vector<std::string> idsList;
     for (auto &submatches : matches) {
-        // get video id
-        auto videoId = submatches[0];
+        auto videoId = submatches[1];
         idsList.push_back(videoId);
     }
 
