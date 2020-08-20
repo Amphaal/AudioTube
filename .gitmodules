@@ -15,3 +15,9 @@
 [submodule "audiotube/nlohmann_json"]
 	path = audiotube/nlohmann_json
 	url = https://github.com/nlohmann/json
+[submodule "audiotube/pcre2"]
+	path = audiotube/pcre2
+	url = https://github.com/jpcre2/pcre2
+[submodule "audiotube/jpcre2"]
+	path = audiotube/jpcre2
+	url = https://github.com/jpcre2/jpcre2
