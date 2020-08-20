@@ -16,63 +16,71 @@
 
 #include <string>
 #include <map>
+#include <regex>
+
+#include "jpcre2.hpp"
 
 #include "CipherOperation.h"
+
+typedef jpcre2::select<char> jp;
 
 namespace AudioTube {
 
 class Regexes {
  public:
     // 1# <itag>, 2# <codec>, 3# <bitrate>, 4# <url>
-    static inline pcre2cppRE DASHManifestExtractor {
+    static inline jp::Regex DASHManifestExtractor {
         R"|(<Representation id="(.*?)" codecs="(.*?)"[\s\S]*?bandwidth="(.*?)"[\s\S]*?<BaseURL>(.*?)<\/BaseURL)|"
     };
 
     // #1 <videoId>
-    static inline pcre2cppRE YoutubeIdFinder {
+    static inline jp::Regex YoutubeIdFinder {
         R"|((?:youtube\.com|youtu.be).*?(?:v=|embed\/)([\w\-]+))|"
     };
 
     // #1 <videoId>
-    static inline pcre2cppRE HTTPRequestYTVideoIdExtractor {
+    static inline jp::Regex HTTPRequestYTVideoIdExtractor {
         R"|(watch\?v=(.*?)&amp;)|"
     };
 
     // #1 <playerConfig>
-    static inline pcre2cppRE PlayerConfigExtractorFromEmbed {
+    static inline jp::Regex PlayerConfigExtractorFromEmbed {
         R"|(yt\.setConfig\(\{'PLAYER_CONFIG': (.*?)\}\);)|"
     };
 
     // #1 <playerConfig>
-    static inline pcre2cppRE PlayerConfigExtractorFromWatchPage {
+    static inline jp::Regex PlayerConfigExtractorFromWatchPage {
         R"|(ytplayer\.config = (.*?)\;ytplayer)|"
     };
 
     // #1 <sts>
-    static inline pcre2cppRE STSFinder {
+    static inline jp::Regex STSFinder {
         R"|(invalid namespace.*?;.*?=(\d+);)|"
     };
 
     // #1 <functionName>, #2 <arg>
-    static inline pcre2cppRE Decipherer_findFuncAndArgument {
+    static inline jp::Regex Decipherer_findFuncAndArgument {
         R"|(\.(\w+)\(\w+,(\d+)\))|"
     };
 
     // #1 <functionName>
-    static inline pcre2cppRE Decipherer_findFunctionName {
+    static inline jp::Regex Decipherer_findFunctionName {
         R"|((\w+)=function\(\w+\)\{(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)\})|"
     };
 
     // #1 <functionName>
-    static inline pcre2cppRE Decipherer_findCalledFunction {
+    static inline jp::Regex Decipherer_findCalledFunction {
         R"|(\w+\.(\w+)\()|"
     };
 
     // Careful, order is important !
-    static std::map<CipherOperation, pcre2cppRE> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName);
-    static pcre2cppRE Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
+    static std::map<CipherOperation, jp::Regex> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName);
+    static jp::Regex Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
+    static std::string escapeForRegex(const std::string &toEscapeForRegex);
 
  private:
+    static inline std::regex _specialChars { R"([-[\]{}()*+?.,\^$|#\s])" };
+
     // #1 <functionBody>
     static constexpr auto _Decipherer_JSDecipheringOperations {
         R"|((?!h\.)%1=function\(\w+\)\{(.*?)\})|"

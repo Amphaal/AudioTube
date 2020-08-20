@@ -14,27 +14,31 @@
 
 #include "Regexes.h"
 
-pcre2cppRE AudioTube::Regexes::Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
-    return pcre2cppRE { _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName) };
+jp::Regex AudioTube::Regexes::Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
+    return jp::Regex { _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName) };
 }
 
 // Careful, order is important !
-std::map<AudioTube::CipherOperation, pcre2cppRE> AudioTube::Regexes::Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
-    std::map<CipherOperation, pcre2cppRE> out;
+std::map<AudioTube::CipherOperation, jp::Regex> AudioTube::Regexes::Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
+    std::map<CipherOperation, jp::Regex> out;
     for (auto [co, regStrBase] : _cipherOperationRegexBase) {
         auto regexAsStr = _Decipherer_generateRegex(regStrBase, obfuscatedDecipheringFunctionName);
 
         out.emplace(
             co,
-            pcre2cppRE { regexAsStr }
+            jp::Regex { regexAsStr }
         );
     }
     return out;
 }
 
+std::string AudioTube::Regexes::escapeForRegex(const std::string &toEscapeForRegex) {
+    return std::regex_replace(toEscapeForRegex, _specialChars, R"(\$&)");
+}
+
 std::string AudioTube::Regexes::_Decipherer_generateRegex(std::string rawRegexAsString, const std::string &obfuscatedDecipheringFunctionName) {
     std::string toReplace = "%1";
-    auto escaped = pcre2cppRE::QuoteMeta(obfuscatedDecipheringFunctionName);
+    auto escaped = escapeForRegex(obfuscatedDecipheringFunctionName);
 
     // replace
     rawRegexAsString.replace(

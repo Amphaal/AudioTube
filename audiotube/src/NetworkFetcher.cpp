@@ -87,22 +87,21 @@ promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metada
 
 std::vector<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
     // search...
-    std::smatch foundIds;
-    pcre2cppRE_match(requestData, foundIds, Regexes::HTTPRequestYTVideoIdExtractor);
+    jp::VecNum matches;
+    jp::RegexMatch rm;
+    rm.setRegexObject(&Regexes::HTTPRequestYTVideoIdExtractor)
+        .setSubject(&requestData)
+        .setNumberedSubstringVector(&matches)
+        .match();
 
     // check
-    if (!foundIds.size()) throw std::logic_error("[DASH] No YT IDs found in HTTP request");
+    if (!matches.size()) throw std::logic_error("[DASH] No YT IDs found in HTTP request");
 
     // iterate
     std::vector<std::string> idsList;
-    for (auto &idMatch : foundIds) {
-        // search data parts
-        auto idMatchStr = idMatch.str();
-        std::smatch dataPartsMatch;
-        pcre2cppRE_search(idMatchStr, dataPartsMatch, Regexes::HTTPRequestYTVideoIdExtractor);
-
+    for (auto &submatches : matches) {
         // get video id
-        auto videoId = dataPartsMatch.str(0);
+        auto videoId = submatches[0];
         idsList.push_back(videoId);
     }
 

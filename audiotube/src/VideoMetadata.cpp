@@ -50,15 +50,19 @@ AudioTube::VideoMetadata::VideoMetadata(const std::string &IdOrUrl, const Instan
     switch (type) {
         case InstantiationType::InstFromUrl: {
             // find id
-            std::smatch idMatches;
-            pcre2cppRE_search(IdOrUrl, idMatches, Regexes::YoutubeIdFinder);
+            jp::VecNum matches;
+            jp::RegexMatch rm;
+            rm.setRegexObject(&Regexes::YoutubeIdFinder)
+                .setSubject(&IdOrUrl)
+                .setNumberedSubstringVector(&matches)
+                .match();
 
             // returns
-            if (idMatches.size() != 1) {
+            if (matches.size() != 1) {
                 throw std::invalid_argument("URL is not a valid  URL !");
             }
 
-            this->_videoId = idMatches.str(0);
+            this->_videoId = matches[0][0];
             this->_url = IdOrUrl;
         }
         break;

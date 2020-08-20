@@ -80,19 +80,19 @@ promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerC
 }
 
 
-nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const pcre2cppRE &regex) {
+nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const jp::Regex &regex) {
     // search
-    std::smatch dataPartsMatch;
-    const pcre2cppRE test(".*", pcre2cppRE::extended);
-    auto test2 = rawSource;
-    std::replace(test2.begin(), test2.end(), '\n', ' ');
-    DebugHelper::_dumpAsFile(test2);
-    auto qq = pcre2cppRE_match(test2, dataPartsMatch, test);
-    // pcre2cppRE_search(rawSource, dataPartsMatch, regex);
-    if (!dataPartsMatch.size()) throw std::logic_error("Failed to extract Player Configuration from raw source");
+    jp::VecNum matches;
+    jp::RegexMatch rm;
+    rm.setRegexObject(&regex)
+        .setSubject(&rawSource)
+        .setNumberedSubstringVector(&matches)
+        .match();
+
+    if (matches.size() != 1) throw std::logic_error("Failed to extract Player Configuration from raw source");
 
     // get player config
-    auto playerConfigAsStr = dataPartsMatch.str(0);
+    auto playerConfigAsStr = matches[0][0];
     auto playerConfig = nlohmann::json::parse(playerConfigAsStr);
 
     // check config exists
@@ -244,10 +244,14 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
 }
 
 std::string AudioTube::PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
-    std::smatch regexResult;
-    pcre2cppRE_search(dl, regexResult, Regexes::STSFinder);
+    jp::VecNum matches;
+    jp::RegexMatch rm;
+    rm.setRegexObject(&Regexes::STSFinder)
+        .setSubject(&dl)
+        .setNumberedSubstringVector(&matches)
+        .match();
 
-    if (!regexResult.length()) throw std::logic_error("STS value cannot be found !");
+    if (matches.size() != 1) throw std::logic_error("STS value cannot be found !");
 
-    return regexResult.str(0);
+    return matches[0][0];
 }

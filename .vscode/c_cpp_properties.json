@@ -20,7 +20,8 @@
                 "${workspaceFolder}/audiotube/promise-cpp",
                 "${workspaceFolder}/audiotube/nlohmann_json/single_include",
                 "${workspaceFolder}/_genDebug/audiotube/pcre2",
-                "${workspaceFolder}/audiotube/asio/asio/include"
+                "${workspaceFolder}/audiotube/asio/asio/include",
+                "${workspaceFolder}/audiotube/jpcre2/src"
             ],
             "defines": [
                 "_DEBUG",

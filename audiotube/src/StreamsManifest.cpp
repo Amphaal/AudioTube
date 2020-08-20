@@ -18,30 +18,29 @@ AudioTube::StreamsManifest::StreamsManifest() {}
 
 void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
     // find streams
-    std::smatch foundStreams;
-    pcre2cppRE_match(raw, foundStreams, Regexes::DASHManifestExtractor);
+    jp::VecNum matches;
+    jp::RegexMatch rm;
+    rm.setRegexObject(&Regexes::DASHManifestExtractor)
+        .setSubject(&raw)
+        .setNumberedSubstringVector(&matches)
+        .match();
 
     // check
-    if (!foundStreams.size()) throw std::logic_error("[DASH] No stream found on manifest");
+    if (!matches.size()) throw std::logic_error("[DASH] No stream found on manifest");
 
     // container
     AudioStreamUrlByBitrate streams;
 
     // iterate through streams
-    for (auto &streamMatch : foundStreams) {
-        // search data parts
-        auto streamRawStr = streamMatch.str();
-        std::smatch streamDataMatch;
-        pcre2cppRE_search(streamRawStr, streamDataMatch, Regexes::DASHManifestExtractor);
-
+    for (auto &submatches : matches) {
         // check
-        if (streamDataMatch.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
+        if (submatches.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
 
         // get parts
-        auto itag = safe_stoi(streamDataMatch.str(0));
-        auto codec = streamDataMatch.str(1);
-        auto bitrate = safe_stoi(streamDataMatch.str(2));
-        auto url = streamDataMatch.str(3);
+        auto itag = safe_stoi(submatches[0]);
+        auto codec = submatches[1];
+        auto bitrate = safe_stoi(submatches[2]);
+        auto url = submatches[3];
 
         // check codec
         if (!_isCodecAllowed(codec)) continue;

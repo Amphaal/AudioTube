@@ -66,7 +66,7 @@ class PlayerConfig : public NetworkHelper {
     promise::Defer _fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl);
     promise::Defer _fillFrom_PlayerSource(const DownloadedUtf8 &dl, const std::string &playerSourceUrl);
 
-    static nlohmann::json _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const pcre2cppRE &regex);
+    static nlohmann::json _extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const jp::Regex &regex);
 
     // extraction helpers
     static std::string _playerSourceUrl(const nlohmann::json &playerConfig);

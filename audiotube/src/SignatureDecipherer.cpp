@@ -70,26 +70,34 @@ AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::fromCache(const 
 }
 
 AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode) {
-    std::smatch matches;
-    pcre2cppRE_search(ytPlayerSourceCode, matches, Regexes::Decipherer_findFunctionName);
+    jp::VecNum matches;
+    jp::RegexMatch rm;
+    rm.setRegexObject(&Regexes::Decipherer_findFunctionName)
+        .setSubject(&ytPlayerSourceCode)
+        .setNumberedSubstringVector(&matches)
+        .match();
 
-    if (!matches.size()) throw std::runtime_error("[Decipherer] No function name found !");
+    if (matches.size() != 1) throw std::runtime_error("[Decipherer] No function name found !");
 
-    auto functionName = matches.str(0);
+    auto functionName = matches[0][0];
 
     return functionName;
 }
 
 std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOperations(const std::string &ytPlayerSourceCode, const YTClientMethod &obfuscatedDecipheringFunctionName) {
     // get the body of the function
-    std::smatch matches;
+    jp::VecNum matches;
+    jp::RegexMatch rm;
     auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
-    pcre2cppRE_search(ytPlayerSourceCode, matches, regex);
+    rm.setRegexObject(&regex)
+        .setSubject(&ytPlayerSourceCode)
+        .setNumberedSubstringVector(&matches)
+        .match();
 
-    if (!matches.size()) throw std::runtime_error("[Decipherer] No function body found !");
+    if (matches.size() != 1) throw std::runtime_error("[Decipherer] No function body found !");
 
     // calls
-    auto functionBody = matches.str(0);
+    auto functionBody = matches[0][0];
     auto javascriptFunctionCalls = AudioTube::splitString(functionBody, ';');
 
     return javascriptFunctionCalls;
@@ -104,12 +112,16 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
     std::set<std::string> uniqueOperations;
     for (const auto &call : javascriptDecipheringOperations) {
         // find function name in method call
-        std::smatch matches;
-        pcre2cppRE_search(call, matches, Regexes::Decipherer_findCalledFunction);
+        jp::VecNum matches;
+        jp::RegexMatch rm;
+        rm.setRegexObject(&Regexes::Decipherer_findCalledFunction)
+            .setSubject(&call)
+            .setNumberedSubstringVector(&matches)
+            .match();
 
-        if (!matches.size()) continue;
+        if (matches.size() != 1) continue;
 
-        auto calledFunctionName = matches.str(0);
+        auto calledFunctionName = matches[0][0];
 
         // add to set
         uniqueOperations.insert(calledFunctionName);
@@ -126,8 +138,13 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
             if (functionNamesByOperation.find(co) != functionNamesByOperation.end()) continue;
 
             // check with regex
-            std::smatch matches;
-            pcre2cppRE_search(ytPlayerSourceCode, matches, regex);
+            jp::VecNum matches;
+            jp::RegexMatch rm;
+            rm.setRegexObject(&regex)
+                .setSubject(&ytPlayerSourceCode)
+                .setNumberedSubstringVector(&matches)
+                .match();
+
             if (matches.size()) {
                 functionNamesByOperation.emplace(co, calledFunctionName);
                 break;  // found, break
@@ -144,21 +161,23 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
 
 AudioTube::SignatureDecipherer::YTDecipheringOperations AudioTube::SignatureDecipherer::_buildOperations(
         const std::unordered_map<CipherOperation, YTClientMethod> &functionNamesByOperation,
-        const std::vector<std::string> &javascriptOperations
-    ) {
-    YTDecipheringOperations operations;
-
+        const std::vector<std::string> &javascriptOperations) {
     // determine order and execution of subjacent methods
+    YTDecipheringOperations operations;
 
     // iterate
     for (const auto &call : javascriptOperations) {
         // find which function is called
-        std::smatch matches;
-        pcre2cppRE_search(call, matches, Regexes::Decipherer_findFuncAndArgument);
-        if (!matches.size()) continue;
+        jp::VecNum matches;
+        jp::RegexMatch rm;
+        rm.setRegexObject(&Regexes::Decipherer_findFuncAndArgument)
+                .setSubject(&call)
+                .setNumberedSubstringVector(&matches)
+                .match();
+        if (matches.size() != 1) continue;
 
-        auto calledFunctionName = matches.str(0);
-        auto arg = safe_stoi(matches.str(1));
+        auto calledFunctionName = matches[0][0];
+        auto arg = safe_stoi(matches[0][1]);
 
         // find associated operation type
         auto operationTypeFound = std::find_if(
