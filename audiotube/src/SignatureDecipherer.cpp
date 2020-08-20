@@ -71,7 +71,7 @@ AudioTube::SignatureDecipherer* AudioTube::SignatureDecipherer::fromCache(const 
 
 AudioTube::SignatureDecipherer::YTClientMethod AudioTube::SignatureDecipherer::_findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode) {
     std::smatch matches;
-    std::regex_search(ytPlayerSourceCode, matches, Regexes::Decipherer_findFunctionName);
+    pcre2cppRE_search(ytPlayerSourceCode, matches, Regexes::Decipherer_findFunctionName);
 
     if (!matches.size()) throw std::runtime_error("[Decipherer] No function name found !");
 
@@ -84,7 +84,7 @@ std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOpera
     // get the body of the function
     std::smatch matches;
     auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
-    std::regex_search(ytPlayerSourceCode, matches, regex);
+    pcre2cppRE_search(ytPlayerSourceCode, matches, regex);
 
     if (!matches.size()) throw std::runtime_error("[Decipherer] No function body found !");
 
@@ -105,7 +105,7 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
     for (const auto &call : javascriptDecipheringOperations) {
         // find function name in method call
         std::smatch matches;
-        std::regex_search(call, matches, Regexes::Decipherer_findCalledFunction);
+        pcre2cppRE_search(call, matches, Regexes::Decipherer_findCalledFunction);
 
         if (!matches.size()) continue;
 
@@ -127,7 +127,7 @@ std::unordered_map<AudioTube::CipherOperation, AudioTube::SignatureDecipherer::Y
 
             // check with regex
             std::smatch matches;
-            std::regex_search(ytPlayerSourceCode, matches, regex);
+            pcre2cppRE_search(ytPlayerSourceCode, matches, regex);
             if (matches.size()) {
                 functionNamesByOperation.emplace(co, calledFunctionName);
                 break;  // found, break
@@ -154,7 +154,7 @@ AudioTube::SignatureDecipherer::YTDecipheringOperations AudioTube::SignatureDeci
     for (const auto &call : javascriptOperations) {
         // find which function is called
         std::smatch matches;
-        std::regex_search(call, matches, Regexes::Decipherer_findFuncAndArgument);
+        pcre2cppRE_search(call, matches, Regexes::Decipherer_findFuncAndArgument);
         if (!matches.size()) continue;
 
         auto calledFunctionName = matches.str(0);

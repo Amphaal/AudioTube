@@ -51,7 +51,7 @@ AudioTube::VideoMetadata::VideoMetadata(const std::string &IdOrUrl, const Instan
         case InstantiationType::InstFromUrl: {
             // find id
             std::smatch idMatches;
-            std::regex_search(IdOrUrl, idMatches, Regexes::YoutubeIdFinder);
+            pcre2cppRE_search(IdOrUrl, idMatches, Regexes::YoutubeIdFinder);
 
             // returns
             if (idMatches.size() != 1) {

@@ -88,7 +88,7 @@ promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metada
 std::vector<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData) {
     // search...
     std::smatch foundIds;
-    std::regex_match(requestData, foundIds, Regexes::HTTPRequestYTVideoIdExtractor);
+    pcre2cppRE_match(requestData, foundIds, Regexes::HTTPRequestYTVideoIdExtractor);
 
     // check
     if (!foundIds.size()) throw std::logic_error("[DASH] No YT IDs found in HTTP request");
@@ -99,7 +99,7 @@ std::vector<std::string> AudioTube::NetworkFetcher::_extractVideoIdsFromHTTPRequ
         // search data parts
         auto idMatchStr = idMatch.str();
         std::smatch dataPartsMatch;
-        std::regex_search(idMatchStr, dataPartsMatch, Regexes::HTTPRequestYTVideoIdExtractor);
+        pcre2cppRE_search(idMatchStr, dataPartsMatch, Regexes::HTTPRequestYTVideoIdExtractor);
 
         // get video id
         auto videoId = dataPartsMatch.str(0);

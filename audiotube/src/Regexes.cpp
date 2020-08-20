@@ -14,19 +14,19 @@
 
 #include "Regexes.h"
 
-std::regex AudioTube::Regexes::Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
-    return std::regex { _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName) };
+pcre2cppRE AudioTube::Regexes::Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName) {
+    return pcre2cppRE { _Decipherer_generateRegex(_Decipherer_JSDecipheringOperations, obfuscatedDecipheringFunctionName) };
 }
 
 // Careful, order is important !
-std::map<AudioTube::CipherOperation, std::regex> AudioTube::Regexes::Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
-    std::map<CipherOperation, std::regex> out;
+std::map<AudioTube::CipherOperation, pcre2cppRE> AudioTube::Regexes::Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName) {
+    std::map<CipherOperation, pcre2cppRE> out;
     for (auto [co, regStrBase] : _cipherOperationRegexBase) {
         auto regexAsStr = _Decipherer_generateRegex(regStrBase, obfuscatedDecipheringFunctionName);
 
         out.emplace(
             co,
-            std::regex { regexAsStr }
+            pcre2cppRE { regexAsStr }
         );
     }
     return out;
@@ -34,7 +34,7 @@ std::map<AudioTube::CipherOperation, std::regex> AudioTube::Regexes::Decipherer_
 
 std::string AudioTube::Regexes::_Decipherer_generateRegex(std::string rawRegexAsString, const std::string &obfuscatedDecipheringFunctionName) {
     std::string toReplace = "%1";
-    auto escaped = escapeForRegex(obfuscatedDecipheringFunctionName);
+    auto escaped = pcre2cppRE::QuoteMeta(obfuscatedDecipheringFunctionName);
 
     // replace
     rawRegexAsString.replace(
@@ -45,9 +45,4 @@ std::string AudioTube::Regexes::_Decipherer_generateRegex(std::string rawRegexAs
 
     // as std::string
     return std::string { rawRegexAsString };
-}
-
-std::string AudioTube::Regexes::escapeForRegex(const std::string &input) {
-    // matches any characters that need to be escaped in RegEx
-    return std::regex_replace(input, _specialChars, R"(\$&)");
 }

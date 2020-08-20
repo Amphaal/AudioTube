@@ -16,7 +16,6 @@
 
 #include <string>
 #include <map>
-#include <regex>
 
 #include "CipherOperation.h"
 
@@ -25,57 +24,55 @@ namespace AudioTube {
 class Regexes {
  public:
     // 1# <itag>, 2# <codec>, 3# <bitrate>, 4# <url>
-    static inline std::regex DASHManifestExtractor {
+    static inline pcre2cppRE DASHManifestExtractor {
         R"|(<Representation id="(.*?)" codecs="(.*?)"[\s\S]*?bandwidth="(.*?)"[\s\S]*?<BaseURL>(.*?)<\/BaseURL)|"
     };
 
     // #1 <videoId>
-    static inline std::regex YoutubeIdFinder {
+    static inline pcre2cppRE YoutubeIdFinder {
         R"|((?:youtube\.com|youtu.be).*?(?:v=|embed\/)([\w\-]+))|"
     };
 
     // #1 <videoId>
-    static inline std::regex HTTPRequestYTVideoIdExtractor {
+    static inline pcre2cppRE HTTPRequestYTVideoIdExtractor {
         R"|(watch\?v=(.*?)&amp;)|"
     };
 
     // #1 <playerConfig>
-    static inline std::regex PlayerConfigExtractorFromEmbed {
+    static inline pcre2cppRE PlayerConfigExtractorFromEmbed {
         R"|(yt\.setConfig\(\{'PLAYER_CONFIG': (.*?)\}\);)|"
     };
 
     // #1 <playerConfig>
-    static inline std::regex PlayerConfigExtractorFromWatchPage {
+    static inline pcre2cppRE PlayerConfigExtractorFromWatchPage {
         R"|(ytplayer\.config = (.*?)\;ytplayer)|"
     };
 
     // #1 <sts>
-    static inline std::regex STSFinder {
+    static inline pcre2cppRE STSFinder {
         R"|(invalid namespace.*?;.*?=(\d+);)|"
     };
 
     // #1 <functionName>, #2 <arg>
-    static inline std::regex Decipherer_findFuncAndArgument {
+    static inline pcre2cppRE Decipherer_findFuncAndArgument {
         R"|(\.(\w+)\(\w+,(\d+)\))|"
     };
 
     // #1 <functionName>
-    static inline std::regex Decipherer_findFunctionName {
+    static inline pcre2cppRE Decipherer_findFunctionName {
         R"|((\w+)=function\(\w+\)\{(\w+)=\2\.split\(\x22{2}\);.*?return\s+\2\.join\(\x22{2}\)\})|"
     };
 
     // #1 <functionName>
-    static inline std::regex Decipherer_findCalledFunction {
+    static inline pcre2cppRE Decipherer_findCalledFunction {
         R"|(\w+\.(\w+)\()|"
     };
 
     // Careful, order is important !
-    static std::map<CipherOperation, std::regex> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName);
-    static std::regex Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
+    static std::map<CipherOperation, pcre2cppRE> Decipherer_DecipheringOps(const std::string &obfuscatedDecipheringFunctionName);
+    static pcre2cppRE Decipherer_findJSDecipheringOperations(const std::string &obfuscatedDecipheringFunctionName);
 
  private:
-    static inline std::regex _specialChars { R"|([-[\]{}()*+?.,\^$|#\s])|" };
-
     // #1 <functionBody>
     static constexpr auto _Decipherer_JSDecipheringOperations {
         R"|((?!h\.)%1=function\(\w+\)\{(.*?)\})|"
@@ -89,7 +86,6 @@ class Regexes {
     };
 
     static std::string _Decipherer_generateRegex(std::string rawRegexAsString, const std::string &obfuscatedDecipheringFunctionName);
-    static std::string escapeForRegex(const std::string &input);
 };
 
 }  // namespace AudioTube

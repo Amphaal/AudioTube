@@ -19,7 +19,7 @@ AudioTube::StreamsManifest::StreamsManifest() {}
 void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const SignatureDecipherer* decipherer) {
     // find streams
     std::smatch foundStreams;
-    std::regex_match(raw, foundStreams, Regexes::DASHManifestExtractor);
+    pcre2cppRE_match(raw, foundStreams, Regexes::DASHManifestExtractor);
 
     // check
     if (!foundStreams.size()) throw std::logic_error("[DASH] No stream found on manifest");
@@ -32,7 +32,7 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
         // search data parts
         auto streamRawStr = streamMatch.str();
         std::smatch streamDataMatch;
-        std::regex_search(streamRawStr, streamDataMatch, Regexes::DASHManifestExtractor);
+        pcre2cppRE_search(streamRawStr, streamDataMatch, Regexes::DASHManifestExtractor);
 
         // check
         if (streamDataMatch.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");

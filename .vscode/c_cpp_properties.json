@@ -19,7 +19,7 @@
                 "${workspaceFolder}/audiotube/spdlog/include",
                 "${workspaceFolder}/audiotube/promise-cpp",
                 "${workspaceFolder}/audiotube/nlohmann_json/single_include",
-                "${workspaceFolder}/audiotube/ct_regex/single-header",
+                "${workspaceFolder}/_genDebug/audiotube/pcre2",
                 "${workspaceFolder}/audiotube/asio/asio/include"
             ],
             "defines": [
