@@ -90,7 +90,7 @@ AudioTube::UrlQuery::UrlQuery(const std::string_view &query) {
             case FIND_VALUE: {
                 if (*currentChar != *"&") continue;
 
-                UrlQuery::SubQuery subq(valFindStart, (std::size_t)(currentChar - valFindStart));
+                UrlQuery::SubQuery subq(&*valFindStart, currentChar - valFindStart);  // &* to allow MSVC (https://github.com/abseil/abseil-cpp/issues/161)
                 this->_subqueries.emplace(currentKey, subq);
 
                 keyFindStart = currentChar + 1;
@@ -102,7 +102,7 @@ AudioTube::UrlQuery::UrlQuery(const std::string_view &query) {
 
     // end FIND_VALUE
     if (finderFunc == FIND_VALUE) {
-        UrlQuery::SubQuery subq(valFindStart, (std::size_t)(this->_wholeQuery.end() - valFindStart));
+        UrlQuery::SubQuery subq(&*valFindStart, this->_wholeQuery.end() - valFindStart);   // &* to allow MSVC (https://github.com/abseil/abseil-cpp/issues/161)
         this->_subqueries.emplace(currentKey, subq);
     }
 }
