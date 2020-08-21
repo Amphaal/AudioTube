@@ -30,18 +30,22 @@ namespace AudioTube {
 
 class SignatureDecipherer {
  public:
-    std::string decipher(const std::string &signature) const;
-    static SignatureDecipherer* create(const std::string &clientPlayerUrl, const std::string &rawPlayerSourceData);
-    static SignatureDecipherer* fromCache(const std::string &clientPlayerUrl);
-
- private:
     using Argument = int;
     using YTDecipheringOperations = std::queue<std::pair<CipherOperation, Argument>>;
     using YTClientMethod = std::string;
 
+    void printOperations() const;
+    std::string decipher(const std::string &signature) const;
+
+    static SignatureDecipherer* create(const std::string &clientPlayerUrl, const std::string &rawPlayerSourceData);
+    static SignatureDecipherer* fromCache(const std::string &clientPlayerUrl);
+
+    explicit SignatureDecipherer(const YTDecipheringOperations &operations);
+
+ private:
     explicit SignatureDecipherer(const std::string &rawPlayerSourceData);
 
-    std::queue<std::pair<CipherOperation, Argument>> _operations;
+    YTDecipheringOperations _operations;
     static inline std::unordered_map<std::string, SignatureDecipherer*> _cache;
 
     static YTClientMethod _findObfuscatedDecipheringFunctionName(const std::string &ytPlayerSourceCode);

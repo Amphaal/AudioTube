@@ -14,14 +14,24 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
+
 namespace AudioTube {
 
 // Careful, order is important !
-enum class CipherOperation {
+enum CipherOperation {
     CO_Unknown,
     Slice,
     Swap,
     Reverse
+};
+
+static inline std::vector<std::string> CipherOperation_str {
+    "CO_Unknown",
+    "Slice",
+    "Swap",
+    "Reverse"
 };
 
 }  // namespace AudioTube

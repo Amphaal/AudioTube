@@ -48,22 +48,40 @@ bool youtube_metadata_fetching_succeeded(const std::string &ytId) {
 // Test cases
 //
 
+TEST_CASE("Decipherer test", "[metadata]") {
+    std::string source =   "kOq0QJ8wRgIhAICjNBeVlp_19y5PthHrq2Vy4vkcVEUAgZwDLno0z6CGAiEAj7MmsGvh_nxApH_X3pFSPURqC3btePsjUYQLgaTAI88=88=";
+    std::string expected = "AOq0QJ8wRgIhAICjNBeVlp_19y5PthHrq2Vy4vkcVEUkgZwDLno0z6CGAiEAj7MmsGvh_nxApH_X3pFSPURqC3btePsjUYQLgaTAI88=";
+
+    AudioTube::SignatureDecipherer::YTDecipheringOperations operations;
+    operations.push({ AudioTube::CipherOperation::Reverse, 0 });
+    operations.push({ AudioTube::CipherOperation::Slice, 3 });
+    operations.push({ AudioTube::CipherOperation::Reverse, 0 });
+    operations.push({ AudioTube::CipherOperation::Swap, 43 });
+
+    auto cipherer = AudioTube::SignatureDecipherer(operations);
+    auto deciphered = cipherer.decipher(source);
+
+    spdlog::debug(deciphered);
+
+    REQUIRE(deciphered == expected);
+}
+
 // TEST_CASE("Unavailable video", "[metadata]") {
-//   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
+//     REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
 // }
 
 // TEST_CASE("OK from JSON Adaptative Stream - no deciphering", "[metadata]") {
-//   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
+//     REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
 // }
 
 // TEST_CASE("OK from Dash Manifest - no url deciphering", "[metadata]") {
-//   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
+//     REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));
 // }
 
 // TEST_CASE("Restricted viewing", "[metadata]") {
-//   REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
+//     REQUIRE(youtube_metadata_fetching_succeeded("dNv1ImIa1-4"));
 // }
 
 // TEST_CASE("Exact STS required", "[metadata]") {
-//   REQUIRE(youtube_metadata_fetching_succeeded("lkkHtuTdIj4"));
+//     REQUIRE(youtube_metadata_fetching_succeeded("lkkHtuTdIj4"));
 // }

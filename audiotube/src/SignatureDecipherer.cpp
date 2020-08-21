@@ -14,6 +14,47 @@
 
 #include "SignatureDecipherer.h"
 
+void AudioTube::SignatureDecipherer::printOperations() const {
+    auto copyOfOperations = this->_operations;
+    std::vector<std::string> listOfOps;
+
+    while(!copyOfOperations.empty()) {
+        auto [op, arg] = copyOfOperations.front();
+
+        switch (op) {
+            case CipherOperation::Reverse: {
+                listOfOps.push_back(CipherOperation_str[op]);
+            }
+            break;
+
+            case CipherOperation::Swap:
+            case CipherOperation::Slice: {
+                listOfOps.push_back(CipherOperation_str[op] + "(" + std::to_string(arg) + ")");
+            }
+            break;
+
+            default: {
+                throw std::logic_error("Unhandled operation !");
+            }
+            break;
+        }
+
+        copyOfOperations.pop();
+    }
+
+    // create output
+    std::string out;
+    for (const auto &piece : listOfOps) out += piece + ", ";
+    if(listOfOps.size()) out = out.substr(0, out.length() - 2);
+
+    spdlog::debug("Decipherer : Operations >> [{}]", out);
+}
+
+// for test purposes only !
+AudioTube::SignatureDecipherer::SignatureDecipherer(const YTDecipheringOperations &operations) {
+    this->_operations = operations;
+}
+
 std::string AudioTube::SignatureDecipherer::decipher(const std::string &signature) const {
     auto modifiedSignature = signature;
     auto copyOfOperations = this->_operations;
