@@ -49,25 +49,25 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
             throw std::logic_error("Player response is missing !");
         }
 
-        // check if is live
         auto videoDetails = playerResponse["videoDetails"];
-        auto isLiveStream = videoDetails["isLive"].get<bool>();
-        if (isLiveStream) {
-            throw std::logic_error("Live streams are not handled for now!");
-        }
 
         // check playability status
         auto playabilityStatus = playerResponse["playabilityStatus"];
         auto pStatus = playabilityStatus["status"].get<std::string>();
-        std::transform(pStatus.begin(), pStatus.end(), pStatus.begin(), [](unsigned char c){ return std::tolower(c); });
-        if (pStatus == "error") {
+        if (pStatus != "OK") {
             throw std::logic_error("This video is not available !");
         }
 
+        // check if is live
+        auto isLiveStream = videoDetails["isLiveContent"].get<bool>();
+        if (isLiveStream) {
+            throw std::logic_error("Live streams are not handled for now!");
+        }
+
         // check reason, throw soft error
-        auto pReason = playabilityStatus["reason"].get<std::string>();
-        if (!pReason.empty()) {
-            throw std::string("This video is not available though VideoInfo : ") + pReason;
+        auto pReason = playabilityStatus["reason"];
+        if (!pReason.is_null()) {
+            throw std::string("This video is not available though VideoInfo : ") + pReason.get<std::string>();
         }
 
         // get title and duration

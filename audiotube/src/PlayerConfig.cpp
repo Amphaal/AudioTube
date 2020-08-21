@@ -46,6 +46,7 @@ void AudioTube::PlayerConfig::fillFromVideoInfosDetails(const std::string &title
 }
 
 promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
+    spdlog::debug("PlayerConfig : Trying from [Embed]...");
     // pipeline
     return _downloadRaw_VideoEmbedPageHtml(videoId)
             .then([=](const DownloadedUtf8 &dl) {
@@ -55,6 +56,7 @@ promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::Video
 }
 
 promise::Defer AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
+    spdlog::debug("PlayerConfig : Trying from [WatchPage]...");
     // define requested at timestamp
     auto now = std::chrono::system_clock::to_time_t(
         std::chrono::system_clock::now()

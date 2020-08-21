@@ -80,7 +80,7 @@ AudioTube::UrlQuery::UrlQuery(const std::string_view &query) {
             case FIND_KEY: {
                 if (*currentChar != *"=") continue;
 
-                currentKey = std::string(keyFindStart, currentChar - 1);
+                currentKey = std::string(keyFindStart, currentChar);
 
                 valFindStart = currentChar + 1;
                 finderFunc = FIND_VALUE;
@@ -90,7 +90,7 @@ AudioTube::UrlQuery::UrlQuery(const std::string_view &query) {
             case FIND_VALUE: {
                 if (*currentChar != *"&") continue;
 
-                UrlQuery::SubQuery subq(valFindStart, currentChar - valFindStart - 1);
+                UrlQuery::SubQuery subq(valFindStart, currentChar - valFindStart);
                 this->_subqueries.emplace(currentKey, subq);
 
                 keyFindStart = currentChar + 1;

@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <ctime>
+#include <vector>
 
 #include <nlohmann/json.hpp>
 
@@ -39,6 +40,11 @@ class StreamsManifest : public NetworkHelper {
         PlayerResponse,
         PlayerConfig,
         DASH
+    };
+    std::vector<std::string> AudioStreamsSource_str {
+        "PlayerResponse",
+        "PlayerConfig",
+        "DASH"
     };
 
     using RawDASHManifest = std::string;

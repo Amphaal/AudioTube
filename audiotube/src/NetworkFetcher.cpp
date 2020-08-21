@@ -51,6 +51,14 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
         .fail([=](const std::logic_error &exception) {
             spdlog::warn("AudioTube : {}", exception.what());
             whenFailed();
+        })
+        .fail([=](const nlohmann::detail::exception &exception) {
+            spdlog::warn("AudioTube : {}", exception.what());
+            whenFailed();
+        })
+        .fail([=]() {
+            spdlog::warn("AudioTube : unhandled error :'(");
+            whenFailed();
         });
     });
 }

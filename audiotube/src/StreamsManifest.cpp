@@ -35,7 +35,7 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
     // iterate through streams
     for (auto &submatches : matches) {
         // check
-        if (submatches.size() != 4) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
+        if (submatches.size() != 5) throw std::logic_error("[DASH] Expected dataparts are missing from stream");
 
         // get parts
         auto itag = safe_stoi(submatches[1]);
@@ -49,6 +49,8 @@ void AudioTube::StreamsManifest::feedRaw_DASH(const RawDASHManifest &raw, const 
         // fill
         streams.emplace(bitrate, std::make_pair(itag, url));
     }
+
+    if(!streams.size()) return;
 
     // insert in package
     this->_package.emplace(AudioStreamsSource::DASH, streams);
@@ -99,6 +101,8 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
         streams.emplace(bitrate, std::make_pair(tag, url));
     }
 
+    if(!streams.size()) return;
+
     // insert in package
     this->_package.emplace(AudioStreamsSource::PlayerResponse, streams);
 }
@@ -136,8 +140,13 @@ std::pair<AudioTube::StreamsManifest::AudioStreamsSource, AudioTube::StreamsMani
 
 std::string AudioTube::StreamsManifest::preferedUrl() const {
     auto source = this->preferedStreamSource();
-    spdlog::debug("Picking stream URL from source : {}", source.first);
-    return source.second.end()->second.second;  // since bitrates are asc-ordered, take latest for fastest
+    spdlog::debug("Picking stream URL from source : [{}]", AudioStreamsSource_str[source.first]);
+
+    // since bitrates are asc-ordered, take latest for fastest
+    auto last = source.second.end();
+    last--;
+
+    return last->second.second;
 }
 
 bool AudioTube::StreamsManifest::isExpired() const {
@@ -152,10 +161,12 @@ bool AudioTube::StreamsManifest::isExpired() const {
 
 
 bool AudioTube::StreamsManifest::_isCodecAllowed(const std::string &codec) {
-    return codec.find("opus") > std::string::npos;
+    auto opusFound = codec.find("opus");
+    return !(opusFound == std::string::npos);
 }
 
 bool AudioTube::StreamsManifest::_isMimeAllowed(const std::string &mime) {
-    if (mime.find("audio") == std::string::npos) return false;
+    auto audioFound = mime.find("audio");
+    if (audioFound == std::string::npos) return false;
     return _isCodecAllowed(mime);
 }

@@ -58,7 +58,7 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
     request_stream << "Accept: */*\r\n";
     request_stream << "Connection: close\r\n\r\n";
 
-    spdlog::debug("HTTPSDownloader : Downloading from [{}]...", downloadUrl);
+    spdlog::debug("HTTPSDownloader : Downloading [{}]...", downloadUrl);
 
     // Send the request.
     asio::write(ssl_sock, request);
@@ -94,18 +94,21 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
 
     if(!headers.size()) throw std::logic_error("HTTPSDownloader : Response have no headers !");
 
-    // Write whatever content we already have to output.
+    // if not HEAD, read body message
     std::ostringstream output_stream;
-    if (response.size() > 0) {
-        output_stream << &response;
-    }
-    // Read until EOF, writing data to output as we go.
-    asio::error_code error;
-    while (asio::read(ssl_sock, response, asio::transfer_at_least(1), error)) {
-        output_stream << &response;
+    if(!head) {
+        // Write whatever content we already have to output.
+        if (response.size() > 0) {
+            output_stream << &response;
+        }
+        // Read until EOF, writing data to output as we go.
+        asio::error_code error;
+        while (asio::read(ssl_sock, response, asio::transfer_at_least(1), error)) {
+            output_stream << &response;
+        }
     }
 
-    spdlog::debug("HTTPSDownloader : Finished downloading [{}]", downloadUrl);
+    // spdlog::debug("HTTPSDownloader : Finished downloading [{}]", downloadUrl);
 
     AudioTube::NetworkHelper::Response outResponse {
         output_stream.str(),
@@ -113,7 +116,7 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
         hasContentLengthHeader
     };
 
-    spdlog::debug("HTTPSDownloader : Response length {}, headers {}", outResponse.messageBody.size(), outResponse.headers.size());
+    // spdlog::debug("HTTPSDownloader : Response length {}, headers {}", outResponse.messageBody.size(), outResponse.headers.size());
 
     return outResponse;
 }
