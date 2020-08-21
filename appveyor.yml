@@ -4,7 +4,7 @@ install:
     - cd %APPVEYOR_BUILD_FOLDER%
     - git submodule update --init --recursive
 build_script:
-    - cmake -GNinja -B_gen -H. -DBUILD_TESTING=1 -DCMAKE_TOOLCHAIN_FILE=toolchains/clang-ci-appveyor.cmake
+    - cmake -GNinja -B_gen -H. -DBUILD_TESTING=1 -DPCRE2_BUILD_TESTS=0 -DCMAKE_TOOLCHAIN_FILE=toolchains/clang-ci-appveyor.cmake
     - ninja -C _gen
 test_script:
     - cd _gen/tests
