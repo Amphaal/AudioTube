@@ -61,7 +61,6 @@ std::string AudioTube::SignatureDecipherer::decipher(const std::string &signatur
 
     while (!copyOfOperations.empty()) {
         auto operationPair = copyOfOperations.front();
-        copyOfOperations.pop();
 
         switch (operationPair.first) {
             case CipherOperation::Reverse: {
@@ -82,14 +81,17 @@ std::string AudioTube::SignatureDecipherer::decipher(const std::string &signatur
                 auto first = modifiedSignature[firstIndex];
                 auto second = modifiedSignature[secondIndex];
 
-                modifiedSignature.replace(firstIndex, 1, &second);
-                modifiedSignature.replace(secondIndex, 1, &first);
+                modifiedSignature[firstIndex] = second;
+                modifiedSignature[secondIndex] = first;
             }
             break;
 
             default:
                 break;
         }
+
+        // spdlog::debug(modifiedSignature);
+        copyOfOperations.pop();
     }
 
     return modifiedSignature;

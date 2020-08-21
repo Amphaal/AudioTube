@@ -53,6 +53,13 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
 
         // check playability status
         auto playabilityStatus = playerResponse["playabilityStatus"];
+
+        // check reason, throw soft error
+        auto pReason = playabilityStatus["reason"];
+        if (!pReason.is_null()) {
+            throw std::string("This video is not available though VideoInfo : ") + pReason.get<std::string>();
+        }
+
         auto pStatus = playabilityStatus["status"].get<std::string>();
         if (pStatus != "OK") {
             throw std::logic_error("This video is not available !");
@@ -62,12 +69,6 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         auto isLiveStream = videoDetails["isLiveContent"].get<bool>();
         if (isLiveStream) {
             throw std::logic_error("Live streams are not handled for now!");
-        }
-
-        // check reason, throw soft error
-        auto pReason = playabilityStatus["reason"];
-        if (!pReason.is_null()) {
-            throw std::string("This video is not available though VideoInfo : ") + pReason.get<std::string>();
         }
 
         // get title and duration
@@ -108,7 +109,10 @@ promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 
         manifest->feedRaw_PlayerResponse(raw_playerResponseStreams, playerConfig->decipherer());
 
         // DASH manifest handling
-        auto dashManifestUrl = streamingData["dashManifestUrl"].get<std::string>();
+        std::string dashManifestUrl;
+        auto dmu = streamingData["dashManifestUrl"];
+        if(!dmu.is_null()) dashManifestUrl = dmu.get<std::string>();
+
         d.resolve(dashManifestUrl);
     })
     .then([=](const std::string &dashManifestUrl){

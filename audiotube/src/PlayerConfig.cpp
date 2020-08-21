@@ -179,9 +179,9 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
 
         // fetch and check video infos
         auto videoDetails = playerResponse["videoDetails"];
-        this->_title = videoDetails["title"].get<std::string>();
-        this->_duration = safe_stoi(videoDetails["lengthSeconds"].get<std::string>());
-        auto isLive = videoDetails["isLive"].get<bool>();
+            this->_title = videoDetails["title"].get<std::string>();
+            this->_duration = safe_stoi(videoDetails["lengthSeconds"].get<std::string>());
+            auto isLive = videoDetails["isLiveContent"].get<bool>();
 
         if (isLive) throw std::logic_error("Live streams are not handled for now!");
         if (this->_title.empty()) throw std::logic_error("Video title cannot be found !");
@@ -189,9 +189,9 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
 
         // check playability status, throw err
         auto playabilityStatus = playerResponse["playabilityStatus"];
-        auto pReason = playabilityStatus["reason"].get<std::string>();
-        if (!pReason.empty()) {
-            throw std::logic_error("This video is not available though WatchPage : %1");
+        auto pReason = playabilityStatus["reason"];
+        if (!pReason.is_null()) {
+            throw std::logic_error("This video is not available though WatchPage : " + pReason.get<std::string>());
         }
 
         // get streamingData
@@ -214,15 +214,19 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         streamsManifest->setSecondsUntilExpiration((unsigned int)ei_cast);
 
         // raw stream infos
-        auto raw_playerConfigStreams = args["adaptive_fmts"].get<std::string>();
+        auto raw_playerConfigStreams = args["adaptive_fmts"];
         auto raw_playerResponseStreams = streamingData["adaptiveFormats"];
 
         // feed
-        streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams, this->_decipherer);
+        if (!raw_playerConfigStreams.is_null()) {
+            streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams.get<std::string>(), this->_decipherer);
+        }
         streamsManifest->feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
 
         // DASH manifest handling
-        auto dashManifestUrl = streamingData["dashManifestUrl"].get<std::string>();
+        std::string dashManifestUrl;
+        auto dmu = streamingData["dashManifestUrl"];
+        if(!dmu.is_null()) dashManifestUrl = dmu.get<std::string>();
 
         // Extract player source URL
         auto playerSourceUrl = _playerSourceUrl(playerConfig);

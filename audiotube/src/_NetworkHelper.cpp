@@ -58,7 +58,7 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
     request_stream << "Accept: */*\r\n";
     request_stream << "Connection: close\r\n\r\n";
 
-    spdlog::debug("HTTPSDownloader : Downloading [{}]...", downloadUrl);
+    if(!head) spdlog::debug("HTTPSDownloader : Downloading [{}]...", downloadUrl);
 
     // Send the request.
     asio::write(ssl_sock, request);

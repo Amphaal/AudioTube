@@ -99,7 +99,7 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
             );
         } else {
             url = url_JSON.get<std::string>();
-            spdlog::debug("PlayerResponse : Unciphered URL [{}]", url);
+            // spdlog::debug("PlayerResponse : Unciphered URL [{}]", url);
         }
 
         // add tag / url pair
@@ -124,7 +124,7 @@ std::string AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer
     // append
     out += std::string("&") + sigKey + "=" + signature;
 
-    spdlog::debug("PlayerResponse : Deciphered URL [{}]", out);
+    // spdlog::debug("PlayerResponse : Deciphered URL [{}]", out);
 
     return out;
 }
