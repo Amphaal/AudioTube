@@ -67,14 +67,20 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
     asio::streambuf response;
     asio::read_until(ssl_sock, response, "\r\n");
 
-    // Check that response is OK.
-    std::istream response_stream(&response);
-    std::string http_version;
-    response_stream >> http_version;
-    unsigned int status_code;
-    response_stream >> status_code;
-    std::string status_message;
-    std::getline(response_stream, status_message);
+        // Check that response is OK.
+        std::istream response_stream(&response);
+
+        // HTTP VERSION
+        std::string http_version;
+        response_stream >> http_version;
+
+        // STATUS CODE
+        unsigned int status_code;
+        response_stream >> status_code;
+
+        // STATUS MESSAGE
+        std::string status_message;
+        std::getline(response_stream, status_message);
 
     // Read the response headers, which are terminated by a blank line.
     asio::read_until(ssl_sock, response, "\r\n\r\n");
@@ -113,7 +119,8 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
     AudioTube::NetworkHelper::Response outResponse {
         output_stream.str(),
         headers,
-        hasContentLengthHeader
+        hasContentLengthHeader,
+        status_code
     };
 
     // spdlog::debug("HTTPSDownloader : Response length {}, headers {}", outResponse.messageBody.size(), outResponse.headers.size());

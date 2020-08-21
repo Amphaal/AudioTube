@@ -130,7 +130,11 @@ std::vector<AudioTube::UrlQuery> AudioTube::UrlQuery::subqueries() const {
 }
 
 std::string AudioTube::UrlQuery::percentDecoded() const {
-    return AudioTube::Url::decode(std::string{this->_wholeQuery});
+    return AudioTube::Url::decode(this->undecoded());
+}
+
+std::string AudioTube::UrlQuery::undecoded() const {
+    return std::string { this->_wholeQuery };
 }
 
 std::string AudioTube::Url::decode(const std::string & sSrc) {

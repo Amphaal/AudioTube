@@ -52,9 +52,9 @@ bool youtube_metadata_fetching_succeeded(const std::string &ytId) {
 //   REQUIRE_FALSE(youtube_metadata_fetching_succeeded("MnoajJelaAo"));
 // }
 
-TEST_CASE("OK from JSON Adaptative Stream - no deciphering", "[metadata]") {
-  REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
-}
+// TEST_CASE("OK from JSON Adaptative Stream - no deciphering", "[metadata]") {
+//   REQUIRE(youtube_metadata_fetching_succeeded("-Q5Y037vIyc"));
+// }
 
 // TEST_CASE("OK from Dash Manifest - no url deciphering", "[metadata]") {
 //   REQUIRE(youtube_metadata_fetching_succeeded("qyYFF3Eh6lw"));

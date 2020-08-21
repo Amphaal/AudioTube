@@ -39,6 +39,7 @@ class NetworkHelper {
         std::string messageBody;
         std::vector<std::string> headers;
         bool hasContentLengthHeader = false;
+        unsigned int statusCode = 0;
     };
     using DownloadedUtf8 = std::string;
     static promise::Defer promise_dl_HTTPS(const std::string &downloadUrl, bool head = false);

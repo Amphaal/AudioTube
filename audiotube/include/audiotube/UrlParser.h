@@ -51,6 +51,7 @@ class UrlQuery {
 
     std::vector<UrlQuery> subqueries() const;
     std::string percentDecoded() const;
+    std::string undecoded() const;
 
  private:
     std::map<UrlQuery::Key, UrlQuery::SubQuery> _subqueries;

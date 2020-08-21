@@ -70,18 +70,20 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
         if (!_isMimeAllowed(mimeType)) continue;
 
         // find itag + url
-        auto bitrate = itagGroup["bitrate"].get<double>();
-        auto url = itagGroup["url"].get<std::string>();
         auto tag = itagGroup["itag"].get<int>();
+        auto bitrate = itagGroup["bitrate"].get<double>();
+        std::string url;
+        auto url_JSON = itagGroup["url"];
 
         // decipher if no url
-        if (url.empty()) {
+        if (url_JSON.is_null()) {
             // find cipher
-            auto cipherRaw = itagGroup["cipher"].get<std::string>();
-            if (cipherRaw.empty()) cipherRaw = itagGroup["signatureCipher"].get<std::string>();
-            if (cipherRaw.empty()) throw std::logic_error("Cipher data cannot be found !");
+            auto cipherRaw = itagGroup["cipher"];
+            if (cipherRaw.is_null()) cipherRaw = itagGroup["signatureCipher"];
+            if (cipherRaw.is_null()) throw std::logic_error("Cipher data cannot be found !");
 
-            UrlQuery cipher(cipherRaw);
+            auto cipherRawStr = cipherRaw.get<std::string>();
+            UrlQuery cipher(cipherRawStr);
 
             // find params
             auto cipheredUrl = cipher["url"].percentDecoded();
@@ -95,6 +97,9 @@ void AudioTube::StreamsManifest::feedRaw_PlayerResponse(const RawPlayerResponseS
                 signature,
                 signatureParameter
             );
+        } else {
+            url = url_JSON.get<std::string>();
+            spdlog::debug("PlayerResponse : Unciphered URL [{}]", url);
         }
 
         // add tag / url pair
@@ -118,6 +123,8 @@ std::string AudioTube::StreamsManifest::_decipheredUrl(const SignatureDecipherer
 
     // append
     out += std::string("&") + sigKey + "=" + signature;
+
+    spdlog::debug("PlayerResponse : Deciphered URL [{}]", out);
 
     return out;
 }

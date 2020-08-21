@@ -66,7 +66,7 @@ promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefre
 bool AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck) {
     auto bestUrl = toCheck->audioStreams()->preferedUrl();
     auto response = AudioTube::NetworkHelper::downloadHTTPS(bestUrl, true);  // download HEAD
-    return response.hasContentLengthHeader;
+    return response.hasContentLengthHeader && response.statusCode == 200;
 }
 
 promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
