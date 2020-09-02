@@ -153,7 +153,10 @@ std::string AudioTube::StreamsManifest::preferedUrl() const {
     auto last = source.second.end();
     last--;
 
-    return last->second.second;
+    auto url = last->second.second;
+    // spdlog::debug(url);
+
+    return url;
 }
 
 bool AudioTube::StreamsManifest::isExpired() const {
