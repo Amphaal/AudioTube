@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <winsock2.h>  // put winsock2.h here since spdlog calls windows.h
+#include <spdlog/spdlog.h>
+
 #include <string>
 #include <vector>
 
@@ -23,8 +26,6 @@
 #include <asio/ssl/context.hpp>
 #include <asio/ssl/stream.hpp>
 #include <asio/ssl/rfc2818_verification.hpp>
-
-#include <spdlog/spdlog.h>
 
 #include "UrlParser.h"
 
