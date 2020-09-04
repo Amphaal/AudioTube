@@ -59,6 +59,7 @@ target_link_libraries(audiotube PUBLIC spdlog)
 find_package(OpenSSL REQUIRED)
 
 add_library(asio INTERFACE)
+target_compile_definitions(asio INTERFACE WIN32_LEAN_AND_MEAN) # prevents <winsock2.h> warnings
 target_include_directories(asio INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/asio/asio/include")
 target_link_libraries(asio INTERFACE OpenSSL::Crypto OpenSSL::SSL)
 target_link_libraries(asio INTERFACE ws2_32 mswsock)

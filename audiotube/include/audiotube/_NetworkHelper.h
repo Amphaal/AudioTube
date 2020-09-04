@@ -15,6 +15,7 @@
 #pragma once
 
 #ifdef _WIN32
+    #include <windows.h>
     #include <winsock2.h>  // put winsock2.h here since spdlog.h calls windows.h
 #endif
 #include <spdlog/spdlog.h>
