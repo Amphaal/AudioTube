@@ -132,6 +132,7 @@ std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOpera
     // get the body of the function
     jp::VecNum matches;
     jp::RegexMatch rm;
+
     auto regex = Regexes::Decipherer_findJSDecipheringOperations(obfuscatedDecipheringFunctionName);
     rm.setRegexObject(&regex)
         .setSubject(&ytPlayerSourceCode)
@@ -139,10 +140,10 @@ std::vector<std::string> AudioTube::SignatureDecipherer::_findJSDecipheringOpera
         .setNumberedSubstringVector(&matches)
         .match();
 
-    if (matches.size() != 1) throw std::runtime_error("[Decipherer] No function body found !");
+    if (matches.size() == 0) throw std::runtime_error("[Decipherer] No function body found !");
 
     // calls
-    auto functionBody = matches[0][1];
+    auto functionBody = matches[0][1];  // take first
     auto javascriptFunctionCalls = AudioTube::splitString(functionBody, ';');
 
     return javascriptFunctionCalls;

@@ -84,7 +84,7 @@ class Regexes {
 
     // #1 <functionBody>
     static constexpr auto _Decipherer_JSDecipheringOperations {
-        R"|((?!h\.)%1=function\(\w+\)\{(.*?)\})|"
+        R"|(%1=function\(\w+\)\{(.*?)\})|"
     };
 
     // Careful, order is important !
