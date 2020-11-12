@@ -89,12 +89,22 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
     std::string headerTmp;
     std::vector<std::string> headers;
     bool hasContentLengthHeader = false;
+    std::string redirectUrl;
 
-    // iterate
+    // iterate to get headers
     while (std::getline(response_stream, headerTmp) && headerTmp != "\r") {
         headers.push_back(headerTmp);
+
+        //
         if (!hasContentLengthHeader) {
             hasContentLengthHeader = headerTmp.find("Content-Length") != std::string::npos;
+        }
+
+        // find redirection url
+        if(status_code == 302 && redirectUrl.empty()) {
+            auto found = headerTmp.find(LocationTag);
+            if(found == std::string::npos) continue;
+            redirectUrl = headerTmp.substr(found + LocationTag.size());
         }
     }
 
@@ -120,7 +130,8 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
         output_stream.str(),
         headers,
         hasContentLengthHeader,
-        status_code
+        status_code,
+        redirectUrl
     };
 
     // spdlog::debug("HTTPSDownloader : Response length {}, headers {}", outResponse.messageBody.size(), outResponse.headers.size());

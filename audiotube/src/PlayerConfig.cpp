@@ -82,25 +82,36 @@ promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerC
 }
 
 
-nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const jp::Regex &regex) {
+nlohmann::json AudioTube::PlayerConfig::_extractPlayerConfigFromRawSource(const DownloadedUtf8 &rawSource, const jp::Regex &regexToJSONStart) {
     // search
     jp::VecNum matches;
     jp::RegexMatch rm;
-    rm.setRegexObject(&regex)
+    rm.setRegexObject(&regexToJSONStart)
         .setSubject(&rawSource)
         .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
-    if (matches.size() != 1) throw std::logic_error("Failed to extract Player Configuration from raw source");
+    // check if first part is there
+    if (matches.size() != 1)
+        throw std::logic_error("Failed to extract Player Configuration from raw source");
+    auto firstPart = matches[0][1];
 
-    // get player config
-    auto playerConfigAsStr = matches[0][1];
-    auto playerConfig = nlohmann::json::parse(playerConfigAsStr);
+    // get the first result of the rest
+    rm.setRegexObject(&Regexes::BalancedBraces)
+        .setSubject(&firstPart)
+        .match();
 
-    // check config exists
-    if (playerConfigAsStr.empty() || playerConfig.is_null()) {
+    // get player config as string
+    auto &playerConfigAsStr = matches[0][0];
+    if (playerConfigAsStr.empty()) {
         throw std::logic_error("Player response is missing !");
+    }
+
+    // try to parse
+    auto playerConfig = nlohmann::json::parse(playerConfigAsStr);
+    if (playerConfig.is_null()) {
+        throw std::logic_error("Cannot parse to JSON the Player Configuration !");
     }
 
     return playerConfig;
@@ -110,6 +121,24 @@ std::string AudioTube::PlayerConfig::_playerSourceUrl(const nlohmann::json &play
     auto playerSourceUrlPath = playerConfig["assets"]["js"].get<std::string>();
     if (playerSourceUrlPath.empty()) throw std::logic_error("Player source URL is cannot be found !");
     return std::string("https://www.youtube.com") + playerSourceUrlPath;
+}
+
+std::string AudioTube::PlayerConfig::_extractPlayerSourceURLFromRawSource(const DownloadedUtf8 &rawSource) {
+    // search
+    jp::VecNum matches;
+    jp::RegexMatch rm;
+    rm.setRegexObject(&Regexes::PlayerConfigurationURLQuery)
+        .setSubject(&rawSource)
+        .addModifier("gm")
+        .setNumberedSubstringVector(&matches)
+        .match();
+
+    // check if first part is there
+    if (matches.size() != 1)
+        throw std::logic_error("Failed to extract PlayerSourceURL from raw source");
+
+    // returns
+    return std::string("https://www.youtube.com") + matches[0][1];
 }
 
 promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const std::string &playerSourceUrl) {
@@ -149,16 +178,11 @@ promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const 
 }
 
 promise::Defer AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
-    return promise::newPromise([=](promise::Defer d) {
-        auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromEmbed);
-
-        // player source
-        auto playerSourceUrl = _playerSourceUrl(playerConfig);
-        d.resolve(playerSourceUrl);
+    std::string playerSourceURL;
+    return promise::newPromise([&playerSourceURL, dl](promise::Defer d) {
+        playerSourceURL = _extractPlayerSourceURLFromRawSource(dl);
     })
-    .then([=](const std::string &playerSourceUrl){
-        return this->_downloadAndfillFrom_PlayerSource(playerSourceUrl);
-    })
+    .then(this->_downloadAndfillFrom_PlayerSource(playerSourceURL))
     .then([=]() {
         return *this;
     });
@@ -167,7 +191,7 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const Downl
 promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
     return promise::newPromise([=](promise::Defer d) {
         // get player config JSON
-        auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromWatchPage);
+        auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromWatchPage_JSONStart);
 
         // Get player response JSON
         auto args = playerConfig["args"];
@@ -229,7 +253,7 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         if(!dmu.is_null()) dashManifestUrl = dmu.get<std::string>();
 
         // Extract player source URL
-        auto playerSourceUrl = _playerSourceUrl(playerConfig);
+        auto playerSourceUrl = _extractPlayerSourceURLFromRawSource(dl);
 
         d.resolve(playerSourceUrl, dashManifestUrl);
     })
@@ -259,7 +283,10 @@ std::string AudioTube::PlayerConfig::_getSts(const DownloadedUtf8 &dl) {
         .setNumberedSubstringVector(&matches)
         .match();
 
-    if (!matches.size()) throw std::logic_error("STS value cannot be found !");
+    // check if has STS
+    if (!matches.size())
+        throw std::logic_error("STS value cannot be found !");
 
-    return matches[0][1];
+    // returns first one
+    return matches[0][0];
 }

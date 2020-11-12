@@ -44,19 +44,27 @@ class Regexes {
         R"|(watch\?v=(.*?)&amp;)|"
     };
 
-    // #1 <playerConfig>
-    static inline jp::Regex PlayerConfigExtractorFromEmbed {
-        R"|(yt\.setConfig\({.*'PLAYER_CONFIG': (.*?)}\);)|"
+    // https://stackoverflow.com/questions/546433/regular-expression-to-match-balanced-parentheses
+    static inline jp::Regex BalancedBraces {
+        R"|(\{(?:[^}{]*(?R)?)*+\})|"
+    };
+
+    static inline jp::Regex PlayerConfigurationURLQuery {
+        R"|(<script\s+src="(.*?js)".*?name="player_ias\/base)|"
+    };
+
+    static inline jp::Regex PlayerConfigExtractorFromEmbed_JSONStart {
+        R"|(['""]PLAYER_CONFIG['""]\s*:\s*(.*))|"
     };
 
     // #1 <playerConfig>
-    static inline jp::Regex PlayerConfigExtractorFromWatchPage {
+    static inline jp::Regex PlayerConfigExtractorFromWatchPage_JSONStart {
         R"|(ytplayer\.config = (.*?)\;ytplayer)|"
     };
 
     // #1 <sts>
     static inline jp::Regex STSFinder {
-        R"|(\("STS",void 0\):(\d*?);)|"
+        R"|((?<=signatureTimestamp[=\:])\d+)|"
     };
 
     // #1 <functionName>, #2 <arg>
