@@ -50,7 +50,7 @@ add_library(spdlog INTERFACE)
 target_include_directories(spdlog INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/spdlog/include")
 
 #link
-target_link_libraries(audiotube PUBLIC spdlog)
+target_link_libraries(audiotube PUBLIC spdlog pthread)
 
 ###########################
 ## Deps : asio + OpenSSL ##
