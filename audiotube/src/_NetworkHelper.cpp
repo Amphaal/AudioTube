@@ -124,7 +124,7 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
         }
     }
 
-    // spdlog::debug("HTTPSDownloader : Finished downloading [{}]", downloadUrl);
+    spdlog::debug("HTTPSDownloader : Finished downloading [{}]", downloadUrl);
 
     AudioTube::NetworkHelper::Response outResponse {
         output_stream.str(),
@@ -134,7 +134,7 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
         redirectUrl
     };
 
-    // spdlog::debug("HTTPSDownloader : Response length {}, headers {}", outResponse.messageBody.size(), outResponse.headers.size());
+    spdlog::debug("HTTPSDownloader : Response length {}, headers {}", outResponse.messageBody.size(), outResponse.headers.size());
 
     return outResponse;
 }

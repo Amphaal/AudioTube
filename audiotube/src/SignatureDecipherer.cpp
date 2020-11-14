@@ -90,7 +90,7 @@ std::string AudioTube::SignatureDecipherer::decipher(const std::string &signatur
                 break;
         }
 
-        // spdlog::debug(modifiedSignature);
+        spdlog::debug(modifiedSignature);
         copyOfOperations.pop();
     }
 
