@@ -16,6 +16,30 @@ project(AudioTube
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+###################
+## Deps : spdlog ##
+###################
+
+if(NOT TARGET spdlog::spdlog)
+    #try to find it in packages
+    find_package(spdlog)
+
+    # if not found, then fetch it from source !
+    if(NOT spdlog_FOUND)
+        message("Including [spdlog] !")
+            Include(FetchContent)
+            FetchContent_Declare(spdlog
+                GIT_REPOSITORY "https://github.com/gabime/spdlog"
+                GIT_TAG "v1.x"
+            )
+            FetchContent_MakeAvailable(spdlog)
+    endif()
+endif()
+
+##
+##
+##
+
 add_subdirectory(audiotube)
 
 #dont build tests if included as submodule

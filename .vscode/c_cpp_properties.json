@@ -26,7 +26,8 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "SPDLOG_FMT_EXTERNAL"
             ],
             "compilerPath": "C:/msys64/mingw64/bin/clang++.exe",
             "cStandard": "c11",

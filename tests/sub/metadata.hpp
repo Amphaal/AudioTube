@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <spdlog/spdlog.h>
+
 #include <audiotube/VideoMetadata.h>
 #include <audiotube/NetworkFetcher.h>
 

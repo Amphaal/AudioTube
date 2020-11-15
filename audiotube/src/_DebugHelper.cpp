@@ -12,6 +12,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
+#include <spdlog/spdlog.h>
+
 #include "_DebugHelper.h"
 
 void AudioTube::DebugHelper::_dumpAsJSON(const UrlQuery &query) {

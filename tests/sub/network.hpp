@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <string>
-
 #include <audiotube/_NetworkHelper.h>
+
+#include <string>
 
 #include <catch2/catch.hpp>
 

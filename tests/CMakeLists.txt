@@ -1,6 +1,6 @@
 # fetch
 if(NOT TARGET Catch2::Catch2)
-    message("Including Catch2 !")
+    message("Including [Catch2] !")
     Include(FetchContent)
 
     FetchContent_Declare(Catch2
@@ -19,6 +19,7 @@ add_executable(audiotube_tests tests.cpp)
 target_link_libraries(audiotube_tests
     audiotube
     Catch2::Catch2
+    spdlog::spdlog
 )
 
 #tests handling

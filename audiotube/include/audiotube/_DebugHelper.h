@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <spdlog/spdlog.h>
-
 #include <string>
 #include <fstream>
 #include <filesystem>

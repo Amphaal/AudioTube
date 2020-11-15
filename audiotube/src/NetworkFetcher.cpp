@@ -12,6 +12,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
+#include <spdlog/spdlog.h>
+
 #include "NetworkFetcher.h"
 
 promise::Defer AudioTube::NetworkFetcher::fromPlaylistUrl(const std::string &url) {
