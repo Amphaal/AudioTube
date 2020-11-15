@@ -36,7 +36,7 @@ target_sources(audiotube PRIVATE
 ## Deps : promise-cpp ##
 ########################
 
-add_library(promise-cpp INTERFACE IMPORTED)
+add_library(promise-cpp INTERFACE)
 target_include_directories(promise-cpp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/promise-cpp")
 
 #link
