@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <promise.hpp>
+#include <promise/allocator.hpp>
 
 #include <asio.hpp>
 #include <asio/ssl/context.hpp>
