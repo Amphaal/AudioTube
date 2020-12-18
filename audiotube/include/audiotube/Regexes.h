@@ -50,7 +50,7 @@ class Regexes {
     };
 
     static inline jp::Regex PlayerConfigurationURLQuery {
-        R"|(<script\s+src="(.*?js)".*?name="player_ias\/base)|"
+        R"|(<script\s+src="(.*?player_ias.*?\.js)")|"
     };
 
     static inline jp::Regex PlayerConfigExtractorFromEmbed_JSONStart {
