@@ -195,16 +195,8 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         // get player config JSON
         auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromWatchPage_JSONStart);
 
-        // Get player response JSON
-        auto args = playerConfig["args"];
-        auto playerResponseAsStr = args["player_response"].get<std::string>();
-        auto playerResponse = nlohmann::json::parse(playerResponseAsStr);
-        if (playerResponseAsStr.empty() || playerResponse.is_null()) {
-            throw std::logic_error("Player response is missing !");
-        }
-
         // fetch and check video infos
-        auto videoDetails = playerResponse["videoDetails"];
+        auto videoDetails = playerConfig["videoDetails"];
             this->_title = videoDetails["title"].get<std::string>();
             this->_duration = safe_stoi(videoDetails["lengthSeconds"].get<std::string>());
             auto isLive = videoDetails["isLiveContent"].get<bool>();
@@ -214,14 +206,14 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         if (!this->_duration) throw std::logic_error("Video length cannot be found !");
 
         // check playability status, throw err
-        auto playabilityStatus = playerResponse["playabilityStatus"];
+        auto playabilityStatus = playerConfig["playabilityStatus"];
         auto pReason = playabilityStatus["reason"];
         if (!pReason.is_null()) {
             throw std::logic_error("This video is not available though WatchPage : " + pReason.get<std::string>());
         }
 
         // get streamingData
-        auto streamingData = playerResponse["streamingData"];
+        auto streamingData = playerConfig["streamingData"];
         if (streamingData.is_null()) {
             throw std::logic_error("An error occured while fetching video infos");
         }
@@ -240,13 +232,7 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const Downloaded
         streamsManifest->setSecondsUntilExpiration((unsigned int)ei_cast);
 
         // raw stream infos
-        auto raw_playerConfigStreams = args["adaptive_fmts"];
         auto raw_playerResponseStreams = streamingData["adaptiveFormats"];
-
-        // feed
-        if (!raw_playerConfigStreams.is_null()) {
-            streamsManifest->feedRaw_PlayerConfig(raw_playerConfigStreams.get<std::string>(), this->_decipherer);
-        }
         streamsManifest->feedRaw_PlayerResponse(raw_playerResponseStreams, this->_decipherer);
 
         // DASH manifest handling

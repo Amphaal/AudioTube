@@ -59,7 +59,7 @@ class Regexes {
 
     // #1 <playerConfig>
     static inline jp::Regex PlayerConfigExtractorFromWatchPage_JSONStart {
-        R"|(ytplayer\.config = (.*?)\;ytplayer)|"
+        R"|(var\s+ytInitialPlayerResponse\s*=\s*(\{.*\}))|"
     };
 
     // #1 <sts>
