@@ -80,7 +80,7 @@ target_link_libraries(audiotube PUBLIC nlohmann_json)
 
 SET(PCRE2_BUILD_PCRE2GREP OFF CACHE BOOL "" FORCE)
 SET(PCRE2_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory(pcre2)
+add_subdirectory(pcre2 EXCLUDE_FROM_ALL)
 target_include_directories(pcre2-8 INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/pcre2")
 
 add_library(jpcre2 INTERFACE)
