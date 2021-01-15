@@ -12,6 +12,8 @@ project(AudioTube
     LANGUAGES CXX
 )
 
+option(AUDIOTUBE_SHARED "Generate ${PROJECT_VERSION} as a shared library" OFF)
+
 #cpp standards
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)

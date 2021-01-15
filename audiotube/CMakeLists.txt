@@ -1,5 +1,11 @@
+#determine lib type
+SET(AUDIOTUBE_LIB_TYPE STATIC)
+if(AUDIOTUBE_SHARED)
+    SET(AUDIOTUBE_LIB_TYPE SHARED)
+endif()
+
 #create as static lib
-add_library(audiotube STATIC)
+add_library(audiotube ${AUDIOTUBE_LIB_TYPE})
 
 target_include_directories(audiotube
     PRIVATE include/audiotube
