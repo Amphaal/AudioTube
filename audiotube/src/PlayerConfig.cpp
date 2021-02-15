@@ -126,21 +126,29 @@ std::string AudioTube::PlayerConfig::_playerSourceUrl(const nlohmann::json &play
 }
 
 std::string AudioTube::PlayerConfig::_extractPlayerSourceURLFromRawSource(const DownloadedUtf8 &rawSource) {
-    // search
+    // search for <script> tags
     jp::VecNum matches;
+    
     jp::RegexMatch rm;
-    rm.setRegexObject(&Regexes::PlayerConfigurationURLQuery)
+    rm.setRegexObject(&Regexes::FindScriptSrc)
         .setSubject(&rawSource)
         .addModifier("gm")
         .setNumberedSubstringVector(&matches)
         .match();
 
-    // check if first part is there
-    if (matches.size() != 1)
-        throw std::logic_error("Failed to extract PlayerSourceURL from raw source");
+    for(auto &src : matches) {
+        // check if contains keyword
+        auto &grpMatch = src[1];
+        if(grpMatch.find("player_ias") == std::string::npos) continue;
 
-    // returns
-    return std::string("https://www.youtube.com") + matches[0][1];
+        spdlog::debug(grpMatch);
+
+        // returns
+        return std::string("https://www.youtube.com") + grpMatch;
+    }
+
+    // if not found in regex
+    throw std::logic_error("Failed to extract PlayerSourceURL from raw source");
 }
 
 promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const std::string &playerSourceUrl) {

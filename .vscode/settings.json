@@ -110,6 +110,7 @@
         "valarray": "cpp",
         "*.ipp": "cpp",
         "charconv": "cpp",
-        "semaphore": "cpp"
+        "semaphore": "cpp",
+        "cfenv": "cpp"
     }
 }

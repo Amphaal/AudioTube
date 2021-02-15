@@ -49,8 +49,8 @@ class Regexes {
         R"|(\{(?:[^}{]*(?R)?)*+\})|"
     };
 
-    static inline jp::Regex PlayerConfigurationURLQuery {
-        R"|(<script\s+src="(.*?player_ias.*?\.js)")|"
+    static inline jp::Regex FindScriptSrc {
+        R"|(<script.*?src="(.*?)".*?>)|"
     };
 
     static inline jp::Regex PlayerConfigExtractorFromEmbed_JSONStart {
