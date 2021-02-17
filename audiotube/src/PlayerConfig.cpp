@@ -141,8 +141,6 @@ std::string AudioTube::PlayerConfig::_extractPlayerSourceURLFromRawSource(const 
         auto &grpMatch = src[1];
         if(grpMatch.find("player_ias") == std::string::npos) continue;
 
-        spdlog::debug(grpMatch);
-
         // returns
         return std::string("https://www.youtube.com") + grpMatch;
     }
