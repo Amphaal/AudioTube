@@ -18,7 +18,6 @@
 #include <map>
 #include <regex>
 
-#define PCRE2_STATIC
 #include "jpcre2.hpp"
 
 #include "CipherOperation.h"
