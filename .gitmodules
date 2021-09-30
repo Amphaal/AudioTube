@@ -12,4 +12,4 @@
 	url = https://github.com/jpcre2/jpcre2
 [submodule "audiotube/promise-cpp"]
 	path = audiotube/promise-cpp
-	url = https://github.com/Amphaal/promise-cpp
+	url = https://github.com/xhawk18/promise-cpp
