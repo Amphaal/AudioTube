@@ -1,5 +1,5 @@
 {
-    "terminal.integrated.shell.windows": "C:/msys64/usr/bin/bash.exe",
+    "terminal.integrated.shell.windows": "${env:MINGW64_ROOT}\\..\\usr\\bin\\bash.exe",
     "terminal.integrated.shellArgs.windows": ["--login", "-i"],
     "terminal.integrated.env.windows": {
         "MSYSTEM": "MINGW64",

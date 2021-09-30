@@ -4,9 +4,9 @@
             "name": "Win32",
             "browse": {
                 "path": [
-                    "C:/msys64/mingw64/include/c++",
-                    "C:/msys64/mingw64/include",
-                    "C:/msys64/mingw64/lib"
+                    "${env:MINGW64_ROOT}/include/c++",
+                    "${env:MINGW64_ROOT}/include",
+                    "${env:MINGW64_ROOT}/lib"
                 ],
                 "limitSymbolsToIncludedHeaders": true
             },
@@ -27,7 +27,7 @@
                 "_UNICODE",
                 "SPDLOG_FMT_EXTERNAL"
             ],
-            "compilerPath": "C:/msys64/mingw64/bin/clang++.exe",
+            "compilerPath": "${env:MINGW64_ROOT}/bin/clang++.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "clang-x64"
