@@ -24,7 +24,7 @@ SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT TARGET spdlog::spdlog)
     #try to find it in packages
-    find_package(spdlog)
+    find_package(spdlog QUIET)
 
     # if not found, then fetch it from source !
     if(NOT spdlog_FOUND)
