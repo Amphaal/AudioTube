@@ -189,6 +189,7 @@ promise::Promise AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const Dow
     std::string playerSourceURL;
     return promise::newPromise([&playerSourceURL, dl](promise::Defer d) {
         playerSourceURL = _extractPlayerSourceURLFromRawSource(dl);
+        d.resolve();
     })
     .then(this->_downloadAndfillFrom_PlayerSource(playerSourceURL))
     .then([=]() {

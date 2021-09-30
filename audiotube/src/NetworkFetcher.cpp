@@ -31,7 +31,7 @@ promise::Promise AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRef
     toRefresh->OnMetadataFetching();
 
     // workflow...
-    return promise::newPromise([=](promise::Defer d){
+    return promise::newPromise([=](promise::Defer d) {
         // on error default behavior
         auto whenFailed = [=]() {
            toRefresh->setFailure(true);
