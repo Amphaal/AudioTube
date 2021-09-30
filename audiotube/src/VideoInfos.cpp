@@ -14,7 +14,7 @@
 
 #include "VideoInfos.h"
 
-promise::Defer AudioTube::VideoInfos::fillStreamsManifest(const PlayerConfig::VideoId &videoId, PlayerConfig* playerConfig, StreamsManifest* manifest) {
+promise::Promise AudioTube::VideoInfos::fillStreamsManifest(const PlayerConfig::VideoId &videoId, PlayerConfig* playerConfig, StreamsManifest* manifest) {
     // set request date
     auto now = std::chrono::system_clock::to_time_t(
         std::chrono::system_clock::now()
@@ -28,7 +28,7 @@ promise::Defer AudioTube::VideoInfos::fillStreamsManifest(const PlayerConfig::Vi
             });
 }
 
-promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts) {
+promise::Promise AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts) {
     auto apiUrl = std::string("https://youtube.googleapis.com/v/") + videoId;
     auto encodedApiUrl = Url::encode(apiUrl);
 
@@ -37,7 +37,7 @@ promise::Defer AudioTube::VideoInfos::_downloadRaw_VideoInfos(const PlayerConfig
     return promise_dl_HTTPS(requestUrl);
 }
 
-promise::Defer AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig) {
+promise::Promise AudioTube::VideoInfos::_fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig) {
     return promise::newPromise([=](promise::Defer d) {
         // as string then to query
         UrlQuery videoInfos(dl);

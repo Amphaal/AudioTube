@@ -43,7 +43,8 @@ target_sources(audiotube PRIVATE
 ########################
 
 add_library(promise-cpp INTERFACE)
-target_include_directories(promise-cpp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/promise-cpp")
+target_include_directories(promise-cpp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/promise-cpp/include/promise-cpp")
+target_compile_definitions(audiotube   INTERFACE PROMISE_HEADONLY)
 
 #link
 target_link_libraries(audiotube PUBLIC promise-cpp)

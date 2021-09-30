@@ -47,7 +47,7 @@ void AudioTube::PlayerConfig::fillFromVideoInfosDetails(const std::string &title
     this->_duration = duration;
 }
 
-promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
+promise::Promise AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::VideoId &videoId) {
     spdlog::debug("PlayerConfig : Trying from [Embed]...");
     // pipeline
     return _downloadRaw_VideoEmbedPageHtml(videoId)
@@ -57,7 +57,7 @@ promise::Defer AudioTube::PlayerConfig::from_EmbedPage(const PlayerConfig::Video
             });
 }
 
-promise::Defer AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
+promise::Promise AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::VideoId &videoId, StreamsManifest* streamsManifest) {
     spdlog::debug("PlayerConfig : Trying from [WatchPage]...");
     // define requested at timestamp
     auto now = std::chrono::system_clock::to_time_t(
@@ -73,12 +73,12 @@ promise::Defer AudioTube::PlayerConfig::from_WatchPage(const PlayerConfig::Video
             });
 }
 
-promise::Defer AudioTube::PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const PlayerConfig::VideoId &videoId) {
+promise::Promise AudioTube::PlayerConfig::_downloadRaw_VideoEmbedPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = std::string("https://www.youtube.com/embed/" + videoId + "?hl=en");
     return promise_dl_HTTPS(url);
 }
 
-promise::Defer AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerConfig::VideoId &videoId) {
+promise::Promise AudioTube::PlayerConfig::_downloadRaw_WatchPageHtml(const PlayerConfig::VideoId &videoId) {
     auto url = std::string("https://www.youtube.com/watch?v=" + videoId + "&bpctr=9999999999&hl=en");
     return promise_dl_HTTPS(url);
 }
@@ -149,7 +149,7 @@ std::string AudioTube::PlayerConfig::_extractPlayerSourceURLFromRawSource(const 
     throw std::logic_error("Failed to extract PlayerSourceURL from raw source");
 }
 
-promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const std::string &playerSourceUrl) {
+promise::Promise AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const std::string &playerSourceUrl) {
     return promise::newPromise([=](promise::Defer d){
         // if cached is found, return it
         auto cachedDecipherer = SignatureDecipherer::fromCache(playerSourceUrl);
@@ -185,7 +185,7 @@ promise::Defer AudioTube::PlayerConfig::_downloadAndfillFrom_PlayerSource(const 
     });
 }
 
-promise::Defer AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
+promise::Promise AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const DownloadedUtf8 &dl) {
     std::string playerSourceURL;
     return promise::newPromise([&playerSourceURL, dl](promise::Defer d) {
         playerSourceURL = _extractPlayerSourceURLFromRawSource(dl);
@@ -196,7 +196,7 @@ promise::Defer AudioTube::PlayerConfig::_fillFrom_VideoEmbedPageHtml(const Downl
     });
 }
 
-promise::Defer AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
+promise::Promise AudioTube::PlayerConfig::_fillFrom_WatchPageHtml(const DownloadedUtf8 &dl, StreamsManifest* streamsManifest) {
     return promise::newPromise([=](promise::Defer d) {
         // get player config JSON
         auto playerConfig = _extractPlayerConfigFromRawSource(dl, Regexes::PlayerConfigExtractorFromWatchPage_JSONStart);

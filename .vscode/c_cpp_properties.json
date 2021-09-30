@@ -15,11 +15,12 @@
                 "${workspaceFolder}/audiotube",
                 "${workspaceFolder}/audiotube/include",
                 "${workspaceFolder}/audiotube/include/audiotube",
-                "${workspaceFolder}/audiotube/promise-cpp",
                 "${workspaceFolder}/audiotube/nlohmann_json/single_include",
                 "${workspaceFolder}/_genDebug/audiotube/pcre2",
                 "${workspaceFolder}/audiotube/asio/asio/include",
-                "${workspaceFolder}/audiotube/jpcre2/src"
+                "${workspaceFolder}/audiotube/jpcre2/src",
+                "${workspaceFolder}/audiotube/promise-cpp/include/promise-cpp",
+                "${workspaceFolder}/_genDebug/_deps/catch2-src/single_include"
             ],
             "defines": [
                 "_DEBUG",

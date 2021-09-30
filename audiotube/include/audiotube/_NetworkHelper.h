@@ -23,7 +23,6 @@
 #include <vector>
 
 #include <promise.hpp>
-#include <promise/allocator.hpp>
 
 #include <asio.hpp>
 #include <asio/ssl/context.hpp>
@@ -47,7 +46,7 @@ class NetworkHelper {
         std::string redirectUrl;
     };
     using DownloadedUtf8 = std::string;
-    static promise::Defer promise_dl_HTTPS(const std::string &downloadUrl, bool head = false);
+    static promise::Promise promise_dl_HTTPS(const std::string &downloadUrl, bool head = false);
     static NetworkHelper::Response downloadHTTPS(const std::string &downloadUrl, bool head = false);
     static constexpr std::string_view LocationTag = "Location: ";
 };

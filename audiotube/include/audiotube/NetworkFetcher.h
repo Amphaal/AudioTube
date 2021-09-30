@@ -27,12 +27,12 @@ namespace AudioTube {
 
 class NetworkFetcher : public NetworkHelper {
  public:
-    static promise::Defer fromPlaylistUrl(const std::string &url);
-    static promise::Defer refreshMetadata(VideoMetadata* toRefresh, bool force = false);
+    static promise::Promise fromPlaylistUrl(const std::string &url);
+    static promise::Promise refreshMetadata(VideoMetadata* toRefresh, bool force = false);
     static bool isStreamAvailable(VideoMetadata* toCheck);
 
  private:
-    static promise::Defer _refreshMetadata(VideoMetadata* metadata);
+    static promise::Promise _refreshMetadata(VideoMetadata* metadata);
 
     static std::vector<std::string> _extractVideoIdsFromHTTPRequest(const DownloadedUtf8 &requestData);
     static std::vector<VideoMetadata*> _videoIdsToMetadataList(const std::vector<std::string> &videoIds);

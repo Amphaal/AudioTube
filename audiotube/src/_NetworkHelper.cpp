@@ -141,7 +141,7 @@ AudioTube::NetworkHelper::Response AudioTube::NetworkHelper::downloadHTTPS(const
     return outResponse;
 }
 
-promise::Defer AudioTube::NetworkHelper::promise_dl_HTTPS(const std::string &downloadUrl, bool head) {
+promise::Promise AudioTube::NetworkHelper::promise_dl_HTTPS(const std::string &downloadUrl, bool head) {
     return promise::newPromise([=](promise::Defer d) {
         auto response = downloadHTTPS(downloadUrl, head);
         return d.resolve(response.messageBody);

@@ -28,11 +28,11 @@ namespace AudioTube {
 
 class VideoInfos : public NetworkHelper {
  public:
-    static promise::Defer fillStreamsManifest(const PlayerConfig::VideoId &videoId, PlayerConfig* playerConfig, StreamsManifest* manifest);
+    static promise::Promise fillStreamsManifest(const PlayerConfig::VideoId &videoId, PlayerConfig* playerConfig, StreamsManifest* manifest);
 
  private:
-    static promise::Defer _downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts);
-    static promise::Defer _fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig);
+    static promise::Promise _downloadRaw_VideoInfos(const PlayerConfig::VideoId &videoId, const std::string &sts);
+    static promise::Promise _fillFrom_VideoInfos(const DownloadedUtf8 &dl, StreamsManifest* manifest, PlayerConfig *playerConfig);
 
     static std::string _percentEncodeUrl(const std::string &rawUrl);
     static std::string _percentDecodeUrl(const std::string &encodedUrl);

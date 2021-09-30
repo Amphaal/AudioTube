@@ -16,13 +16,13 @@
 
 #include "NetworkFetcher.h"
 
-promise::Defer AudioTube::NetworkFetcher::fromPlaylistUrl(const std::string &url) {
+promise::Promise AudioTube::NetworkFetcher::fromPlaylistUrl(const std::string &url) {
     return promise_dl_HTTPS(url)
             .then(&_extractVideoIdsFromHTTPRequest)
             .then(&_videoIdsToMetadataList);
 }
 
-promise::Defer AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
+promise::Promise AudioTube::NetworkFetcher::refreshMetadata(VideoMetadata* toRefresh, bool force) {
     // check if soft refresh...
     if (!force && !toRefresh->audioStreams()->isExpired()) return promise::resolve(toRefresh);
 
@@ -81,7 +81,7 @@ bool AudioTube::NetworkFetcher::isStreamAvailable(VideoMetadata* toCheck) {
     return isStreamAvailable;
 }
 
-promise::Defer AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
+promise::Promise AudioTube::NetworkFetcher::_refreshMetadata(VideoMetadata* metadata) {
     auto videoInfoPipeline = PlayerConfig::from_EmbedPage(metadata->id())
     .then([=](const PlayerConfig &pConfig) {
         metadata->setPlayerConfig(pConfig);
