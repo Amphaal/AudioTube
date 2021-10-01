@@ -17,7 +17,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": false,
+            "externalConsole": true, // TODO : unset once bug is fixed
             "MIMode": "gdb",
             "preLaunchTask": "2+. Build",
             "setupCommands": [

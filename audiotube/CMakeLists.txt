@@ -9,17 +9,13 @@ add_library(audiotube ${AUDIOTUBE_LIB_TYPE})
 
 target_include_directories(audiotube
     PRIVATE include/audiotube
-    INTERFACE .
     INTERFACE include
-)
-
-#headers for MOC
-target_sources(audiotube PRIVATE
-    include/audiotube/VideoMetadata.h
+    INTERFACE promise-cpp/include
 )
 
 #force headers for MOC
 target_sources(audiotube PRIVATE
+    include/audiotube/VideoMetadata.h
     include/audiotube/StreamsManifest.h
 )
 
@@ -43,8 +39,7 @@ target_sources(audiotube PRIVATE
 ########################
 
 add_library(promise-cpp INTERFACE)
-target_include_directories(promise-cpp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/promise-cpp/include/promise-cpp")
-target_compile_definitions(audiotube   INTERFACE PROMISE_HEADONLY)
+target_include_directories(promise-cpp INTERFACE promise-cpp/include)
 
 #link
 target_link_libraries(audiotube PUBLIC promise-cpp)

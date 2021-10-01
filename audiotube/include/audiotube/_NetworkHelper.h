@@ -22,7 +22,10 @@
 #include <string>
 #include <vector>
 
-#include <promise.hpp>
+#define PROMISE_HEADER_ONLY 1
+#define PROMISE_HEADONLY 1
+#include <promise-cpp/promise.hpp>
+#include <promise-cpp/promise_inl.hpp>
 
 #include <asio.hpp>
 #include <asio/ssl/context.hpp>
