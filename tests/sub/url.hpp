@@ -1,6 +1,6 @@
 // AudioTube C++
 // C++ fork based on https://github.com/Tyrrrz/YoutubeExplode
-// Copyright (C) 2019-2020 Guillaume Vara
+// Copyright (C) 2019-2021 Guillaume Vara
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
