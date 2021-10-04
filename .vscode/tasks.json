@@ -17,7 +17,6 @@
                 "isDefault": true,
                 "kind": "test"
             },
-            "dependsOn" : "1. Fetch submodules",
             "type": "shell",
             "windows": {
                 "command": "cmake -GNinja -B_genDebug -H. -DBUILD_TESTING=1 -DCMAKE_TOOLCHAIN_FILE=toolchains/msys.cmake"

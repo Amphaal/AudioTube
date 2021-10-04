@@ -5,28 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Lancer",
+            "name": "Lancer",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/_genDebug/tests/audiotube_tests",
             "windows": {
                 "program": "${workspaceFolder}/_genDebug/tests/audiotube_tests.exe",
                 "miDebuggerPath": "${env:MINGW64_ROOT}\\bin\\gdb.exe",
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Activer l'impression en mode Pretty pour gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ],
+                "externalConsole": true // TODO : unset once bug is fixed
             },
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": true, // TODO : unset once bug is fixed
-            "MIMode": "gdb",
-            "preLaunchTask": "2+. Build",
-            "setupCommands": [
-                {
-                    "description": "Activer l'impression en mode Pretty pour gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
+            "MIMode": "lldb",
+            "preLaunchTask": "2+. Build"
         }
     ]
 }
