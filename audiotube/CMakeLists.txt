@@ -87,6 +87,7 @@ add_subdirectory(pcre2 EXCLUDE_FROM_ALL)
 
 add_library(jpcre2 INTERFACE)
 target_include_directories(jpcre2 INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/jpcre2/src")
+target_include_directories(jpcre2 INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/pcre2") #BUG missing from pcre2 linkage...
 target_link_libraries(jpcre2 INTERFACE pcre2-8)
 
 target_link_libraries(audiotube PUBLIC jpcre2)
