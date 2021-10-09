@@ -4,6 +4,12 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/amphaal/audiotube/badge/master)](https://www.codefactor.io/repository/github/amphaal/audiotube/overview/master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/b3bccdbef7f745e9ba8fcf49f6257f7c)](https://www.codacy.com/manual/Amphaal/AudioTube?utm_source=github.com&utm_medium=referral&utm_content=Amphaal/AudioTube&utm_campaign=Badge_Grade)
 
+## Features
+#### Based on <https://github.com/Tyrrrz/YoutubeExplode>
+
+-   Request Youtube API to get specifically viable audio streams URLs
+-   Meant to be statically linked to <https://github.com/Amphaal/rpgrpz>
+
 ## License
     AudioTube C++
     C++ fork based on https://github.com/Tyrrrz/YoutubeExplode
@@ -18,8 +24,3 @@
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
-#### Based on <https://github.com/Tyrrrz/YoutubeExplode>
-
--   Request Youtube API to get specifically viable audio streams URLs
--   Meant to be statically linked to <https://github.com/Amphaal/rpgrpz>
