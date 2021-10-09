@@ -1,12 +1,35 @@
 {
-    "terminal.integrated.shell.windows": "${env:MINGW64_ROOT}\\..\\usr\\bin\\bash.exe",
-    "terminal.integrated.shellArgs.windows": ["--login", "-i"],
-    "terminal.integrated.env.windows": {
-        "MSYSTEM": "MINGW64",
-        "MSYS2_PATH_TYPE": "inherit",
-        "CHERE_INVOKING": "1",
-        "MSVSCODE": "1"
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        },
+        "Command Prompt": {
+            "path": [
+                "${env:windir}\\Sysnative\\cmd.exe",
+                "${env:windir}\\System32\\cmd.exe"
+            ],
+            "args": [],
+            "icon": "terminal-cmd"
+        },
+        "Git Bash": {
+            "source": "Git Bash"
+        },
+        "Msys2 Shell" : {
+            "path" : "${env:MINGW64_ROOT}\\..\\usr\\bin\\bash.exe",
+            "args": [        
+                "--login",
+                "-i"
+            ],
+            "env": {
+                "MSYSTEM": "MINGW64",
+                "MSYS2_PATH_TYPE": "inherit",
+                "CHERE_INVOKING": "1",
+                "MSVSCODE": "1"
+            }
+        }
     },
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
     "terminal.integrated.scrollback": 10000,
     "files.associations": {
         "qcoreapplication": "cpp",
