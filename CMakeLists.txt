@@ -35,9 +35,6 @@ if(NOT TARGET spdlog::spdlog)
                 GIT_TAG "v1.x"
             )
             FetchContent_MakeAvailable(spdlog)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND MINGW)
-        # https://github.com/msys2/MINGW-packages/issues/6855
-        target_link_options(spdlog::spdlog INTERFACE "-Wl,/force:multiple")
     endif()
 endif()
 
